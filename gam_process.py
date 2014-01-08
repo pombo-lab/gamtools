@@ -136,11 +136,10 @@ def get_segmentation_bed_tasks(tasks_to_run, segmentation_file, window):
         basename = os.path.splitext(os.path.basename(input_bam))[0]
 
         def with_extension(extension): return os.path.join(output_dir, basename + extension)
-        action = '%(python_exec)s %(segmentation_bed_script)s -s %(dependencies)s -n {input_bam}  | tr "-" "\t" | bedtools merge > %(targets)s'.format(input_bam=input_bam)
-        print action
+
         tasks_to_run.append({
                     'name'     : 'Getting segmentation bed at {0}bp for {1}'.format(window, input_bam),
-                    'actions'  : [action,],
+                    'actions'  : ['%(python_exec)s %(segmentation_bed_script)s -s %(dependencies)s -n {input_bam}  | tr "-" "\t" | bedtools merge > %(targets)s'.format(input_bam=input_bam),],
                     'targets'  : [with_extension(".segmentation_{0}bp.bed".format(window))],
                     'file_dep' : [segmentation_file],
                     })
