@@ -218,7 +218,7 @@ class GamExperiment(object):
         
         stored_shape = freqs.shape[:2]
         
-        processed = map(method, freqs.reshape((product(stored_shape),2,2)))
+        processed = map(method, freqs.reshape((stored_shape.product(),2,2)))
         
         return np.array(processed).reshape(stored_shape)
     
