@@ -144,6 +144,20 @@ def get_segmentation_bed_tasks(tasks_to_run, segmentation_file, window):
                     'file_dep' : [segmentation_file],
                     })
 
+        tasks_to_run.append({
+                    'name'     : 'Sorting segmentation bed at {0}bp for {1}'.format(window, input_bam),
+                    'actions'  : ['sort -k1,1 -k2,2n %(dependencies)s > %(targets)s',],
+                    'targets'  : [with_extension(".segmentation_{0}bp.sorted.bed".format(window))],
+                    'file_dep' : [with_extension(".segmentation_{0}bp.bed".format(window))],
+                    })
+
+        tasks_to_run.append({
+                    'name'     : 'Making segmentation bigBed at {0}bp for {1}'.format(window, input_bam),
+                    'actions'  : ['bedToBigBed %(dependencies)s %(genome_file)s %(targets)s',],
+                    'targets'  : [with_extension(".segmentation_{0}bp.bb".format(window))],
+                    'file_dep' : [with_extension(".segmentation_{0}bp.sorted.bed".format(window))],
+                    })
+
     return tasks_to_run
 
 class MyTaskLoader(TaskLoader):
