@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
 import os
-from functools import partial
 import itertools
 import h5py
 from multiprocessing import Pool
-import time
 
 
 class HDF5FileExistsError(Exception):
@@ -85,31 +83,6 @@ class GamExperimentalData(object):
         df_index = np.array(self.store["experimental_data"]["index"][:])
 
         return pd.DataFrame(data=df_data, index=df_index, columns=df_columns)
-    
-    def get_index_frequency(self, index1, index2):
-        """Take two tuples of (chromosome, window) and return [[ no_both_present, no_1_only],[ no_2_only, no_neither_present]]"""
-        
-        # Get a view on the data containing just the windows of interest
-        samples = np.array(self.data[[index1,index2]])
-        
-        return self.count_frequency(samples)
-        
-    def get_location_frequency(self, loc1, loc2):
-        """Take two integer window locations and return [[ no_both_present, no_1_only],[ no_2_only, no_neither_present]]"""
-        # Get a view on the data containing just the windows of interest
-        samples = np.array(self.data[[loc1,loc2]])
-        
-        return self.count_frequency(samples)
-        
-    def count_frequency(self, samples):
-        """Take a table of two columnds and return [[ no_both_present, no_1_only],[ no_2_only, no_neither_present]]"""
-        
-        counts = np.array([[0,0], [0,0]])
-        
-        for s in samples:
-            counts[s[0]][s[1]] += 1
-            
-        return counts + self.pseudocount
         
     @staticmethod
     def from_multibam(multibam_file, hdf5_store):
@@ -155,7 +128,7 @@ class GamExperimentalData(object):
 class GamExperiment(object):
     """A class for storing and processing data associated with a GAM Experiment"""
     
-    def __init__(self, hdf5_path):
+    def __init__(self, hdf5_path, num_processes=1):
         """Open a saved gam_experiment"""
         
         # Open the hdf5 store
@@ -166,6 +139,9 @@ class GamExperiment(object):
         
         # Get the frequency matrix
         self.freq_matrix = GamFrequencyMatrix(self.store)
+
+        # Store the number of processes available for matrix computation
+        self.num_processes = num_processes
     
     def get_chrom_processed_matrix(self, chrom, method=None):
         
@@ -189,9 +165,17 @@ class GamExperiment(object):
         index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
         
         combinations = itertools.product(index1_list, index2_list)
-        
-        freqs = np.array(map(lambda c: self.experimental_data.get_location_frequency(*c), combinations))
-        
+
+        data_array = [np.array(self.experimental_data.data[[loc1,loc2]]) for loc1, loc2 in combinations]
+
+        if self.num_processes == 1:
+            freqs = np.array(map(count_frequency, data_array))
+        else:
+            print 'Using {} processes'.format(self.num_processes)
+            p = Pool(self.num_processes)
+            freqs = np.array(p.map(count_frequency, data_array))
+            p.close()
+
         return freqs.reshape((len(index1_list), len(index2_list), 2, 2))
         
     def get_loc_frequency_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
@@ -226,7 +210,7 @@ class GamExperiment(object):
         return np.log(N[0,0]) + np.log(N[1,1]) - np.log(np.log(N[0,1])) - np.log(N[1,0])
         
     @staticmethod
-    def from_multibam(segmentation_multibam, hdf5_path):
+    def from_multibam(segmentation_multibam, hdf5_path, num_processes=1):
         """Create a new experiment from a segmentation multibam file"""
         
         # Create the hdf5 store
@@ -242,7 +226,7 @@ class GamExperiment(object):
         store.close()
         
         # Return the object
-        return GamExperiment(hdf5_path)
+        return GamExperiment(hdf5_path, num_processes)
     
     @staticmethod
     def create_store(hdf5_path):
@@ -270,3 +254,14 @@ class GamExperiment(object):
     def close(self):
         
         self.store.close()
+        
+def count_frequency(samples):
+    """Take a table of two columnds and return [[ no_both_present, no_1_only],[ no_2_only, no_neither_present]]"""
+    
+    counts = np.array([[0,0], [0,0]])
+    
+    for s in samples:
+        counts[s[0]][s[1]] += 1
+        
+    return counts 
+
