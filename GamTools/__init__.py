@@ -164,19 +164,38 @@ class GamExperiment(object):
         index1_list = self.experimental_data.data.columns[loc1_start:loc1_stop]
         index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
         
-        combinations = itertools.product(index1_list, index2_list)
+        combinations = itertools.combinations(index1_list, 2)
 
-        data_array = [np.array(self.experimental_data.data[[loc1,loc2]]) for loc1, loc2 in combinations]
+        from multiprocessing import Manager, Queue, Process
+        import time
 
-        if self.num_processes == 1:
-            freqs = np.array(map(count_frequency, data_array))
-        else:
-            print 'Using {} processes'.format(self.num_processes)
-            p = Pool(self.num_processes)
-            freqs = np.array(p.map(count_frequency, data_array))
-            p.close()
+        print 'Using {} processes'.format(self.num_processes)
+        q = Queue(maxsize=self.num_processes)
+        manager = Manager()
 
-        return freqs.reshape((len(index1_list), len(index2_list), 2, 2))
+        d = manager.dict()
+        process_pool = []
+        for n in range(self.num_processes):
+            process_pool.append(Process(target=f, args=(q,d)))
+        
+        map(lambda p: p.start(), process_pool)
+        
+        start_time = time.time()
+        for key in combinations:
+            loc1, loc2 = key
+            data = self.experimental_data.data[[loc1,loc2]]
+            q.put((key, data))
+            
+        for i in range(self.num_processes):
+            q.put((None, None))
+            
+        map(lambda p: p.join(), process_pool)
+
+        print 'Time elapsed: ', time.time() - start_time
+
+        return 5
+
+        #return freqs.reshape((len(index1_list), len(index2_list), 2, 2))
         
     def get_loc_frequency_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
         
@@ -264,4 +283,10 @@ def count_frequency(samples):
         counts[s[0]][s[1]] += 1
         
     return counts 
+
+def f(input_queue,result_dict):
+    key, data = input_queue.get()
+    while key is not None:
+        result_dict[key] = count_frequency(np.array(data))
+        key,data = input_queue.get()
 
