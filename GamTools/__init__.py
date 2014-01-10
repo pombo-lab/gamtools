@@ -163,8 +163,12 @@ class GamExperiment(object):
         
         index1_list = self.experimental_data.data.columns[loc1_start:loc1_stop]
         index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
+
+        data_1 = np.array(self.experimental_data.data.iloc[:,loc1_start:loc1_stop])
+        data_2 = np.array(self.experimental_data.data.iloc[:,loc2_start:loc2_stop])
+        full_data = np.concatenate((data_1, data_2), axis=1)
         
-        combinations = itertools.combinations(index1_list, 2)
+        combinations = itertools.product(range(len(data_1[0])), range(len(data_1[0]), len(data_1[0]) + len(data_2[0])))
 
         from multiprocessing import Manager, Queue, Process
         import time
@@ -183,7 +187,7 @@ class GamExperiment(object):
         start_time = time.time()
         for key in combinations:
             loc1, loc2 = key
-            data = self.experimental_data.data[[loc1,loc2]]
+            data = full_data[:,[loc1, loc2]]
             q.put((key, data))
             
         for i in range(self.num_processes):
@@ -280,6 +284,7 @@ def count_frequency(samples):
     counts = np.array([[0,0], [0,0]])
     
     for s in samples:
+
         counts[s[0]][s[1]] += 1
         
     return counts 
@@ -287,6 +292,6 @@ def count_frequency(samples):
 def f(input_queue,result_dict):
     key, data = input_queue.get()
     while key is not None:
-        result_dict[key] = count_frequency(np.array(data))
+        result_dict[key] = count_frequency(data)
         key,data = input_queue.get()
 
