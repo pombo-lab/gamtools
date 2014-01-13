@@ -175,7 +175,7 @@ class GamExperiment(object):
         from multiprocessing import Manager, Queue, Process
         import time
 
-        print 'Using {} processes'.format(self.num_processes)
+        print 'Using {0} processes'.format(self.num_processes)
         q = Queue(maxsize=self.num_processes)
         manager = Manager()
 
