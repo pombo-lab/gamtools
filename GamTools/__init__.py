@@ -165,10 +165,12 @@ class GamExperiment(object):
         index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
 
         data_1 = np.array(self.experimental_data.data.iloc[:,loc1_start:loc1_stop])
+        len_1 = len(data_1[0])
         data_2 = np.array(self.experimental_data.data.iloc[:,loc2_start:loc2_stop])
+        len_2 = len(data_2[0])
         full_data = np.concatenate((data_1, data_2), axis=1)
         
-        combinations = itertools.product(range(len(data_1[0])), range(len(data_1[0]), len(data_1[0]) + len(data_2[0])))
+        combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
 
         from multiprocessing import Manager, Queue, Process
         import time
@@ -197,9 +199,14 @@ class GamExperiment(object):
 
         print 'Time elapsed: ', time.time() - start_time
 
-        return 5
+        freqs = np.zeros((len_1, len_2, 2, 2))
 
-        #return freqs.reshape((len(index1_list), len(index2_list), 2, 2))
+        for key in d.keys():
+            loc1, loc2 = key
+            loc2 = loc2 - len_1
+            freqs[loc1][loc2] = d[key]
+
+        return freqs
         
     def get_loc_frequency_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
         
