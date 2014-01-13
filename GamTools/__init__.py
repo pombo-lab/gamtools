@@ -171,7 +171,7 @@ class GamExperiment(object):
         if self.num_processes == 1:
             freqs = np.array(map(count_frequency, data_array))
         else:
-            print 'Using {} processes'.format(self.num_processes)
+            print 'Using {0} processes'.format(self.num_processes)
             p = Pool(self.num_processes)
             freqs = np.array(p.map(count_frequency, data_array))
             p.close()

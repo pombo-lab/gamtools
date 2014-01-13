@@ -60,8 +60,8 @@ def main(args):
         print 'starting calculation for', chrom
         start_time = time.clock()
         chrom_shape = exp.get_chrom_processed_matrix(chrom).shape
-        print 'chrom size is: {} x {}'.format(*chrom_shape), 
-        print 'Calculation took {}s'.format(time.clock() - start_time)
+        print 'chrom size is: {0} x {1}'.format(*chrom_shape), 
+        print 'Calculation took {0}s'.format(time.clock() - start_time)
     print 'Done!'
 
 if __name__ == "__main__":
