@@ -3,7 +3,7 @@ import numpy as np
 import os
 import itertools
 import h5py
-from multiprocessing import Pool
+from multiprocessing import Manager, Queue, Process
 
 
 class HDF5FileExistsError(Exception):
@@ -130,6 +130,13 @@ class GamExperiment(object):
     
     def __init__(self, hdf5_path, num_processes=1):
         """Open a saved gam_experiment"""
+
+        # Store the number of processes available for matrix computation
+        self.num_processes = num_processes
+
+        # Starting the worker pool forks the process, so do this as early as possible to
+        # reduce memory usage
+        self.worker_pool = WorkerPool(num_processes)
         
         # Open the hdf5 store
         self.store = self.open_store(hdf5_path)
@@ -142,6 +149,7 @@ class GamExperiment(object):
 
         # Store the number of processes available for matrix computation
         self.num_processes = num_processes
+        self.worker_pool = WorkerPool(num_processes)
     
     def get_chrom_processed_matrix(self, chrom, method=None):
         
@@ -172,39 +180,23 @@ class GamExperiment(object):
         
         combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
 
-        from multiprocessing import Manager, Queue, Process
-        import time
-
         print 'Using {0} processes'.format(self.num_processes)
-        q = Queue(maxsize=self.num_processes)
-        manager = Manager()
+        
+        self.worker_pool.start()
 
-        d = manager.dict()
-        process_pool = []
-        for n in range(self.num_processes):
-            process_pool.append(Process(target=f, args=(q,d)))
-        
-        map(lambda p: p.start(), process_pool)
-        
-        start_time = time.time()
         for key in combinations:
             loc1, loc2 = key
             data = full_data[:,[loc1, loc2]]
-            q.put((key, data))
+            self.worker_pool.queue.put((key, data))
             
-        for i in range(self.num_processes):
-            q.put((None, None))
-            
-        map(lambda p: p.join(), process_pool)
-
-        print 'Time elapsed: ', time.time() - start_time
+        self.worker_pool.stop()
 
         freqs = np.zeros((len_1, len_2, 2, 2))
 
-        for key in d.keys():
+        for key in self.worker_pool.results.keys():
             loc1, loc2 = key
             loc2 = loc2 - len_1
-            freqs[loc1][loc2] = d[key]
+            freqs[loc1][loc2] = self.worker_pool.results[key]
 
         return freqs
         
@@ -302,3 +294,29 @@ def f(input_queue,result_dict):
         result_dict[key] = count_frequency(data)
         key,data = input_queue.get()
 
+class WorkerPool(object):
+
+    def __init__(self, num_proc):
+        
+        self.num_processes = num_proc
+
+        self.queue = Queue(maxsize=self.num_processes)
+        
+        manager = Manager()
+        self.results = manager.dict()
+
+        self.processes = []
+        for n in range(self.num_processes):
+            self.processes.append(Process(target=f, args=(self.queue, self.results)))
+        
+    def start(self):
+
+        map(lambda p: p.start(), self.processes)
+        
+            
+    def stop(self):
+
+        for i in range(self.num_processes):
+            self.queue.put((None, None))
+            
+        map(lambda p: p.join(), self.processes)
