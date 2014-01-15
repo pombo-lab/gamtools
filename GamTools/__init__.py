@@ -46,19 +46,19 @@ class GamFrequencyMatrix(object):
         self.data[loc1_start:loc1_stop, loc2_start:loc2_stop] = freqs
         
     @staticmethod
-    def create_freq_matrix(hdf5_store, no_windows):
+    def create_freq_matrix(hdf5_store, no_windows, compression=None):
         """Create a frequency matrix dataset stored in the HDF5 file"""
         
         grp = hdf5_store.create_group("processed_data")
         
-        freq_matrix = grp.create_dataset("frequencies", (no_windows,no_windows,2,2), dtype='i')
+        freq_matrix = grp.create_dataset("frequencies", (no_windows,no_windows,2,2), dtype='i', compression=compression)
         
         return freq_matrix
     
     @staticmethod
-    def from_no_windows(hdf5_store, no_windows):
+    def from_no_windows(hdf5_store, no_windows, compression=None):
         
-        matrix = GamFrequencyMatrix.create_freq_matrix(hdf5_store, no_windows)
+        matrix = GamFrequencyMatrix.create_freq_matrix(hdf5_store, no_windows, compression=compression)
         
         return GamFrequencyMatrix(hdf5_store)
 
@@ -85,7 +85,7 @@ class GamExperimentalData(object):
         return pd.DataFrame(data=df_data, index=df_index, columns=df_columns)
         
     @staticmethod
-    def from_multibam(multibam_file, hdf5_store):
+    def from_multibam(multibam_file, hdf5_store, compression=None):
         """Read in a multibam file and return a GamExperimentalData object"""
         
         experimental_data = GamExperimentalData.read_multibam(multibam_file)
@@ -101,7 +101,7 @@ class GamExperimentalData(object):
         return pd.read_csv(input_file, delim_whitespace=True,index_col=[0,1]).transpose()
     
     @staticmethod
-    def data_to_store(data, hdf5_store):
+    def data_to_store(data, hdf5_store, compression=None):
         """Save experimental data to an hdf5 store"""
         
         grp = hdf5_store.create_group("experimental_data")
@@ -109,7 +109,7 @@ class GamExperimentalData(object):
         #print data
         segmentation = np.array(data)
         #print segmentation
-        segmentation_hd = grp.create_dataset("segmentation", segmentation.shape, segmentation.dtype)
+        segmentation_hd = grp.create_dataset("segmentation", segmentation.shape, segmentation.dtype, compression=compression)
         
         segmentation_hd.write_direct(segmentation)
         
@@ -137,7 +137,7 @@ class GamExperiment(object):
         # Starting the worker pool forks the process, so do this as early as possible to
         # reduce memory usage
         self.worker_pool = WorkerPool(num_processes)
-        
+
         # Open the hdf5 store
         self.store = self.open_store(hdf5_path)
         
@@ -232,17 +232,17 @@ class GamExperiment(object):
         return np.log(N[0,0]) + np.log(N[1,1]) - np.log(np.log(N[0,1])) - np.log(N[1,0])
         
     @staticmethod
-    def from_multibam(segmentation_multibam, hdf5_path, num_processes=1):
+    def from_multibam(segmentation_multibam, hdf5_path, num_processes=1, compression=None):
         """Create a new experiment from a segmentation multibam file"""
         
         # Create the hdf5 store
         store = GamExperiment.create_store(hdf5_path)
         
         # Create the experimental data in the datastore
-        experimental_data = GamExperimentalData.from_multibam(segmentation_multibam, store)
+        experimental_data = GamExperimentalData.from_multibam(segmentation_multibam, store, compression)
         
         # Create a new frequency matrix
-        freq_matrix = GamFrequencyMatrix.from_no_windows(store, experimental_data.no_windows)
+        freq_matrix = GamFrequencyMatrix.from_no_windows(store, experimental_data.no_windows, compression)
         
         # close the store
         store.close()
