@@ -181,6 +181,8 @@ class GamExperiment(object):
         combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
 
         print 'Using {0} processes'.format(self.num_processes)
+        print self.worker_pool.results
+        print 'done' in self.worker_pool.results
         
         self.worker_pool.start()
 
@@ -188,12 +190,16 @@ class GamExperiment(object):
             loc1, loc2 = key
             data = full_data[:,[loc1, loc2]]
             self.worker_pool.queue.put((key, data))
-            
+
         self.worker_pool.stop()
+            
+        print 'Done processing'
 
         freqs = np.zeros((len_1, len_2, 2, 2))
 
         for key in self.worker_pool.results.keys():
+            if key[:4] == 'done':
+                continue
             loc1, loc2 = key
             loc2 = loc2 - len_1
             freqs[loc1][loc2] = self.worker_pool.results[key]
@@ -288,11 +294,15 @@ def count_frequency(samples):
         
     return counts 
 
-def f(input_queue,result_dict):
+def f(process_num, input_queue, result_dict):
     key, data = input_queue.get()
     while key is not None:
-        result_dict[key] = count_frequency(data)
-        key,data = input_queue.get()
+
+        if key == 'END':
+            result_dict['done{0}'.format(process_num + 1)] = True
+        else:
+            result_dict[key] = count_frequency(data)
+            key,data = input_queue.get()
 
 class WorkerPool(object):
 
@@ -307,7 +317,7 @@ class WorkerPool(object):
 
         self.processes = []
         for n in range(self.num_processes):
-            self.processes.append(Process(target=f, args=(self.queue, self.results)))
+            self.processes.append(Process(target=f, args=(n, self.queue, self.results)))
         
     def start(self):
 
@@ -316,7 +326,8 @@ class WorkerPool(object):
             
     def stop(self):
 
-        for i in range(self.num_processes):
-            self.queue.put((None, None))
+        done_keys = [ 'done{0}'.format(pnum + 1) for pnum in range(self.num_processes) ]
+        while not all (k in self.results for k in done_keys):
+            print 'Checking whether all processes are finished'
+            self.queue.put(('END', None))
             
-        map(lambda p: p.join(), self.processes)
