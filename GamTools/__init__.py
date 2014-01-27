@@ -136,7 +136,10 @@ class GamExperiment(object):
 
         # Starting the worker pool forks the process, so do this as early as possible to
         # reduce memory usage
-        self.worker_pool = WorkerPool(num_processes)
+        if self.num_processes > 1:
+            self.processor = MultithreadedMatrixProcesser(num_processes)
+        else:
+            self.processor = MatrixProcesser()
 
         # Open the hdf5 store
         self.store = self.open_store(hdf5_path)
@@ -146,10 +149,6 @@ class GamExperiment(object):
         
         # Get the frequency matrix
         self.freq_matrix = GamFrequencyMatrix(self.store)
-
-        # Store the number of processes available for matrix computation
-        self.num_processes = num_processes
-        self.worker_pool = WorkerPool(num_processes)
     
     def get_chrom_processed_matrix(self, chrom, method=None):
         
@@ -178,31 +177,8 @@ class GamExperiment(object):
         len_2 = len(data_2[0])
         full_data = np.concatenate((data_1, data_2), axis=1)
         
-        combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
+        return self.processor.process(len_1, len_2, full_data)
 
-        print 'Using {0} processes'.format(self.num_processes)
-        
-        self.worker_pool.start()
-
-        for key in combinations:
-            loc1, loc2 = key
-            data = full_data[:,[loc1, loc2]]
-            self.worker_pool.queue.put((key, data))
-
-        self.worker_pool.stop()
-            
-        print 'Done processing'
-        while not len(self.worker_pool.results.keys()) == len_1 * len_2:
-            pass
-
-        freqs = np.zeros((len_1, len_2, 2, 2))
-
-        for key in self.worker_pool.results.keys():
-            loc1, loc2 = key
-            loc2 = loc2 - len_1
-            freqs[loc1][loc2] = self.worker_pool.results[key]
-
-        return freqs
         
     def get_loc_frequency_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
         
@@ -234,6 +210,11 @@ class GamExperiment(object):
     
     def odds_ratio(self, N):
         return np.log(N[0,0]) + np.log(N[1,1]) - np.log(np.log(N[0,1])) - np.log(N[1,0])
+
+    def close(self):
+
+        self.processor.close()
+        self.store.close()
         
     @staticmethod
     def from_multibam(segmentation_multibam, hdf5_path, num_processes=1, compression=None):
@@ -306,12 +287,14 @@ class WorkerPool(object):
 
         self.queue = Queue(maxsize=self.num_processes)
         
-        manager = Manager()
-        self.results = manager.dict()
+        self.manager = Manager()
+        self.results = self.manager.dict()
 
         self.processes = []
         for n in range(self.num_processes):
             self.processes.append(Process(target=f, args=(self.queue, self.results)))
+
+        self.start()
         
     def start(self):
 
@@ -321,3 +304,73 @@ class WorkerPool(object):
 
         while not self.queue.empty():
             pass
+
+    def close(self):
+
+        for n in range(self.num_processes):
+            self.queue.put((None, None))
+
+        map(lambda p: p.join(), self.processes)
+
+class MatrixProcesser(object):
+
+    def process(self, len_1, len_2, full_data):
+
+        combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
+
+        freqs = np.zeros((len_1, len_2, 2, 2))
+
+        for key in combinations:
+            loc1, loc2 = key
+            data = full_data[:,[loc1, loc2]]
+            result = count_frequency(data)
+            loc2 = loc2 - len_1
+            freqs[loc1][loc2] = result
+
+        return freqs
+
+    def close(self):
+        pass
+
+class MultithreadedMatrixProcesser(object):
+
+    def __init__(self, num_processes):
+
+        self.num_processes = num_processes
+        self.worker_pool = WorkerPool(num_processes)
+
+    def process(self, len_1, len_2, full_data):
+
+        combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
+
+        print 'Using {0} processes'.format(self.num_processes)
+        
+        for key in combinations:
+            loc1, loc2 = key
+            data = full_data[:,[loc1, loc2]]
+            self.worker_pool.queue.put((key, data))
+
+        self.worker_pool.stop()
+            
+        print 'Done processing'
+        while not len(self.worker_pool.results.keys()) == len_1 * len_2:
+            pass
+
+        freqs = np.zeros((len_1, len_2, 2, 2))
+
+        for key in self.worker_pool.results.keys():
+            loc1, loc2 = key
+            loc2 = loc2 - len_1
+            freqs[loc1][loc2] = self.worker_pool.results[key]
+
+        self.clean()
+
+        return freqs
+
+    def clean(self):
+
+        self.worker_pool.results.clear()
+
+    def close(self):
+
+        self.worker_pool.close()
