@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import os
 import itertools
@@ -12,14 +11,23 @@ class HDF5FileExistsError(Exception):
 class GamFrequencyMatrix(object):
     """A class for abstracting access to the HDF5 store underlying a frequency matrix"""
     
-    def __init__(self, hdf5_store):
+    def __init__(self, data):
         
-        self.data = self.data_from_store(hdf5_store)
+        self.data = data
         
-    def data_from_store(self, hdf5_store):
+    @staticmethod
+    def from_store(hdf5_store):
         """Get a frequency matrix from the store"""
         
-        return hdf5_store["processed_data"]["frequencies"]
+        data = hdf5_store.store["processed_data"]["frequencies"]
+        return GamFrequencyMatrix(data)
+    
+    @staticmethod
+    def from_no_windows(hdf5_store, no_windows):
+        
+        data = hdf5_store.create_freq_matrix(no_windows)
+        
+        return GamFrequencyMatrix(data)
     
     def any_empty(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
         
@@ -44,91 +52,150 @@ class GamFrequencyMatrix(object):
     def cache_freqs(self, loc1_start, loc1_stop, loc2_start, loc2_stop, freqs):
         
         self.data[loc1_start:loc1_stop, loc2_start:loc2_stop] = freqs
-        
-    @staticmethod
-    def create_freq_matrix(hdf5_store, no_windows, compression=None):
-        """Create a frequency matrix dataset stored in the HDF5 file"""
-        
-        grp = hdf5_store.create_group("processed_data")
-        
-        freq_matrix = grp.create_dataset("frequencies", (no_windows,no_windows,2,2), dtype='i', compression=compression)
-        
-        return freq_matrix
-    
-    @staticmethod
-    def from_no_windows(hdf5_store, no_windows, compression=None):
-        
-        matrix = GamFrequencyMatrix.create_freq_matrix(hdf5_store, no_windows, compression=compression)
-        
-        return GamFrequencyMatrix(hdf5_store)
 
-class GamExperimentalData(object):
-    """A class for abstracting access to the original experimental segmentation"""
-    
-    def __init__(self, hdf5_store, pseudocount = 0):
+class MultibamProcessor(object):
+    """A class for extracting GAM experimental data from the multibam style segmentation file."""
+    def __init__(self):
+        super(MultibamProcessor, self).__init__()
         
-        self.store = hdf5_store
-        
-        self.data = self.data_from_store()
-        
-        self.no_windows = len(self.data.columns)
-        
-        self.pseudocount = pseudocount
-        
-    def data_from_store(self):
-        """Retrieve data from an hdf5 store and use it to recreate the pandas DataFrame"""
-        
-        df_data = np.array(self.store["experimental_data"]["segmentation"][:])
-        df_columns = pd.MultiIndex.from_tuples(map(lambda i: tuple(i), np.array(self.store["experimental_data"]["columns"][:])))
-        df_index = np.array(self.store["experimental_data"]["index"][:])
+    def read(self, multibam_pointer):
+        """Actually read data from the multibam pointer"""
 
-        return pd.DataFrame(data=df_data, index=df_index, columns=df_columns)
-        
+        windows = []
+        data = []
+        for lnum, line in enumerate(multibam_pointer):
+            if lnum == 0:
+                sample_names = self.extract_sample_names(line)
+            else:
+                window, segmentation = self.parse_line(line)
+                windows.append(window)
+                data.append(segmentation)
+
+        data = np.array(data).transpose()
+        data = np.ascontiguousarray(data, data.dtype)
+
+        return data, sample_names, windows
+
+    def parse_line(self, line):
+        """Extract information from one line of the multibam"""
+
+        fields = line.strip().split()
+        chrom = fields[0]
+        start, end = map(int, fields[1].split('-'))
+        window = (chrom, start, end)
+        segmentation = map(int,fields[2:])
+
+        return window, segmentation
+
+    def extract_sample_name(self, file_path):
+        basename = os.path.basename(file_path)
+        return basename.split('.')[0]
+
+    def extract_sample_names(self, header_line):
+        return map(self.extract_sample_name, header_line.split()[2:])
+
+class GamHdf5Store(object):
+    
+    def __init__(self, store, compression):
+
+        self.store, self.compression = store, compression
+
     @staticmethod
-    def from_multibam(multibam_file, hdf5_store, compression=None):
-        """Read in a multibam file and return a GamExperimentalData object"""
+    def create_store(hdf5_path, compression=None):
+        """Create a new hdf5 store without overwriting an old one"""
         
-        experimental_data = GamExperimentalData.read_multibam(multibam_file)
+        if os.path.exists(hdf5_path):
+            # Don't overwrite an existing hdf5 file
+            raise HDF5FileExistsError('The file {0} already exists and would be overwritten by this operation. Please provide the path for a new HDF5 file'.format(hdf5_path))
         
-        GamExperimentalData.data_to_store(experimental_data, hdf5_store)
+        # Create the store
+        store = h5py.File(hdf5_path,'w')
         
-        return GamExperimentalData(hdf5_store)
-        
-    @staticmethod    
-    def read_multibam(input_file):
-        """Read in a multibam file and return a Pandas DataFrame"""
-        
-        return pd.read_csv(input_file, delim_whitespace=True,index_col=[0,1]).transpose()
+        return GamHdf5Store(store, compression)
     
     @staticmethod
-    def data_to_store(data, hdf5_store, compression=None):
+    def open_store(hdf5_path):
+        """Open an hdf5 store and return the store object"""
+        
+        if not os.path.exists(hdf5_path):
+            raise IOError("[Errno 2] No such file or directory: '{0}'".format(hdf5_path))
+            
+        store = h5py.File(hdf5_path,'r+')
+
+        # Get the compression
+        compression = store['processed_data']['frequencies'].compression
+        
+        return GamHdf5Store(store, compression)
+
+    def data_to_store(self, data, columns, windows):
         """Save experimental data to an hdf5 store"""
         
-        grp = hdf5_store.create_group("experimental_data")
-        
-        #print data
-        segmentation = np.array(data)
-        #print segmentation
-        segmentation_hd = grp.create_dataset("segmentation", segmentation.shape, segmentation.dtype, compression=compression)
-        
-        segmentation_hd.write_direct(segmentation)
-        
-        index = np.array(list(data.index))
-        
-        index_hd = grp.create_dataset("index", index.shape, index.dtype)
+        grp = self.store.create_group("experimental_data")
 
-        index_hd.write_direct(index)
         
-        columns = np.array(list(data.columns))
+        segmentation_hd = grp.create_dataset("segmentation", data.shape, data.dtype, compression=self.compression)
+        
+        segmentation_hd.write_direct(data)
+        
+        windows = np.array(windows)
+        
+        index_hd = grp.create_dataset("windows", windows.shape, windows.dtype)
+
+        index_hd.write_direct(windows)
+        
+        columns = np.array(columns)
         
         columns_hd = grp.create_dataset("columns", columns.shape, columns.dtype)
         
         columns_hd.write_direct(columns)
+        
+    def data_from_store(self):
+        """Retrieve data from an hdf5 store and use it to recreate the DataFrame"""
+        
+        data = np.array(self.store["experimental_data"]["segmentation"][:])
+        columns = map(lambda i: tuple(i), np.array(self.store["experimental_data"]["columns"][:]))
+        windows = np.array(self.store["experimental_data"]["windows"][:])
 
+        return data, columns, windows
+        
+    def create_freq_matrix(self, no_windows):
+        """Create a frequency matrix dataset stored in the HDF5 file"""
+        
+        grp = self.store.create_group("processed_data")
+        
+        freq_matrix = grp.create_dataset("frequencies", (no_windows,no_windows,2,2), dtype='i', compression=self.compression)
+        
+        return freq_matrix
+
+class GamExperimentalData(object):
+    """A class for abstracting access to the original experimental segmentation"""
+    
+    def __init__(self, data, columns, windows, hdf5_store):
+
+        self.data, self.columns, self.windows, self.store = data, columns, windows, hdf5_store
+        self.no_windows = len(self.windows)
+        
+    @staticmethod
+    def from_multibam(multibam_path, hdf5_store):
+
+        with open(multibam_path, 'r') as multibam_pointer:
+            data, columns, windows = MultibamProcessor().read(multibam_pointer)
+        
+        hdf5_store.data_to_store(data, columns, windows)
+
+        return GamExperimentalData(data, columns, windows, hdf5_store)
+
+    @staticmethod
+    def from_store(hdf5_store):
+
+        data, columns, windows = hdf5_store.data_from_store()
+
+        return GamExperimentalData(data, columns, windows, hdf5_store)
+        
 class GamExperiment(object):
     """A class for storing and processing data associated with a GAM Experiment"""
     
-    def __init__(self, hdf5_path, num_processes=1):
+    def __init__(self, hdf5_store, experimental_data, frequency_data, num_processes=1):
         """Open a saved gam_experiment"""
 
         # Store the number of processes available for matrix computation
@@ -142,38 +209,48 @@ class GamExperiment(object):
             self.processor = MatrixProcesser()
 
         # Open the hdf5 store
-        self.store = self.open_store(hdf5_path)
+        self.store = hdf5_store
         
         # Get the experimental data from the store
-        self.experimental_data = GamExperimentalData(self.store)
+        self.experimental_data = experimental_data
         
         # Get the frequency matrix
-        self.freq_matrix = GamFrequencyMatrix(self.store)
-    
-    def get_chrom_processed_matrix(self, chrom, method=None):
+        self.freq_matrix = frequency_data
         
-        starting_index = ( chrom, self.experimental_data.data[chrom].columns[0] )
-        stopping_index = ( chrom, self.experimental_data.data[chrom].columns[-1] )
+    @staticmethod
+    def from_multibam(segmentation_multibam, hdf5_path, num_processes=1, compression=None):
+        """Create a new experiment from a segmentation multibam file"""
         
-        return self.get_index_processed_matrix(starting_index, stopping_index, starting_index, stopping_index, method)
+        # Create the hdf5 store
+        store = GamHdf5Store.create_store(hdf5_path, compression)
         
-    def get_index_processed_matrix(self, index1_start, index1_stop, index2_start, index2_stop, method=None):
+        # Create the experimental data in the datastore
+        experimental_data = GamExperimentalData.from_multibam(segmentation_multibam, store)
         
-        loc1_start = self.experimental_data.data.columns.get_loc(index1_start)
-        loc1_stop = self.experimental_data.data.columns.get_loc(index1_stop)
-        loc2_start = self.experimental_data.data.columns.get_loc(index2_start)
-        loc2_stop = self.experimental_data.data.columns.get_loc(index2_stop)
-    
-        return self.get_loc_processed_matrix(loc1_start, loc1_stop, loc2_start, loc2_stop, method)
+        # Create a new frequency matrix
+        freq_matrix = GamFrequencyMatrix.from_no_windows(store, experimental_data.no_windows)
+        
+        # Return the object
+        return GamExperiment(store, experimental_data, freq_matrix, num_processes)
+
+    @staticmethod
+    def load(hdf5_path, num_processes=1):
+
+        # Load the hdf5 store
+        store = GamHdf5Store.open_store(hdf5_path)
+
+        experimental_data = GamExperimentalData.from_store(store)
+
+        freq_matrix = GamFrequencyMatrix.from_store(store)
+        
+        # Return the object
+        return GamExperiment(store, experimental_data, freq_matrix, num_processes)
     
     def calculate_loc_frequency_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop):
         
-        index1_list = self.experimental_data.data.columns[loc1_start:loc1_stop]
-        index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
-
-        data_1 = np.array(self.experimental_data.data.iloc[:,loc1_start:loc1_stop])
+        data_1 = np.array(self.experimental_data.data[:,loc1_start:loc1_stop])
         len_1 = len(data_1[0])
-        data_2 = np.array(self.experimental_data.data.iloc[:,loc2_start:loc2_stop])
+        data_2 = np.array(self.experimental_data.data[:,loc2_start:loc2_stop])
         len_2 = len(data_2[0])
         full_data = np.concatenate((data_1, data_2), axis=1)
         
@@ -197,9 +274,6 @@ class GamExperiment(object):
         if method is None:
             method = self.odds_ratio
         
-        index1_list = self.experimental_data.data.columns[loc1_start:loc1_stop]
-        index2_list = self.experimental_data.data.columns[loc2_start:loc2_stop]
-        
         freqs = self.get_loc_frequency_matrix(loc1_start, loc1_stop, loc2_start, loc2_stop)
         
         stored_shape = freqs.shape[:2]
@@ -214,52 +288,6 @@ class GamExperiment(object):
     def close(self):
 
         self.processor.close()
-        self.store.close()
-        
-    @staticmethod
-    def from_multibam(segmentation_multibam, hdf5_path, num_processes=1, compression=None):
-        """Create a new experiment from a segmentation multibam file"""
-        
-        # Create the hdf5 store
-        store = GamExperiment.create_store(hdf5_path)
-        
-        # Create the experimental data in the datastore
-        experimental_data = GamExperimentalData.from_multibam(segmentation_multibam, store, compression)
-        
-        # Create a new frequency matrix
-        freq_matrix = GamFrequencyMatrix.from_no_windows(store, experimental_data.no_windows, compression)
-        
-        # close the store
-        store.close()
-        
-        # Return the object
-        return GamExperiment(hdf5_path, num_processes)
-    
-    @staticmethod
-    def create_store(hdf5_path):
-        """Create a new hdf5 store without overwriting an old one"""
-        
-        if os.path.exists(hdf5_path):
-            # Don't overwrite an existing hdf5 file
-            raise HDF5FileExistsError('The file {} already exists and would be overwritten by this operation. Please provide the path for a new HDF5 file'.format(hdf5_path))
-        
-        # Create the store
-        store = h5py.File(hdf5_path,'w')
-        
-        return store
-    
-    def open_store(self, hdf5_path):
-        """Open an hdf5 store and return the store object"""
-        
-        if not os.path.exists(hdf5_path):
-            raise IOError("[Errno 2] No such file or directory: '{}'".format(hdf5_path))
-            
-        store = h5py.File(hdf5_path,'r+')
-        
-        return store
-    
-    def close(self):
-        
         self.store.close()
         
 def count_frequency(samples):
