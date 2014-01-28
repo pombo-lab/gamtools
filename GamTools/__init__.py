@@ -3,6 +3,7 @@ import os
 import itertools
 import h5py
 from multiprocessing import Manager, Queue, Process
+from bisect import bisect_left
 
 
 class HDF5FileExistsError(Exception):
@@ -149,12 +150,18 @@ class GamHdf5Store(object):
         
         columns_hd.write_direct(columns)
         
+    def convert_window(self, window):
+
+        chrom, start, stop = window
+        
+        return chrom, int(start), int(stop)
+
     def data_from_store(self):
         """Retrieve data from an hdf5 store and use it to recreate the DataFrame"""
         
         data = np.array(self.store["experimental_data"]["segmentation"][:])
-        columns = map(lambda i: tuple(i), np.array(self.store["experimental_data"]["columns"][:]))
-        windows = np.array(self.store["experimental_data"]["windows"][:])
+        columns = np.array(self.store["experimental_data"]["columns"][:])
+        windows = map(self.convert_window, np.array(self.store["experimental_data"]["windows"][:]))
 
         return data, columns, windows
         
@@ -281,6 +288,63 @@ class GamExperiment(object):
         processed = map(method, freqs.reshape((stored_shape[0] * stored_shape[1],2,2)))
         
         return np.array(processed).reshape(stored_shape)
+
+    def get_chrom_start_stop_bins(self, chrom):
+
+        chrom_bins = map(lambda t: t[0], self.experimental_data.windows)
+
+        start_bin = chrom_bins.index(chrom)
+        stop_from_end = chrom_bins[::-1].index(chrom)
+        stop_bin = len(chrom_bins) - 1 - stop_from_end
+
+        return start_bin, stop_bin
+
+    def get_bins_from_positions(self, chrom, start_pos, stop_pos):
+
+        chrom_start, chrom_stop = self.get_chrom_start_stop_bins(chrom)
+        chrom_windows = self.experimental_data.windows[chrom_start:chrom_stop+1]
+        chrom_positions = map(lambda t: t[2], chrom_windows)
+        start_bin = bisect_left(chrom_positions, start_pos) + chrom_start
+        stop_bin = bisect_left(chrom_positions, stop_pos) + chrom_start
+
+        return start_bin, stop_bin
+
+    def parse_location_string(self, string):
+
+        chrom_fields = string.split(':')
+
+        chrom = chrom_fields[0]
+
+        if len(chrom_fields) == 1:
+            start, stop = self.get_chrom_start_stop_bins(chrom)
+
+        else:
+
+            pos_fields = chrom_fields[1].split('-')
+            start_pos, stop_pos = map(int, pos_fields)
+            start, stop = self.get_bins_from_positions(chrom, start_pos, stop_pos)
+
+        return start, stop
+
+    def parse_locations(self, location1, location2=None):
+
+        loc1_start, loc1_stop = self.parse_location_string(location1)
+
+        if location2 is None:
+            loc2_start, loc2_stop = loc1_start, loc1_stop
+
+        else:
+            loc2_start, loc2_stop = self.parse_location_string(location2)
+
+        return loc1_start, loc1_stop, loc2_start, loc2_stop
+
+    def frequencies(self, location1, location2=None):
+
+        return self.get_loc_frequency_matrix(*self.parse_locations(location1, location2))
+
+    def distances(self, location1, location2=None, method=None):
+
+        return self.get_loc_processed_matrix(*self.parse_locations(location1, location2), method=method)
     
     def odds_ratio(self, N):
         return np.log(N[0,0]) + np.log(N[1,1]) - np.log(np.log(N[0,1])) - np.log(N[1,0])
