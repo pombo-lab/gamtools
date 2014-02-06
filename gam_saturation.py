@@ -51,7 +51,7 @@ def task_to_get_bam_coverage(input_file,window,resample_percentages,tasks_to_run
             'actions' : ['bash -i -c "multiBamCov -bams %(dependencies)s -bed <(bedtools makewindows -w ' + str(window) + ' -g ' + args.genome_file + ') > %(targets)s"'],
             'targets' : [substitue_ext(input_file,".coverage_{0}bp".format(window))],
             'file_dep' : bamfiles,
-            'task_dep' : [get_name( 'indexing_bam', bamfiles[0])],
+            'task_dep' : [ get_name( 'indexing_bam', b) for b in bamfiles ],
            }
 
 def task_to_get_saturation(input_file,window,tasks_to_run):
@@ -61,7 +61,7 @@ def task_to_get_saturation(input_file,window,tasks_to_run):
              'fittings_folder' : os.path.splitext(input_file)[0] + '_%ibp_fittings' % window,
         }
 
-    sub_vars['curve_path'] = os.path.join(sub_vars['fittings_folder'], os.path.splitext(input_file)[0] + '_saturation_' + str(window) +'.png')
+    sub_vars['curve_path'] = os.path.join(sub_vars['fittings_folder'], os.path.splitext(os.path.basename(input_file))[0] + '_saturation_' + str(window) +'.png')
 
     return {
             'name' : get_name('getting_saturation_at_{0}bp'.format(window), input_file),
