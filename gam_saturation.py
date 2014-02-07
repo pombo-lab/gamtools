@@ -54,34 +54,16 @@ def task_to_get_bam_coverage(input_file,window,resample_percentages,tasks_to_run
             'task_dep' : [ get_name( 'indexing_bam', b) for b in bamfiles ],
            }
 
-def task_to_get_saturation(input_file,window,tasks_to_run):
-
-    sub_vars = { 'python_exec' : sys.executable,
-             'saturation_script' : os.path.join(os.path.dirname(__file__),'threshold_by_reads.py'),
-             'fittings_folder' : os.path.splitext(input_file)[0] + '_%ibp_fittings' % window,
-        }
-
-    sub_vars['curve_path'] = os.path.join(sub_vars['fittings_folder'], os.path.splitext(os.path.basename(input_file))[0] + '_saturation_' + str(window) +'.png')
-
-    return {
-            'name' : get_name('getting_saturation_at_{0}bp'.format(window), input_file),
-            'actions' : [ '%(python_exec)s %(saturation_script)s -f %(fittings_folder)s -s %(curve_path)s %(dependencies)s > %(targets)s' % add_subs(sub_vars) ],
-            'targets' : [substitue_ext(input_file,".saturation_{0}bp".format(window))],
-            'file_dep' : get_target(tasks_to_run, 'getting_coverage_at_{0}bp'.format(window), input_file),
-           }
-
 def task_to_get_segmentation(input_file, window, tasks_to_run):
 
-    sub_vars = { 'python_exec'   : sys.executable,
-             'segmentation_script' : os.path.join(os.path.dirname(__file__),'get_threshold.py'),
-             'coverage_file'   : get_target(tasks_to_run, 'getting_coverage_at_{0}bp'.format(window), input_file)[0],
+    sub_vars = { 'segmentation_script' : os.path.join(os.path.dirname(__file__),'multiBAMcoverage2segmentation'),
         }
 
     return {
             'name' : get_name('segmenting_at_{0}bp'.format(window), input_file),
-            'actions' : [ '%(python_exec)s %(segmentation_script)s -t %(dependencies)s %(coverage_file)s > %(targets)s' % add_subs(sub_vars) ],
+            'actions' : [ '%(segmentation_script)s %(dependencies)s %(targets)s' % add_subs(sub_vars) ],
             'targets' : [ substitue_ext(input_file, ".segmentation_{0}bp".format(window)) ],
-            'file_dep' : get_target(tasks_to_run, 'getting_saturation_at_{0}bp'.format(window), input_file),
+            'file_dep' : get_target(tasks_to_run, 'getting_coverage_at_{0}bp'.format(window), input_file),
            }
 
 def tasks_for_file(input_file):
@@ -115,9 +97,6 @@ def tasks_for_file(input_file):
 
         coverage_base_task = task_to_get_bam_coverage(input_file,window,args.resample_percentages,tasks_to_run)
         tasks_to_run[coverage_base_task['name']] = coverage_base_task
-
-        saturation_base_task = task_to_get_saturation(input_file,window,tasks_to_run)
-        tasks_to_run[saturation_base_task['name']] = saturation_base_task
 
         segmentation_base_task = task_to_get_segmentation(input_file, window, tasks_to_run)
         tasks_to_run[segmentation_base_task['name']] = segmentation_base_task
