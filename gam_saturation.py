@@ -15,6 +15,7 @@ parser.add_argument('-b','--input_bamfiles', metavar='INPUT_BAMFILE', required=T
 parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', required=True, help='File containing chromosome names and lengths')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
 parser.add_argument('-r','--resample_percentages', metavar='RESAMPLE_PERCENTAGE', default=[], type=float, nargs='+', help='List of percentages to use for resampling the bam file')
+parser.add_argument('-p','--num_process', metavar='NUM_PROCESSES', type=int, default=1, help='Number of tasks to execute in parallel')
 
 args = parser.parse_args()
 
@@ -61,7 +62,7 @@ def task_to_get_segmentation(input_file, window, tasks_to_run):
 
     return {
             'name' : get_name('segmenting_at_{0}bp'.format(window), input_file),
-            'actions' : [ '%(segmentation_script)s %(dependencies)s %(targets)s' % add_subs(sub_vars) ],
+            'actions' : [ '%(segmentation_script)s --two-step-estimation %(dependencies)s %(targets)s' % add_subs(sub_vars) ],
             'targets' : [ substitue_ext(input_file, ".segmentation_{0}bp".format(window)) ],
             'file_dep' : get_target(tasks_to_run, 'getting_coverage_at_{0}bp'.format(window), input_file),
            }
@@ -109,11 +110,15 @@ for input_bam in args.input_bamfiles:
     tasks_to_run.update( tasks_for_file(input_bam) )
 
 class mytaskloader(TaskLoader):
-    @staticmethod
-    def load_tasks(cmd, opt_values, pos_args):
+    def __init__(self, args):
+        self.num_process = args.num_process
+        super(TaskLoader, self).__init__()
+
+    def load_tasks(self, cmd, opt_values, pos_args):
         task_list = [ dict_to_task(my_task) for my_task in tasks_to_run.values() ]
-        config = {'verbosity': 2}
+        config = {'verbosity': 2,
+                  'num_process' : self.num_process,}
         return task_list, config
 
 if __name__ == "__main__":
-    sys.exit(DoitMain(mytaskloader()).run([]))
+    sys.exit(DoitMain(mytaskloader(args)).run([]))
