@@ -21,7 +21,9 @@ def get_cov_seg_data(subs_path):
     cdata = pd.read_csv(cpath, delim_whitespace=True, index_col=[0,1,2], header=None)
     nwindow = len(cdata.index)
     sdata = pd.read_csv(spath, delim_whitespace=True, index_col=[0,1], header=None, skiprows=1)
-    csum, ssum = np.array([0.0] + list(cdata.sum())), np.array([0.0] + list(sdata.sum()))
+    csum, ssum = list(cdata.sum()), list(sdata.sum())
+    csum, ssum = zip(*[ i for i in zip(csum,ssum) if i[1] != 0.0])
+    csum, ssum = np.array([0.0] + list(csum)), np.array([0.0] + list(ssum))
     ssum = ssum / float(nwindow)
     
     #sort coverage and saturation data by coverage depth

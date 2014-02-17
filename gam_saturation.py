@@ -53,6 +53,7 @@ def task_to_get_bam_coverage(input_file,window,resample_percentages,tasks_to_run
             'targets' : [substitue_ext(input_file,".coverage_{0}bp".format(window))],
             'file_dep' : bamfiles,
             'task_dep' : [ get_name( 'indexing_bam', b) for b in bamfiles ],
+            'uptodate' : [ True ],
            }
 
 def task_to_get_segmentation(input_file, window, tasks_to_run):
