@@ -1,33 +1,23 @@
 import argparse
-import os
+import pandas as pd
+from itertools import groupby
 
-parser = argparse.ArgumentParser(description='Takes in a sorted bed file and returns the proportion of gaps between segments equal to the smallest gap')
-parser.add_argument('segmentation_beds', metavar='SEGMENTATION_BED', nargs='*', help='Path to one or more segmentation bed files (must be sorted)')
+parser = argparse.ArgumentParser(description='Takes in a segmentation multibam file and returns proportion of gaps equal to min(gap) for each column')
+parser.add_argument('segmentation', metavar='SEGMENTATION_MULTIBAM', help='Path to a segmentation multibam')
 
-def count_gaps(bed_handle):
+def proportion_smallest_gap(block_list):
     gaps = []
-    last_end = 0
-    last_chrom = False
-    for line in bed_handle:
-        chrm, start, end = line.strip().split()
-        start, end = int(start), int(end)
-        if last_chrom == chrm:
-            gaps.append(start - last_end)
-        last_end = end
-        last_chrom = chrm
-    return gaps
-
-def proportion_smallest(gaps):
-    no_smallest = float(len([gap for gap in gaps if gap == min(gaps)]))
-    return no_smallest / len(gaps)
-
-def sample_name(sample_path):
-    sample_basename = os.path.basename(sample_path)
-    return sample_basename.split('.')[0]
+    for k, g in groupby(block_list):
+        if k:
+            gaps.extend([0] * ( len(list(g)) - 1))
+        else:
+            gaps.append(len(list(g)))
+            
+    return float(len([gap for gap in gaps if gap == min(gaps)])) / len(gaps)
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    for bed_path in args.segmentation_beds:
-        with open(bed_path, 'r') as bed_handle:
-            print sample_name(bed_path), proportion_smallest(count_gaps(bed_handle))
+    data = pd.read_csv(args.segmentation, delim_whitespace=True)
+    for c in data.columns[2:]:
+        print c, proportion_smallest_gap(data[c])
