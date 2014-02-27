@@ -51,7 +51,10 @@ def get_curve_index(csum,ssum):
 def get_saturation_point(csum, ssum):
     sat_point = 0.85 * max(ssum)
     sat_ix = bisect_left(ssum, sat_point)
-    return csum[sat_ix], ssum[sat_ix]
+    try:
+        return csum[sat_ix], ssum[sat_ix]
+    except:
+        return csum[-1], ssum[-1]
     
 def plot_saturation(csum, ssum, subs_path):
     plt.plot(csum, ssum, 'bo')
