@@ -43,10 +43,33 @@ def get_curve_split(csum, ssum, s):
         return 0.0
 
 def get_curve_index(csum,ssum):
-    curve_scores = []
+    max_score = 0.0
+    max_index = None
     for s in range(2, len(csum) - 1):
-        curve_scores.append(get_curve_split(csum, ssum, s))
-    return max(curve_scores)
+        score = get_curve_split(csum, ssum, s)
+        if score > max_score:
+            max_score = score
+            max_index = s
+    return max_score, max_index
+    
+def plot_fit(x,y,s=0,color='red'):
+    
+    try:
+        fit1 = np.polyfit(x[:s],y[:s],1)
+    except TypeError:
+        fit_fn1 = lambda x:x
+    else:    
+        fit_fn1 = np.poly1d(fit1)
+        
+    try:
+        fit2 = np.polyfit(x[s:],y[s:],1)
+    except TypeError:
+        fit_fn2 = lambda x:x
+    else:
+        fit_fn2 = np.poly1d(fit2)
+        
+    plt.plot(x[:s], fit_fn1(x[:s]), color)
+    plt.plot(x[s:], fit_fn2(x[s:]), color)
 
 def get_saturation_point(csum, ssum):
     sat_point = 0.85 * max(ssum)
@@ -59,16 +82,19 @@ def get_saturation_point(csum, ssum):
 def plot_saturation(csum, ssum, subs_path):
     plt.plot(csum, ssum, 'bo')
     plt.title(os.path.basename(subs_path).split('.')[0])
-
-    curve_index = get_curve_index(csum, ssum)
+    
+    plot_fit(csum, ssum)
+    
+    curve_index, s = get_curve_index(csum, ssum)
+    
+    plot_fit(csum, ssum, s, 'green')
     
     if curve_index > 0.4:
         sat_x, sat_y = get_saturation_point(csum, ssum)
         plt.axvline(sat_x, color='black')
         return sat_x, sat_y, curve_index
     else:
-        return 'NA', 'NA', curve_index
-        
+        return 'NA', 'NA', curve_index        
 def get_saturation(subs_path, img_path):
     
     csum, ssum = get_cov_seg_data(subs_path)
