@@ -71,9 +71,8 @@ def plot_fit(x,y,s=0,color='red'):
     plt.plot(x[:s], fit_fn1(x[:s]), color)
     plt.plot(x[s:], fit_fn2(x[s:]), color)
 
-def get_saturation_point(csum, ssum):
-    sat_point = 0.85 * max(ssum)
-    sat_ix = bisect_left(ssum, sat_point)
+def get_saturation_point(csum, ssum, s):
+    sat_ix = s+2
     try:
         return csum[sat_ix], ssum[sat_ix]
     except:
@@ -90,11 +89,12 @@ def plot_saturation(csum, ssum, subs_path):
     plot_fit(csum, ssum, s, 'green')
     
     if curve_index > 0.4:
-        sat_x, sat_y = get_saturation_point(csum, ssum)
+        sat_x, sat_y = get_saturation_point(csum, ssum, s)
         plt.axvline(sat_x, color='black')
         return sat_x, sat_y, curve_index
     else:
         return 'NA', 'NA', curve_index        
+
 def get_saturation(subs_path, img_path):
     
     csum, ssum = get_cov_seg_data(subs_path)
