@@ -6,18 +6,18 @@ parser = argparse.ArgumentParser(description='Takes in a segmentation multibam f
 parser.add_argument('segmentation', metavar='SEGMENTATION_MULTIBAM', help='Path to a segmentation multibam')
 
 def proportion_smallest_gap(block_list):
-    gaps = []
+    no_with_neighbours = 0
     for k, g in groupby(block_list):
-        if k:
-            gaps.extend([0] * ( len(list(g)) - 1))
-        else:
-            gaps.append(len(list(g)))
+        g = list(g)
+        if k and len(g) > 1:
+            no_with_neighbours += len(g)
             
-    return float(len([gap for gap in gaps if gap == min(gaps)])) / len(gaps)
+    return float(no_with_neighbours) / len(block_list)
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
     data = pd.read_csv(args.segmentation, delim_whitespace=True)
+    print data
     for c in data.columns[2:]:
         print c, proportion_smallest_gap(data[c])
