@@ -81,10 +81,10 @@ class MultibamProcessor(object):
         """Extract information from one line of the multibam"""
 
         fields = line.strip().split()
-        chrom = fields[0]
-        start, end = map(int, fields[1].split('-'))
+        chrom, start, end = fields[:3]
+        start, end = int(start), int(end)
         window = (chrom, start, end)
-        segmentation = map(int,fields[2:])
+        segmentation = map(int,fields[3:])
 
         return window, segmentation
 
