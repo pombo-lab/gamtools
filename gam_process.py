@@ -90,7 +90,7 @@ def get_coverage_tasks(tasks_to_run, window, output_dir):
 
     tasks_to_run.append({
             'name' : 'Getting coverage over {0}bp windows'.format(window),
-            'actions' : ['echo "window %(dependencies)s" > %(targets)s',
+            'actions' : ['echo "chrom start stop %(dependencies)s" > %(targets)s',
                          'bash -i -c "multiBamCov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window)],
             'targets' : [os.path.join(output_dir, 'coverage_at_{0}bp.multibam'.format(window))],
             'file_dep' : bamfiles,
@@ -98,18 +98,10 @@ def get_coverage_tasks(tasks_to_run, window, output_dir):
            })
 
     tasks_to_run.append({
-            'name'     :  'Getting threshold at {0}bp'.format(window),
-            'actions'  : ['%(python_exec)s %(threshold_script)s --header-lines 1 %(dependencies)s > %(targets)s'],
-            'targets'  : [os.path.join(output_dir, 'threshold_at_{0}bp.txt'.format(window))],
-            'file_dep' : [os.path.join(output_dir, 'coverage_at_{0}bp.multibam'.format(window))],
-            })
-
-    tasks_to_run.append({
             'name'     : 'Segmenting data at {0}bp'.format(window),
-            'actions'  : ['%(python_exec)s %(segmentation_script)s --header-lines 1 -t %(dependencies)s {coverage_file} > %(targets)s'.format(
-                                                         coverage_file=os.path.join(output_dir, 'coverage_at_{0}bp.multibam'.format(window)))],
+            'actions'  : ['%(python_exec)s %(segmentation_script)s %(dependencies)s > %(targets)s'],
             'targets'  : [os.path.join(output_dir, 'segmentation_at_{0}bp.multibam'.format(window))],
-            'file_dep' : [os.path.join(output_dir, 'threshold_at_{0}bp.txt'.format(window))],
+            'file_dep' : [os.path.join(output_dir, 'coverage_at_{0}bp.txt'.format(window))],
             })
 
     """
