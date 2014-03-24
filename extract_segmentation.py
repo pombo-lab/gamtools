@@ -8,8 +8,9 @@ parser.add_argument('-n','--sample-name', metavar='SAMPLE_NAME', required=True, 
 
 args = parser.parse_args()
 
-data = pd.read_csv(args.segmentation_file, sep='\s*')
+data = pd.read_csv(args.segmentation_file,
+                   delim_whitespace=True, index_col=[0,1,2])
 
-subset = data.loc[data[args.sample_name] > 0,['chrom','window',args.sample_name]]
+subset = data[data[args.sample_name] > 0][args.sample_name]
 
-subset.to_csv(sys.stdout, header=False, index=False, sep='\t')
+subset.to_csv(sys.stdout, header=False, index=True, sep='\t')

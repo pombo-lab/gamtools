@@ -174,7 +174,7 @@ def plot_legend(hist_patches,
     
 def prettify_plot(sample_name, fig):
     
-    fig.suptitle('Combined fit for {}'.format(sample_name), fontsize=18)
+    fig.suptitle('Combined fit for {0}'.format(sample_name), fontsize=18)
     
     plt.ylabel('No of windows')
     plt.xlabel('No of reads')
@@ -227,11 +227,11 @@ if __name__ == '__main__':
                        delim_whitespace=True, index_col=[0,1,2])
 
     for i in range(len(data.columns)):
-        
+
         sample_name = os.path.basename(data.columns[i]).split('.')[0]
 
         if args.fitting_folder:
-            plot_path = os.path.join(args.fitting_folder, '{}_fit.png'.format(sample_name))
+            plot_path = os.path.join(args.fitting_folder, '{0}_fit.png'.format(sample_name))
         else:
             plot_path = None
 
@@ -241,6 +241,6 @@ if __name__ == '__main__':
         
         data.iloc[:,i] = above_threshold.astype(int)
 
-        print('{} done (number {}) threshold {}'.format(sample_name,i+1,read_threshold), file=sys.stderr)
+        print('{0} done (number {1}) threshold {2}'.format(sample_name,i+1,read_threshold), file=sys.stderr)
 
     data.to_csv(sys.stdout, index=True, sep='\t')
