@@ -49,6 +49,9 @@ def corr(n):
 class HDF5FileExistsError(Exception):
     pass
 
+class Hdf5StoreRequiresCacheException(Exception):
+    pass
+
 class GamFrequencyMatrix(object):
     """A class for abstracting access to the HDF5 store underlying a frequency matrix"""
     
@@ -214,6 +217,32 @@ class GamHdf5Store(object):
         
         return freq_matrix
 
+class GamMockHdf5Store(object):
+
+    def data_to_store(self, data, columns, windows):
+        """Dont Save experimental data to an hdf5 store"""
+        
+        pass
+
+    def create_freq_matrix(self, no_windows):
+
+        class DummyDataStore():
+
+            def __getitem__(*args):
+
+                return np.array([[0]])
+
+            def __setitem__(*args):
+
+                pass
+
+        return DummyDataStore()
+
+    def close(self):
+
+        pass
+
+
 class GamExperimentalData(object):
     """A class for abstracting access to the original experimental segmentation"""
     
@@ -279,6 +308,22 @@ class GamExperiment(object):
         
         # Return the object
         return GamExperiment(store, experimental_data, freq_matrix, num_processes)
+        
+    @staticmethod
+    def from_multibam_no_cache(segmentation_multibam, num_processes=1):
+        """Create a new experiment from a segmentation multibam file"""
+        
+        # Create the hdf5 store
+        store = GamMockHdf5Store()
+        
+        # Create the experimental data in the datastore
+        experimental_data = GamExperimentalData.from_multibam(segmentation_multibam, store)
+        
+        # Create a new frequency matrix
+        freq_matrix = GamFrequencyMatrix.from_no_windows(store, experimental_data.no_windows)
+        
+        # Return the object
+        return GamExperiment(store, experimental_data, freq_matrix, num_processes)
 
     @staticmethod
     def load(hdf5_path, num_processes=1):
@@ -319,7 +364,7 @@ class GamExperiment(object):
     def get_loc_processed_matrix(self, loc1_start, loc1_stop, loc2_start, loc2_stop, method=None):
         
         if method is None:
-            method = self.odds_ratio
+            method = corr
         
         freqs = self.get_loc_frequency_matrix(loc1_start, loc1_stop, loc2_start, loc2_stop)
         
@@ -385,14 +430,19 @@ class GamExperiment(object):
     def distances(self, location1, location2=None, method=None):
 
         return self.get_loc_processed_matrix(*self.parse_locations(location1, location2), method=method)
-    
-    def odds_ratio(self, N):
-        return np.log(N[0,0]) + np.log(N[1,1]) - np.log(np.log(N[0,1])) - np.log(N[1,0])
 
     def close(self):
 
         self.processor.close()
         self.store.close()
+
+    def __enter__(self):
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+
+        self.close()
         
 def count_frequency(samples):
     """Take a table of two columnds and return [[ no_both_present, no_1_only],[ no_2_only, no_neither_present]]"""
