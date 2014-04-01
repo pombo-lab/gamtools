@@ -57,7 +57,16 @@ def normal(x, loc, scale):
 
 def n_binom_plus_log_normal(params, x):
     
-    bin_n, bin_p, nm_loc, nm_scale, size = params
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    # We don't want any solutions where the mode of the lognormal is
+    # less than the mode of the negative binomial. Therefore, the 
+    # function is parameterized such that the position of the lognormal
+    # is given as a distance from the mean of the negative binomial,
+    # called nm_delta. nm_delta is always treated as positive
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
     
     bin_y = neg_binomial(x, bin_n, bin_p)
     
@@ -89,9 +98,13 @@ def filter_data(x, percentile, no_zeros=True):
         
     return x[points_to_keep]
 
-def threshold_n_binom(params, p_value, thresh_range=range(100)):
+def threshold_n_binom(params, p_value, thresh_range=range(500)):
     
-    bin_n, bin_p, nm_loc, nm_scale, size = params
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
 
     
     cumulative_dist = nbinom.cdf(thresh_range, bin_n, bin_p)
@@ -105,9 +118,10 @@ def fit_histogram(breaks, counts):
     with open(os.devnull, "w") as sys.stdout:
         params = fmin(cf.squared_difference, 
                                  (6.89799811e-01,   5.08503431e-01,
-                                      1.29945316,  0.23982432,
+                                      2.69945316,  0.23982432,
                                       0.15),
-                                 (n_binom_plus_log_normal, breaks, counts / float(sum(counts))) )
+                                 (n_binom_plus_log_normal, breaks, counts / float(sum(counts))),
+                                 xtol=0.00001, ftol=0.00001 )
     sys.stdout = old_stdout
     return params
 
@@ -130,7 +144,11 @@ def plot_fit(breaks, counts, params):
 
 def plot_lognormal(breaks, counts, params):
 
-    bin_n, bin_p, nm_loc, nm_scale, size = params
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
 
     gauss_y = normal(breaks, nm_loc, nm_scale)
     gauss_y = gauss_y * sum(counts) * abs(size)
@@ -142,7 +160,11 @@ def plot_lognormal(breaks, counts, params):
     
 def plot_binom(breaks, counts, params):
     
-    bin_n, bin_p, nm_loc, nm_scale, size = params
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
     
     binom_y = neg_binomial(breaks, bin_n, bin_p)
     binom_y = binom_y * sum(counts) * (1. - abs(size))
@@ -180,8 +202,8 @@ def prettify_plot(sample_name, fig):
     plt.xlabel('No of reads')
     locs, labels = plt.xticks()
     labels = map(int,10 ** locs)
-    plt.xticks( locs, labels )
-    
+    plt.xticks( locs, labels )    
+
 def get_threshold(data, i, sample_name, plot_path):
     
     fig = plt.figure(figsize=( 16, 9 ))
