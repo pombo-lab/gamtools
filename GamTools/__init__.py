@@ -5,6 +5,46 @@ import h5py
 from multiprocessing import Manager, Queue, Process
 from bisect import bisect_left
 
+def D(n):
+    total = n.sum()
+    f = n / float(total)
+    p1 = f[0][1] + f[1][1]
+    p2 = f[0][0] + f[1][0]
+    q1 = f[1][0] + f[1][1]
+    q2 = f[0][0] + f[0][1]
+    expected = p1 * q1
+    return f[1][1] - expected
+
+def Dmax(n):
+    total = n.sum()
+    f = n / float(total)
+    p1 = f[0][1] + f[1][1]
+    p2 = f[0][0] + f[1][0]
+    q1 = f[1][0] + f[1][1]
+    q2 = f[0][0] + f[0][1]
+    d = D(n)
+    if d > 0:
+        return min([p1 * q2, p2 * q1])
+    elif d < 0:
+        return min([p1 * q1, p2 * q2])
+    
+def Dprime(n):
+    d = D(n)
+    dmax = Dmax(n)
+    if dmax is None:
+        return 0.0
+    else:
+        return d / dmax
+    
+def corr(n):
+    d = D(n)
+    total = n.sum()
+    f = n / float(total)
+    p1 = f[0][1] + f[1][1]
+    p2 = f[0][0] + f[1][0]
+    q1 = f[1][0] + f[1][1]
+    q2 = f[0][0] + f[0][1]
+    return d / np.sqrt(p1 * p2 * q1 * q2)
 
 class HDF5FileExistsError(Exception):
     pass
