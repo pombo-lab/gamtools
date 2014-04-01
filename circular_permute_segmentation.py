@@ -1,50 +1,26 @@
 import numpy as np
 import argparse
+import pandas as pd
+import sys
 
 parser = argparse.ArgumentParser(description='Circularly permute every column of a segmentation file')
 parser.add_argument('segmentation_file', help='A segmentation file to use as input')
 
-def read_data(fpointer):
-    windows = []
-    data = []
-    for lnum, line in enumerate(fpointer):
-        if lnum == 0:
-            header = line.strip()
-        else:
-            fields = line.strip().split()
-            windows.append(fields[:2])
-            data.append(map(int,fields[2:]))
-
-    data = np.array(data).transpose()
-
-    return header, data, windows
-
-def permute_column(column):
-    no_windows = len(data[0])
-    offset = np.random.randint(no_windows)
-    permutation = list(data[0][offset:])
-    permutation.extend(data[0][:offset])
+def permute_data(input_data):
+    no_windows, no_samples = input_data.shape
+    permutation = input_data.copy()
+    for i in range(no_samples):
+        offset = np.random.randint(no_windows)
+        permutation.iloc[:,i] = list(pd.concat([input_data.iloc[offset:,i], input_data.iloc[:offset,i]]))
     return permutation
-
-def permute_data(data):
-    new_array = []
-    for i in range(len(data)):
-        new_array.append(permute_column(data[i]))
-    return np.array(new_array)
-
-def output_permutation(header, permutation, windows):
-    print header
-    for i,row in enumerate(permutation.transpose()):
-        full_row = windows[i] + map(str, list(row))
-        print '\t'.join(full_row)
 
 if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    with open(args.segmentation_file) as fpointer:
-        header, data, windows = read_data(fpointer)
+    segmentation = pd.read_csv(args.segmentation_file,
+                          delim_whitespace=True, index_col=[0,1,2])
 
-    permutation = permute_data(data)
+    permutation = permute_data(segmentation)
 
-    output_permutation(header, permutation, windows)
+    permutation.to_csv(sys.stdout, sep='\t', header=True, index=True)
