@@ -406,7 +406,12 @@ class GamExperiment(object):
         else:
 
             pos_fields = chrom_fields[1].split('-')
-            start_pos, stop_pos = map(int, pos_fields)
+            
+            def convert_position(pos):
+                clean_pos = pos.replace(',','')
+                return int(clean_pos)
+
+            start_pos, stop_pos = map(convert_position, pos_fields)
             start, stop = self.get_bins_from_positions(chrom, start_pos, stop_pos)
 
         # Always return at least one bin width
