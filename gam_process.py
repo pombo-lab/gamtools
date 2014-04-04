@@ -1,16 +1,15 @@
 #! /usr/bin/env python
 
-from doit.task import dict_to_task
+from doit.loader import generate_tasks
 from doit.cmd_base import TaskLoader
 from doit.doit_cmd import DoitMain
 import argparse
 import os
 import sys
-import itertools
 
 
 parser = argparse.ArgumentParser(description='Map GAM-seq reads and create BigWigs and fastQC files')
-parser.add_argument('input_fastqs', metavar='INPUT_FASTQ', nargs='*', help='One or more input fastq files.')
+parser.add_argument('input_fastqs', metavar='INPUT_FASTQ', nargs='+', help='One or more input fastq files.')
 parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', help='File containing chromosome names and lengths')
 parser.add_argument('-p','--num_process', metavar='NUM_PROCESSES', type=int, default=1, help='Number of tasks to execute in parallel')
 parser.add_argument('-o','--output_dir', metavar='OUPUT_DIRECTORY', help='Write segmentation, matrix etc. to this directory')
@@ -84,9 +83,9 @@ def make_bigwig(input_fastqs):
                 "file_dep" : [with_extension(input_fastq, ".bedgraph")],
               }
 
-def get_coverage(args, window_sizes):
+def get_coverage(args):
     bamfiles = [ with_extension(input_fastq, ".rmdup.bam") for input_fastq in args.input_fastqs ]
-    for window_size in window_sizes:
+    for window_size in args.window_sizes:
         yield {
                 'basename' : 'Getting coverage',
                 'name' :  '{0}bp windows'.format(window_size),
@@ -94,11 +93,11 @@ def get_coverage(args, window_sizes):
                              'bash -i -c "multiBamCov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window_size)],
                 'targets' : [os.path.join(args.output_dir, 'coverage_at_{0}bp.multibam'.format(window_size))],
                 'file_dep' : bamfiles,
-                'task_dep' : 'Indexing bam',
+                'task_dep' : [ 'Indexing bam' ],
                }
 
-def get_segmentation(args, window_sizes):
-    for window_size in window_sizes:
+def get_segmentation(args):
+    for window_size in args.window_sizes:
         yield {
             'basename' : 'Segmenting data',
             'name'     : '{0}bp'.format(window_size),
@@ -171,42 +170,40 @@ class MyTaskLoader(TaskLoader):
         def get_script(script_name): return os.path.join(os.path.dirname(__file__), script_name)
 
         subs_dictionary = vars(args)
-        subs_dictionary.update({'dependencies'        : '%(dependencies)s',
-                                "targets"             : '%(targets)s',
-                                "python_exec"         : sys.executable,
+        subs_dictionary.update({"python_exec"         : sys.executable,
                                 "threshold_script"    : get_script('threshold_by_reads.py'),
                                 "segmentation_script" : get_script('get_threshold.py'),
                                 "segmentation_bed_script" : get_script('extract_segmentation.py'),
                                 "matrix_script"       : get_script('gam_matrix.py')})
 
         for task in self.tasks_to_run:
-            task['actions'] = [ action % subs_dictionary for action in task['actions'] ]
+            task.options = subs_dictionary
 
     def load_tasks(self, cmd, opt_values, pos_args):
-        task_list = [ dict_to_task(my_task) for my_task in self.tasks_to_run ]
         config = {'verbosity': 2,
                   'dep_file' : self.doit_db,
                   'num_process' : self.num_process,
                  }
-        return task_list, config
+        return self.tasks_to_run, config
 
 def main(args):
 
-    tasks_to_run = itertools.chain( map_fastq(args.input_fastqs),
-                                    sort_bam(args.input_fastqs),
-                                    remove_duplicates(args.input_fastqs),
-                                    index_bam(args.input_fastqs),
-                                    make_bedgraph(args.input_fastqs),
-                                    make_bigwig(args.input_fastqs),
-                                    get_coverage(args),
-                                    get_segmentation(args),
-                                  )
+    tasks_to_run   = generate_tasks('task_map', map_fastq(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_bam', sort_bam(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_rmdup', remove_duplicates(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_index', index_bam(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_bedgraph', make_bedgraph(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_bigwig', make_bigwig(args.input_fastqs))
+    tasks_to_run  += generate_tasks('task_coverage', get_coverage(args))
+    tasks_to_run  += generate_tasks('task_segmentation', get_segmentation(args))
     
     sys.exit(DoitMain(MyTaskLoader(tasks_to_run, args)).run([]))
 
 if __name__ == "__main__":
 
+    print 'parsing args'
     args = parser.parse_args()
+    print args
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
