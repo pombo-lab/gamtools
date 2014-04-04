@@ -409,6 +409,10 @@ class GamExperiment(object):
             start_pos, stop_pos = map(int, pos_fields)
             start, stop = self.get_bins_from_positions(chrom, start_pos, stop_pos)
 
+        # Always return at least one bin width
+        if start == stop:
+            stop = start + 1
+
         return start, stop
 
     def parse_locations(self, location1, location2=None):
