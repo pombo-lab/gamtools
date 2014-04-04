@@ -2,7 +2,7 @@ import numpy as np
 import os
 import itertools
 import h5py
-from multiprocessing import Manager, Queue, Process
+from multiprocessing import Pool
 from bisect import bisect_left
 
 def D(n):
@@ -433,7 +433,6 @@ class GamExperiment(object):
 
     def close(self):
 
-        self.processor.close()
         self.store.close()
 
     def __enter__(self):
@@ -455,71 +454,39 @@ def count_frequency(samples):
         
     return counts 
 
-def f(input_queue, result_dict):
-    key, data = input_queue.get()
-    while key is not None:
-        result_dict[key] = count_frequency(data)
-        key,data = input_queue.get()
-
-class WorkerPool(object):
-
-    def __init__(self, num_proc):
-        
-        self.num_processes = num_proc
-
-        self.queue = Queue(maxsize=self.num_processes)
-        
-        self.manager = Manager()
-        self.results = self.manager.dict()
-
-        self.processes = []
-        for n in range(self.num_processes):
-            self.processes.append(Process(target=f, args=(self.queue, self.results)))
-
-        self.start()
-        
-    def start(self):
-
-        map(lambda p: p.start(), self.processes)
-            
-    def stop(self):
-
-        while not self.queue.empty():
-            pass
-
-    def close(self):
-
-        for n in range(self.num_processes):
-            self.queue.put((None, None))
-
-        map(lambda p: p.join(), self.processes)
-
 class MatrixProcesser(object):
 
     def process(self, len_1, len_2, full_data):
 
         combinations = itertools.product(range(len_1), range(len_1, len_1 + len_2))
 
-        freqs = np.zeros((len_1, len_2, 2, 2))
-
-        for key in combinations:
-            loc1, loc2 = key
-            data = full_data[:,[loc1, loc2]]
-            result = count_frequency(data)
-            loc2 = loc2 - len_1
-            freqs[loc1][loc2] = result
+        self._data = full_data
+        result = map(self.get_frequency, combinations)
+            
+        freqs = np.array(result).reshape((len_1, len_2, 2, 2))
 
         return freqs
 
-    def close(self):
-        pass
+    def get_frequency(self, i):
+        
+        p,q = i
+        return self.count_frequency(self._data[:,[p,q]])
+        
+    def count_frequency(self, samples):
+    
+        counts = np.array([[0,0], [0,0]])
+        
+        for s in samples:
+    
+            counts[s[0]][s[1]] += 1
+            
+        return counts 
 
-class MultithreadedMatrixProcesser(object):
+class MultithreadedMatrixProcesser(MatrixProcesser):
 
     def __init__(self, num_processes):
 
         self.num_processes = num_processes
-        self.worker_pool = WorkerPool(num_processes)
 
     def process(self, len_1, len_2, full_data):
 
@@ -527,32 +494,39 @@ class MultithreadedMatrixProcesser(object):
 
         print 'Using {0} processes'.format(self.num_processes)
         
-        for key in combinations:
-            loc1, loc2 = key
-            data = full_data[:,[loc1, loc2]]
-            self.worker_pool.queue.put((key, data))
-
-        self.worker_pool.stop()
+        self._data = full_data
+        p = Pool(self.num_processes)
+        result = p.map(self.get_frequency, combinations)
+        p.close()
+        p.join()
             
         print 'Done processing'
-        while not len(self.worker_pool.results.keys()) == len_1 * len_2:
-            pass
 
-        freqs = np.zeros((len_1, len_2, 2, 2))
-
-        for key in self.worker_pool.results.keys():
-            loc1, loc2 = key
-            loc2 = loc2 - len_1
-            freqs[loc1][loc2] = self.worker_pool.results[key]
-
-        self.clean()
+        freqs = np.array(result).reshape((len_1, len_2, 2, 2))
 
         return freqs
 
-    def clean(self):
+# Magic code that I don't understand, copied from
+# http://bytes.com/topic/python/answers/552476-why-cant-you-pickle-instancemethods
 
-        self.worker_pool.results.clear()
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
 
-    def close(self):
+def _unpickle_method(func_name, obj, cls):
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
 
-        self.worker_pool.close()
+import copy_reg
+import types
+copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+
+# End magic code
