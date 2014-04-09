@@ -236,6 +236,10 @@ class GamHdf5Store(object):
 
         return freq_matrix
 
+    def close(self):
+
+        self.store.close()
+
 
 class GamMockHdf5Store(object):
 

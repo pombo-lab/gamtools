@@ -4,17 +4,6 @@ import os
 import sys
 import time
 
-parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
-parser.add_argument('segmentation_file', help='A segmentation file to use as input')
-parser.add_argument('-p','--num-processes', metavar='NUM_PROC', type=int, default=1, help='Number of processes to use to calculate matrix')
-parser.add_argument('-z','--compression', metavar='COMPRESSION', help='Level of compression to use in hdf5 files', default=None)
-parser.add_argument('-c','--chromosomes', metavar='CHROMOSOME', nargs='+', help='Specific chromosomes to calculate matrices for (default is all chromosomes not ending in _random)')
-parser.add_argument('-o','--overwrite', action='store_true', help='Specific chromosomes to calculate matrices for (default is all chromosomes not ending in _random)')
-group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument('-s','--hdf5-path', metavar='hdf5_path', help='path to store matrix in hdf5 format')
-group.add_argument('-a','--auto-hdf5', action='store_true',
-                    help='automatically determine path to store matrix in hdf5 format')
-
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
 
@@ -49,10 +38,9 @@ def query_yes_no(question, default="yes"):
 
 def get_auto_hdf5_path(segmentation_path):
 
-    base = os.path.basename(segmentation_path)
-    return base + '.matrix.hdf5'
+    return segmentation_path + '.matrix.hdf5'
 
-def main(args):
+def create_main(args):
 
     if args.auto_hdf5:
         args.hdf5_path = get_auto_hdf5_path(args.segmentation_file)
@@ -63,23 +51,44 @@ def main(args):
         else:
             sys.exit('Please specify a path to create a new hdf5 file')
 
-    exp = GamExperiment.from_multibam(args.segmentation_file, args.hdf5_path, args.num_processes,
+    exp = GamExperiment.from_multibam(args.segmentation_file, args.hdf5_path,
                                      compression=args.compression)
 
-    if not args.chromosomes:
-        args.chromosomes = [ c for c in sorted(list(set(map(lambda i: i[0], list(exp.experimental_data.windows))))) if not c[-7:] == '_random' ]
+    exp.close()
+
+def chrom_main(args):
 
     print 'using {0} processes'.format(args.num_processes)
-    for chrom in args.chromosomes:
-        print 'starting calculation for', chrom
-        start_time = time.clock()
-        chrom_shape = exp.frequencies(chrom).shape
-        print 'chrom size is: {0} x {1}'.format(*chrom_shape), 
-        print 'Calculation took {0}s'.format(time.clock() - start_time)
+    exp = GamExperiment.load(args.hdf5_path, args.num_processes)
+    print 'starting calculation for', args.chromosome
+    start_time = time.clock()
+    chrom_shape = exp.frequencies(args.chromosome).shape
+    print 'chrom size is: {0} x {1}'.format(*chrom_shape), 
+    print 'Calculation took {0}s'.format(time.clock() - start_time)
+    exp.close()
     print 'Done!'
+
+parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
+subparsers = parser.add_subparsers()
+
+get_chrom = subparsers.add_parser('chrom')
+get_chrom.add_argument('-p','--num-processes', metavar='NUM_PROC', type=int, default=1, help='Number of processes to use to calculate matrix')
+get_chrom.add_argument('-c','--chromosome', metavar='CHROMOSOME', required=True, help='Specific chromosome to calculate matrices for')
+get_chrom.add_argument('-s','--hdf5-path', metavar='hdf5_path', help='path to store matrix in hdf5 format')
+get_chrom.set_defaults(func=chrom_main)
+
+create_options = subparsers.add_parser('create')
+create_options.add_argument('segmentation_file', help='A segmentation file to use as input')
+create_options.add_argument('-z','--compression', metavar='COMPRESSION', help='Level of compression to use in hdf5 files', default=None)
+create_options.add_argument('-o','--overwrite', action='store_true', help='Specific chromosomes to calculate matrices for (default is all chromosomes not ending in _random)')
+group = create_options.add_mutually_exclusive_group(required=True)
+group.add_argument('-s','--hdf5-path', metavar='hdf5_path', help='path to store matrix in hdf5 format')
+group.add_argument('-a','--auto-hdf5', action='store_true',
+                    help='automatically determine path to store matrix in hdf5 format')
+create_options.set_defaults(func=create_main)
 
 if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args)
+    args.func(args)
