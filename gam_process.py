@@ -13,6 +13,7 @@ parser.add_argument('input_fastqs', metavar='INPUT_FASTQ', nargs='+', help='One 
 parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', help='File containing chromosome names and lengths')
 parser.add_argument('-p','--num_process', metavar='NUM_PROCESSES', type=int, default=1, help='Number of tasks to execute in parallel')
 parser.add_argument('-o','--output_dir', metavar='OUPUT_DIRECTORY', help='Write segmentation, matrix etc. to this directory')
+parser.add_argument('-f','--fittings_dir', metavar='FITTINGS_DIR', help='Write segmentation curve fitting plots to this directory')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
 
 args = parser.parse_args()
@@ -98,22 +99,41 @@ def get_coverage(args):
 
 def get_segmentation(args):
     for window_size in args.window_sizes:
-        yield {
+
+        task = {
             'basename' : 'Segmenting data',
             'name'     : '{0}bp'.format(window_size),
-            'actions'  : ['%(python_exec)s %(segmentation_script)s %(dependencies)s > %(targets)s'],
             'targets'  : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))],
-            'file_dep' : [os.path.join(args.output_dir, 'coverage_at_{0}bp.txt'.format(window_size))],
+            'file_dep' : [os.path.join(args.output_dir, 'coverage_at_{0}bp.multibam'.format(window_size))],
             }
 
-    """
-    tasks_to_run.append({
-            'name'     :  'Getting matrix at {0}bp'.format(window),
-            'actions'  : ['%(python_exec)s %(matrix_script)s --hdf5-path %(targets)s %(dependencies)s'],
-            'targets'  : [os.path.join(output_dir, '{0}bp_matrix.hdf5'.format(window))],
-            'file_dep' : [os.path.join(output_dir, 'segmentation_at_{0}bp.multibam'.format(window))],
-            })
+        if args.fittings_dir:
+            window_dir = os.path.join(args.output_dir, args.fittings_dir, '{0}bp'.format(window_size))
+            task['actions'] = [ 'mkdir -pv {0}'.format(window_dir),
+                                '%(python_exec)s %(segmentation_script)s -f {0} %(dependencies)s > %(targets)s'.format(window_dir)]
+        else:
+            task['actions'] = [ '%(python_exec)s %(segmentation_script)s %(dependencies)s > %(targets)s']
 
+        yield task
+
+def get_matrix(args):
+    last_name = []
+    for window_size in reversed(args.window_sizes):
+
+        task = {
+            'basename' : 'Calculating matrix',
+            'name'     : '{0}bp'.format(window_size),
+            'actions'  : ['%(python_exec)s %(matrix_script)s -o -p %(num_process)s --hdf5-path %(targets)s %(dependencies)s'],
+            'targets'  : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.matrix.hdf5'.format(window_size))],
+            'file_dep' : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))],
+            'task_dep' : last_name
+            }
+
+        last_name = [ '{basename}:{name}'.format(**task) ]
+
+        yield task
+
+    """
 def get_segmentation_bed_tasks(tasks_to_run, segmentation_file, window):
 
     bamfiles = []
@@ -171,8 +191,7 @@ class MyTaskLoader(TaskLoader):
 
         subs_dictionary = vars(args)
         subs_dictionary.update({"python_exec"         : sys.executable,
-                                "threshold_script"    : get_script('threshold_by_reads.py'),
-                                "segmentation_script" : get_script('get_threshold.py'),
+                                "segmentation_script"    : get_script('threshold_by_reads.py'),
                                 "segmentation_bed_script" : get_script('extract_segmentation.py'),
                                 "matrix_script"       : get_script('gam_matrix.py')})
 
@@ -196,14 +215,13 @@ def main(args):
     tasks_to_run  += generate_tasks('task_bigwig', make_bigwig(args.input_fastqs))
     tasks_to_run  += generate_tasks('task_coverage', get_coverage(args))
     tasks_to_run  += generate_tasks('task_segmentation', get_segmentation(args))
+    tasks_to_run  += generate_tasks('task_matrix', get_matrix(args))
     
     sys.exit(DoitMain(MyTaskLoader(tasks_to_run, args)).run([]))
 
 if __name__ == "__main__":
 
-    print 'parsing args'
     args = parser.parse_args()
-    print args
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
