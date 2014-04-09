@@ -1,146 +1,268 @@
-from scipy.stats import scoreatpercentile
+from __future__ import print_function
+from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import os
 import sys
 import CurveFitting as cf
-from CurveFitting import NoMaximaException
 from bisect import bisect_left
-try:
-    import argparse
-except ImportError:
-    import backport_argparse as argparse
-import itertools
+import argparse
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='plot coverage over different window sizes for a list of bam files.')
 parser.add_argument('input_file', metavar='INPUT_FILE', help='Input coverage file')
 parser.add_argument('-f','--fitting-folder', metavar='FITTING_FOLDER', default=False, help='If specified, save the individual curve fittings to this folder')
-parser.add_argument('-s','--saturation-curve', metavar='CURVE_FILENAME', help='If specified, save the saturation curve to this file')
-parser.add_argument('--header-lines', metavar='NUMBER_OF_LINES', default=0, type=int, help='Skip this number of lines in the header')
-args = parser.parse_args()
 
-def get_kde(data):
-    kernel = cf.gaussian_kde(data)
-    kernel.silverman_factor()
-    data_max = max(data)
-    step = data_max / 300
-    points = np.arange(0,data_max,step)
-    return points,kernel.evaluate(points)
+def cumulative_normal(x, loc, scale):
+    return norm.cdf(x, loc, scale)
 
-def get_data(fobj):
-    data = []
-    for line in itertools.islice(fobj, args.header_lines, None):
-        fields = line.split()
-        data.append(map(int,fields[3:]))
-    return np.transpose(np.array(data))
+def cumulative_neg_binom(x, n , p):
+    
+    # x is in log, so transform it back
+    x = list(10 ** x[1:])
+    
+    # Add the point 0.0
+    x = [0.0] + x
+        
+    return nbinom.cdf(x, n, p)
+    
+def un_cumulative(x):
+    last = None
+    new_x = []
+    for i in x:
+        if last is None:
+            last = i
+            continue
+        new_x.append(i - last)
+        last = i
+    return np.array(new_x)
+
+def sum_to_1(x):
+    return x / sum(x)
+
+def neg_binomial(x, n, p):
+    
+    bin_y = cumulative_neg_binom(x, n, p)
+    bin_y = un_cumulative(bin_y)
+    return sum_to_1(bin_y)
+
+def normal(x, loc, scale):
+
+    norm_y = cumulative_normal(x, loc, scale)
+    norm_y = un_cumulative(norm_y)
+    return sum_to_1(norm_y)
+
+def n_binom_plus_log_normal(params, x):
+    
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    # We don't want any solutions where the mode of the lognormal is
+    # less than the mode of the negative binomial. Therefore, the 
+    # function is parameterized such that the position of the lognormal
+    # is given as a distance from the mean of the negative binomial,
+    # called nm_delta. nm_delta is always treated as positive
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
+    
+    bin_y = neg_binomial(x, bin_n, bin_p)
+    
+    norm_y = normal(x, nm_loc, nm_scale)
+    
+    sum_y = (bin_y * (1.-abs(size))) + (norm_y * abs(size))
+    
+    return sum_y / sum(sum_y)
 
 def get_fdr_threshold(x,fdr,threshold):
     threshold_index = bisect_left(fdr[::-1], threshold)
     return x[::-1][threshold_index - 1]
 
-def do_fitting(data,stringency=5,filter_pct=99.9):
-    filtered_data = data[data>0]
-    filtered_data = filtered_data[filtered_data<scoreatpercentile(filtered_data,filter_pct)]
-    filtered_data = np.log10(filtered_data)
-    kde_points = get_kde(filtered_data)
-    kde_x, kde_y = kde_points
-    try:
-        last_max = cf.recursive_last_maximum(kde_x, kde_y, stringency)
-    except NoMaximaException:
-        print 'Couldnt find last_max'
-        last_max = len(kde_x) - 1
-        return None, filtered_data, kde_points, last_max
-    unfit_segment, fit_segment = cf.split_line(kde_x, kde_y, last_max)
+def mask_x_by_z(x, z):
+    return [ xi for i, xi in enumerate(x) if z[i] != 0 ]
+
+def filter_data(x, percentile, no_zeros=True):
+    percentile_score = scoreatpercentile(x, percentile)
+    less_than_percentile = x < percentile_score
+    
+    if no_zeros:
+        not_a_zero = x > 0
+        
+        # only keep points which are both less than percentile AND not a zero
+        points_to_keep = map(all,zip(less_than_percentile,not_a_zero))
+        
+    else:
+        points_to_keep = less_than_percentile
+        
+    return x[points_to_keep]
+
+def threshold_n_binom(params, p_value, thresh_range=range(500)):
+    
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
+
+    
+    cumulative_dist = nbinom.cdf(thresh_range, bin_n, bin_p)
+    
+    prob_dist = sum_to_1(un_cumulative(cumulative_dist))
+    index = bisect_left(prob_dist[::-1], p_value)
+    return thresh_range[::-1][index]
+
+def fit_histogram(breaks, counts):
     old_stdout = sys.stdout
-    sys.stdout = open(os.devnull, "w")
-    fit_results = fmin(cf.squared_difference, np.array([ kde_x[last_max],  0.38570735,  kde_y[last_max]]),(cf.half_gaussian,) + fit_segment)
+    with open(os.devnull, "w") as sys.stdout:
+        params = fmin(cf.squared_difference, 
+                                 (6.89799811e-01,   5.08503431e-01,
+                                      2.69945316,  0.23982432,
+                                      0.15),
+                                 (n_binom_plus_log_normal, breaks, counts / float(sum(counts))),
+                                 xtol=0.00001, ftol=0.00001 )
     sys.stdout = old_stdout
+    return params
+
+def get_fit_x(breaks, counts):
     
-    return fit_results, filtered_data, kde_points, last_max
+    step = (breaks[1] - breaks[0]) / 2.
+    fit_x = mask_x_by_z(breaks[:-1]+step, counts)
+    return fit_x
 
-def get_threshold(fit_results,kde_points,fdr_thresh=0.10):
+def plot_fit(breaks, counts, params):
     
-    kde_x, kde_y = kde_points
-    z = cf.full_gaussian(np.array(fit_results),kde_x)
-    fdr = cf.calculate_fdr(z, kde_y)
-    fdr_thresh = get_fdr_threshold(kde_x,fdr,fdr_thresh)
-    return fdr_thresh
+    fit = sum(counts)*n_binom_plus_log_normal(params,
+                                 breaks)
+    
+    fit_y = mask_x_by_z(fit, counts)
+    
+    fit_x = get_fit_x(breaks, counts)
+    
+    return plt.plot(fit_x, fit_y,'ro')
 
-def get_coverage(unfiltered_data, threshold):
-    return len(unfiltered_data[unfiltered_data>threshold]) / float(len(unfiltered_data))
+def plot_lognormal(breaks, counts, params):
 
-def plot_both(fname,filtered_data,fit_results,kde_points,fdr_thresh,last_max,title=False):
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
+
+    gauss_y = normal(breaks, nm_loc, nm_scale)
+    gauss_y = gauss_y * sum(counts) * abs(size)
+    gauss_y = mask_x_by_z(gauss_y, counts)
+    
+    fit_x = get_fit_x(breaks, counts)
+    
+    return plt.plot(fit_x, gauss_y)    
+    
+def plot_binom(breaks, counts, params):
+    
+    bin_n, bin_p, nm_delta, nm_scale, size = params
+    
+    bin_mean, bin_var = nbinom.stats(bin_n, bin_p)
+    
+    nm_loc = np.log10(bin_mean) + np.abs(nm_delta)
+    
+    binom_y = neg_binomial(breaks, bin_n, bin_p)
+    binom_y = binom_y * sum(counts) * (1. - abs(size))
+    binom_y = mask_x_by_z(binom_y, counts)
+    
+    fit_x = get_fit_x(breaks, counts)
+    
+    return plt.plot(fit_x, binom_y)
+    
+def plot_legend(hist_patches,
+                fit_patches,
+                normal_patches,
+                binom_patches,
+                thresh_patch):
+    
+    patches = (hist_patches[0],
+                fit_patches[0],
+                normal_patches[0],
+                binom_patches[0],
+                thresh_patch)
+    
+    labels = ('Coverage histogram',
+              'Fitted values',
+              'Signal distribution',
+              'Noise distribution',
+              'Threshold')
+    
+    plt.legend(patches, labels)
+    
+def prettify_plot(sample_name, fig):
+    
+    fig.suptitle('Combined fit for {0}'.format(sample_name), fontsize=18)
+    
+    plt.ylabel('No of windows')
+    plt.xlabel('No of reads')
+    locs, labels = plt.xticks()
+    labels = map(int,10 ** locs)
+    plt.xticks( locs, labels )    
+
+def get_threshold(data, i, sample_name, plot_path):
     
     fig = plt.figure(figsize=( 16, 9 ))
-    ax1 = fig.add_subplot(111)
-    n,bins,hist_patches = ax1.hist(filtered_data,100)
-    max_n = max(n)
     
-    kde_x, kde_y = kde_points
-    scaling_factor = ( max_n / max(kde_y))
-    kde_y = kde_y * scaling_factor
-    unfit_segment, fit_segment = cf.split_line(kde_x, kde_y, last_max)
+    counts, breaks, hist_patches = plt.hist(np.log10(filter_data(data.iloc[:,i],99.99)),bins=50)
     
-    fit_patch = ax1.plot(*fit_segment,color='r')
-    unfit_patch = ax1.plot(*unfit_segment,color='g')
+    params = fit_histogram(breaks, counts)
     
-    z = cf.full_gaussian(np.array(fit_results),kde_x)
-    z = z * scaling_factor
-    result_gaussian_patch = ax1.plot(kde_x,z,'purple')  
-    
-    thresh_patch = ax1.axvline(fdr_thresh,color='black')
-    if title:
-         fig.suptitle(title, fontsize=18)
-    ax1.set_ylabel('No of windows')
-    ax1.set_xlabel('No of reads')
-    ax1.set_xticklabels( 10 ** ax1.get_xticks() )
-    
-    plt.figlegend((hist_patches[0],fit_patch[0],unfit_patch[0],result_gaussian_patch[0],thresh_patch),
-    ('Depth Histogram','KDE (fitted)','KDE (unfit)','Fitting Result','Threshold'),loc = 'upper right')
-    fig.savefig(fname)
+    read_threshold = threshold_n_binom(params, 0.001)
 
-def plot_saturation(fname,counts,coverages,title=False):
-    fig = plt.figure(figsize=( 12, 7 ))
-    ax1 = fig.add_subplot(111)
-    plt.plot(counts,coverages,'ro')
-    ax1.set_ylabel('% of windows over threshold')
-    ax1.set_xlabel('% of original reads')
-    if title:
-         fig.suptitle(title, fontsize=18)
-    ax1.set_xlim(left=0.0)
-    ax1.set_ylim(bottom=0.0)
-    fig.savefig(fname)
+    if plot_path:
 
-if args.fitting_folder and not os.path.isdir(args.fitting_folder):
-    os.mkdir(args.fitting_folder)
+        fit_patches = plot_fit(breaks, counts, params)
+        
+        normal_patches = plot_lognormal(breaks, counts, params)
+        
+        binom_patches = plot_binom(breaks, counts, params)
+        
+        thresh_patch = plt.axvline(np.log10(read_threshold),color='black')
+        
+        plot_legend(hist_patches,
+                    fit_patches,
+                    normal_patches,
+                    binom_patches,
+                    thresh_patch)
+        
 
-data = get_data(open(args.input_file))
+        
+        prettify_plot(sample_name, fig)
+        
+        plt.savefig(plot_path)
 
-counts = np.array(map(sum,data))
-max_count = float(max(counts))
-counts = counts / max_count
-
-coverages = []
-for i,count in enumerate(counts):
+    plt.close()
     
-    fit_results, filtered_data, kde_points, last_max = do_fitting(data[i])
-    kde_x, kde_y = kde_points
-    
-    if not fit_results is None:
-        fdr_thresh = get_threshold(fit_results,kde_points)
-    else:
-        fdr_thresh = 1.5
-    if fdr_thresh < np.log10(3): fdr_thresh = np.log10(3)
-    coverage = get_coverage(data[i], 10**fdr_thresh)
-    coverages.append(coverage)
-    print sum(data[i]), coverage, 10**fdr_thresh
-    if args.fitting_folder:
-        filename = '%s_resample_%i%%.png' % (os.path.basename(args.input_file), 100 * count)
-        title = '%s resampled at %i%%.png' % (os.path.basename(args.input_file), 100 * count)
-        plot_both(os.path.join(args.fitting_folder, filename), filtered_data,fit_results,kde_points,fdr_thresh,last_max,title)
+    return read_threshold
 
-if args.saturation_curve:
-    plot_saturation(args.saturation_curve, counts, coverages)
+
+if __name__ == '__main__':
+
+    args = parser.parse_args()
+
+    data = pd.read_csv(args.input_file,
+                       delim_whitespace=True, index_col=[0,1,2])
+
+    for i in range(len(data.columns)):
+
+        sample_name = os.path.basename(data.columns[i]).split('.')[0]
+
+        if args.fitting_folder:
+            plot_path = os.path.join(args.fitting_folder, '{0}_fit.png'.format(sample_name))
+        else:
+            plot_path = None
+
+        read_threshold = get_threshold(data, i, sample_name, plot_path)
+        
+        above_threshold = data.iloc[:,i] > read_threshold
+        
+        data.iloc[:,i] = above_threshold.astype(int)
+
+        print('{0} done (number {1}) threshold {2}'.format(sample_name,i+1,read_threshold), file=sys.stderr)
+
+    data.to_csv(sys.stdout, index=True, sep='\t')
