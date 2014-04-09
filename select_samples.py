@@ -10,17 +10,22 @@ parser.add_argument('-n','--sample-names', metavar='SAMPLE_NAME', required=True,
 
 args = parser.parse_args()
 
-data = pd.read_csv(args.segmentation_file, delim_whitespace=True, index_col=[0,1,2])
+if __name__ == '__main__':
 
-index = { os.path.basename(c).split('.')[0] : c for c in data.columns }
+    data = pd.read_csv(args.segmentation_file, delim_whitespace=True, index_col=[0,1,2])
 
-bad_samples = [ index[b] for b in args.sample_names ]
+    index = { }
 
-if args.keep_good:
-    subset = data[bad_samples]
-else:
-    subset = data.drop(bad_samples, 1)
+    for c in data.columns:
+        index[os.path.basename(c).split('.')[0]] = c  
+
+    bad_samples = [ index[b] for b in args.sample_names ]
+
+    if args.keep_good:
+        subset = data[bad_samples]
+    else:
+        subset = data.drop(bad_samples, 1)
 
 
-subset.to_csv(sys.stdout, index=True, sep='\t')
+    subset.to_csv(sys.stdout, index=True, sep='\t')
 
