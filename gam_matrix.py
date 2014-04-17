@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import time
+import numpy as np
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -59,10 +60,13 @@ def create_main(args):
 def chrom_main(args):
 
     print 'using {0} processes'.format(args.num_processes)
-    exp = GamExperiment.load(args.hdf5_path, args.num_processes)
+    exp = GamExperiment.from_multibam_no_cache(args.segmentation_file, args.num_processes)
     print 'starting calculation for', args.chromosome
     start_time = time.clock()
-    chrom_shape = exp.frequencies(args.chromosome).shape
+    chrom_path = args.segmentation_file + '.chrom.' + args.chromosome
+    chrom_freq = exp.frequencies(args.chromosome)
+    np.savez_compressed(chrom_path, freqs=chrom_freq)
+    chrom_shape = chrom_freq.shape
     print 'chrom size is: {0} x {1}'.format(*chrom_shape), 
     print 'Calculation took {0}s'.format(time.clock() - start_time)
     exp.close()
@@ -74,11 +78,10 @@ subparsers = parser.add_subparsers()
 get_chrom = subparsers.add_parser('chrom')
 get_chrom.add_argument('-p','--num-processes', metavar='NUM_PROC', type=int, default=1, help='Number of processes to use to calculate matrix')
 get_chrom.add_argument('-c','--chromosome', metavar='CHROMOSOME', required=True, help='Specific chromosome to calculate matrices for')
-get_chrom.add_argument('-s','--hdf5-path', metavar='hdf5_path', help='path to store matrix in hdf5 format')
+get_chrom.add_argument('segmentation_file', help='A segmentation file to use as input')
 get_chrom.set_defaults(func=chrom_main)
 
 create_options = subparsers.add_parser('create')
-create_options.add_argument('segmentation_file', help='A segmentation file to use as input')
 create_options.add_argument('-z','--compression', metavar='COMPRESSION', help='Level of compression to use in hdf5 files', default=None)
 create_options.add_argument('-o','--overwrite', action='store_true', help='Specific chromosomes to calculate matrices for (default is all chromosomes not ending in _random)')
 group = create_options.add_mutually_exclusive_group(required=True)
