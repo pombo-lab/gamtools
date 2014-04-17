@@ -2,6 +2,7 @@ from GamTools import corr
 import itertools
 import numpy as np
 import argparse
+import glob
 
 parser = argparse.ArgumentParser(description='Calculate PCC between different chromosomes stored as npz files.')
 parser.add_argument('-p1','--paths1', metavar='FIRST_PATH', required=True, nargs='+', help='One or more input npz files.')
@@ -119,8 +120,12 @@ def get_pcc(paths1, paths2, method=lambda x:x, distance=np.Inf):
 
 def main(args):
 
-    args.paths1.sort()
-    args.paths2.sort()
+    if len(args.paths1) > 1:
+        args.paths1.sort()
+        args.paths2.sort()
+    else:
+        args.paths1 = sorted(glob.glob(args.paths1[0]))
+        args.paths2 = sorted(glob.glob(args.paths2[0]))
 
     for paths in zip(args.paths1, args.paths2):
         print '{0} <--> {1}'.format(*paths)
