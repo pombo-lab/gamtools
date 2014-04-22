@@ -11,10 +11,10 @@ parser.add_argument('-d','--distance', metavar='DISTANCE', type=int, default=np.
 
 class ZipChroms(object):
     
-    def __init__(self, path1, path2, method=lambda x:x, distance=np.Inf):
+    def __init__(self, path1, path2, distance=np.Inf):
         
         print 'initializing'
-        self.method, self.distance = method, distance
+        self.distance = distance
         print 'distance to consider is {0}'.format(self.distance)
         self.path1, self.path2 = path1, path2
         self.loaded = False
@@ -62,10 +62,8 @@ class ZipChroms(object):
         
     def load_matrix(self, path):
         
-        arr = np.load(path)['freqs']
+        arr = np.load(path)['corr']
         old_shape = arr.shape
-        flat_shape = (old_shape[0] * old_shape[1], old_shape[2], old_shape[3])
-        arr = np.array(map(self.method, arr.reshape(flat_shape))).reshape(old_shape[:2])
         indices = itertools.product(range(old_shape[0]), range(old_shape[1]))
         
         return ( arr[p,q] for p,q in indices if np.abs((p - q) < self.distance) )
@@ -103,11 +101,11 @@ def do_pcc(iterable, n, x_mean, y_mean, x_sd, y_sd):
         
     return prod / (n-1)
 
-def get_pcc(paths1, paths2, method=lambda x:x, distance=np.Inf):
+def get_pcc(paths1, paths2, distance=np.Inf):
     
     _zipped_paths = zip(paths1, paths2)
     
-    _zipped_arrays = [ ZipChroms(p1, p2, method=method, distance=distance) for p1, p2 in _zipped_paths ]
+    _zipped_arrays = [ ZipChroms(p1, p2, distance=distance) for p1, p2 in _zipped_paths ]
     
     n, x_mean, y_mean = get_means(itertools.chain(*_zipped_arrays))
     
@@ -130,7 +128,7 @@ def main(args):
     for paths in zip(args.paths1, args.paths2):
         print '{0} <--> {1}'.format(*paths)
 
-    r = get_pcc(args.paths1, args.paths2, corr, distance=args.distance)
+    r = get_pcc(args.paths1, args.paths2, distance=args.distance)
 
     print 'PCC is: {0}'.format(r)
 
