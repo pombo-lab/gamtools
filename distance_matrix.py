@@ -8,7 +8,8 @@ parser.add_argument('npz_frequencies_file', help='An npz file containing co-segr
 args = parser.parse_args()
 
 correlation_file = args.npz_frequencies_file.split('.')
-correlation_file = correlation_file[0] + '.correlations.npz'
+correlation_file[correlation_file.index('chrom')] = "corr"
+correlation_file = '.'.join(correlation_file)
 
 freqs = np.load(args.npz_frequencies_file)['freqs']
 
@@ -20,4 +21,4 @@ def flatten_freqs(freqs):
 
 distances = np.array(map(corr, flatten_freqs(freqs))).reshape(freqs.shape[:2])
 
-np.save_compressed(correlation_file, corr=distances)
+np.savez_compressed(correlation_file, corr=distances)
