@@ -42,32 +42,32 @@ def get_transpositions(array):
         yield tuple(axes[i:] + axes[:i])
 
 
-def get_independent_probs(arr):
+def get_independent_probs(n):
+    
+    total = n.sum()
+    f = n / float(total)
+    
     ind = []
-    for t in get_transpositions(arr):
-        probs = [ arr.transpose(t)[1,...].sum(), arr.transpose(t)[0,...].sum() ]
+    for t in get_transpositions(f):
+        probs = [ f.transpose(t)[1,...].sum(), f.transpose(t)[0,...].sum() ]
         ind.append(probs)
-    return np.array(ind)
+    return np.array(ind), f
 
 
 def D(n):
-    total = n.sum()
-    f = n / float(total)
-    probs = get_independent_probs(f)
+    probs,f = get_independent_probs(n)
     expected = probs.prod(axis=0)[0]
     observed = f.flatten()[-1]
     return observed - expected
 
 def corr(n):
-    d = D(n)
-    total = n.sum()
-    f = n / float(total)
-    probs = get_independent_probs(f)
+    d =  D(n)
+    probs,f = get_independent_probs(n)
     return d / np.sqrt(probs.prod())
 
 
 def line_indices(line):
-    fields = line.strip().split()
+    fields = line.split()
     chrom = fields[0]
     cstart, cstop = get_chrom_start_stop_bins(chrom)
     indices = map(lambda x: cstart+int(x),fields[1:])
@@ -81,14 +81,15 @@ def indices_corr(indices):
     columns = np.array(data.iloc[:, indices ])
     freqs = count_frequency(columns)
     
-    return corr(freqs)
+    return corr(freqs), freqs
 
 def line_corr(line):
     
     indices = line_indices(line)
-    return indices_corr(indices)
+    correlation, frequencies = indices_corr(indices)
+    return (correlation,) + tuple(get_independent_probs(frequencies)[0][:,0])
     
 with open(args.interactions_file, 'r') as interactions:
     for line in interactions:
         correlation = line_corr(line)
-        print line.strip() + '\t{0}'.format(correlation)
+        print '\t'.join(map(str,line.strip().split() + list(correlation)))
