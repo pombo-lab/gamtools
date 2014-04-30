@@ -1,4 +1,3 @@
-from GamTools import corr
 import itertools
 import numpy as np
 import argparse
