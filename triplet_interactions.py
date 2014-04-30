@@ -63,7 +63,7 @@ def D(n):
 def corr(n):
     d =  D(n)
     probs,f = get_independent_probs(n)
-    return d / np.sqrt(probs.prod())
+    return d / np.power(probs.prod(), 1./len(n.shape))
 
 
 def line_indices(line):
@@ -92,4 +92,7 @@ def line_corr(line):
 with open(args.interactions_file, 'r') as interactions:
     for line in interactions:
         correlation = line_corr(line)
-        print '\t'.join(map(str,line.strip().split() + list(correlation)))
+        original_fields = line.strip().split()
+        correlation_fields = list(correlation)
+        correlation_fields.append(max(correlation_fields[1:]))
+        print '\t'.join(map(str,original_fields + correlation_fields))
