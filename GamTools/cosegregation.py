@@ -35,6 +35,10 @@ def either_locus_not_detected(probs):
 def raw(n):
 
     f = frequency_to_probability(n)
+
+    if either_locus_not_detected(f):
+        return np.NAN
+
     return f.flat[-1]
 
 
@@ -80,3 +84,9 @@ def corr(n):
 
     return d / np.power(probs.prod(), 1./len(n.shape))
 
+
+def clip_for_plotting(array, percentile=1.):
+
+    clip_lower = np.percentile(array[np.isfinite(array)], percentile)
+    clip_upper = np.percentile(array[np.isfinite(array)], (100. - percentile))
+    return np.clip(array, clip_lower, clip_upper)
