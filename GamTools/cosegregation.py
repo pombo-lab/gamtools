@@ -46,7 +46,7 @@ def D(n):
     f = frequency_to_probability(n)
     probs = get_marginal_probabilities(f)
 
-    if either_locus_not_detected(f):
+    if either_locus_not_detected(probs):
         return np.NAN
 
     expected = probs.prod(axis=0)[0]
@@ -64,13 +64,17 @@ def Dmax(n):
         return min(probs[:,0]) - expected
     elif d < 0:
         return expected
+    elif d == 0.:
+        return 0.
 
 
 def Dprime(n):
     d = D(n)
-    dmax = Dmax(n)
-    if dmax is None:
+    if not np.isfinite(d):
         return np.NAN
+    dmax = Dmax(n)
+    if dmax == 0.0:
+        return 0.0
     else:
         return d / dmax
 
