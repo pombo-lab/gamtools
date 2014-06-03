@@ -145,3 +145,14 @@ def get_matrix(segmentation_data, *location_strings, **kwargs):
 
 def get_marginals(region):
     return region.sum(axis=1).astype(float) / region.count(axis=1).astype(float)
+
+
+def map_sample_name_to_column(segmentation_data):
+
+    name_mapping = { }
+
+    for c in segmentation_data.columns:
+
+        name_mapping[os.path.basename(c).split('.')[0]] = c  
+
+    return name_mapping

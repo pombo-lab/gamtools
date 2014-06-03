@@ -1,7 +1,6 @@
-import pandas as pd
 import sys
 import argparse
-import os
+from GamTools import segmentation
 
 parser = argparse.ArgumentParser(description='Remove columns in segmentation file that fail QC.')
 parser.add_argument('-s','--segmentation-file', metavar='SEGMENTATION_FILE', required=True, help='A file containing the segmentation of all samples')
@@ -12,12 +11,9 @@ args = parser.parse_args()
 
 if __name__ == '__main__':
 
-    data = pd.read_csv(args.segmentation_file, delim_whitespace=True, index_col=[0,1,2])
+    data = segmentation.open_segmentation(args.segmentation_file)
 
-    index = { }
-
-    for c in data.columns:
-        index[os.path.basename(c).split('.')[0]] = c  
+    index = segmentation.map_sample_name_to_column(data)
 
     bad_samples = [ index[b] for b in args.sample_names ]
 
