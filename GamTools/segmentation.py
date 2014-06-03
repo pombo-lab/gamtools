@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import itertools
+import os
 from .cosegregation import Dprime, clip_for_plotting
 
 
@@ -119,6 +120,17 @@ def region_from_location_string(segmentation_data, loc_string):
 
 def get_matrix(segmentation_data, *location_strings, **kwargs):
 
+    def get_region(loc_string):
+
+        return region_from_location_string(segmentation_data, loc_string)
+
+    regions = map(get_region, location_strings)
+
+    return get_matrix_from_regions(segmentation_data, *regions, **kwargs)
+
+
+def get_matrix_from_regions(*regions, **kwargs):
+
     defaults = {'method' : Dprime,
                 'clip' : 1.,
                }
@@ -126,13 +138,6 @@ def get_matrix(segmentation_data, *location_strings, **kwargs):
     defaults.update(kwargs)
     
     method, clip = defaults['method'], defaults['clip']
-
-    def get_region(loc_string):
-
-        return region_from_location_string(segmentation_data, loc_string)
-
-    regions = map(get_region, location_strings)
-
     freqs = get_cosegregation_freqs(*regions)
 
     matrix = map_freqs(method, freqs)
