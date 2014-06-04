@@ -87,10 +87,3 @@ def corr(n):
     d = D(n)
 
     return d / np.power(probs.prod(), 1./len(n.shape))
-
-
-def clip_for_plotting(array, percentile=1.):
-
-    clip_lower = np.percentile(array[np.isfinite(array)], percentile)
-    clip_upper = np.percentile(array[np.isfinite(array)], (100. - percentile))
-    return np.clip(array, clip_lower, clip_upper)

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import os
-from .cosegregation import Dprime, clip_for_plotting
+from .cosegregation import Dprime
 
 
 def open_segmentation(path_or_buffer):
@@ -49,7 +49,7 @@ def get_cosegregation_freqs(*regions):
     full_data = np.concatenate(regions, axis=0)
     
     def get_frequency(indices):
-                
+
         return cosegregation_frequency(full_data[indices, :])
 
     result = map(get_frequency, combinations)
@@ -132,20 +132,17 @@ def get_matrix(segmentation_data, *location_strings, **kwargs):
 def get_matrix_from_regions(*regions, **kwargs):
 
     defaults = {'method' : Dprime,
-                'clip' : 1.,
                }
 
     defaults.update(kwargs)
     
-    method, clip = defaults['method'], defaults['clip']
+    method = defaults['method']
+
     freqs = get_cosegregation_freqs(*regions)
 
     matrix = map_freqs(method, freqs)
 
-    if clip is None:
-        return matrix
-    else:
-        return clip_for_plotting(matrix, clip)
+    return matrix
 
 
 def get_marginals(region):
