@@ -14,7 +14,9 @@ parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', help='File cont
 parser.add_argument('-p','--num_process', metavar='NUM_PROCESSES', type=int, default=1, help='Number of tasks to execute in parallel')
 parser.add_argument('-o','--output_dir', metavar='OUPUT_DIRECTORY', help='Write segmentation, matrix etc. to this directory')
 parser.add_argument('-f','--fittings_dir', metavar='FITTINGS_DIR', help='Write segmentation curve fitting plots to this directory')
+parser.add_argument('-b','--bigbeds', action='store_true', help='Make bed files for segmentation')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
+parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=0, type=int, help='Filter out any mapped read with a mapping quality less than x (default is not to filter based on quality')
 
 args = parser.parse_args()
 
@@ -28,7 +30,7 @@ def map_fastq(input_fastqs):
         yield {
                 "name"     : input_fastq,
                 "basename" : 'Mapping fastq',
-                "actions"  : ['bowtie2 -x genome -U %(dependencies)s | sed \'/XS : /d\' | samtools view -F 4 -bS - > %(targets)s'],
+                "actions"  : ['bowtie2 -x genome -U %(dependencies)s | sed \'/XS : /d\' | samtools view -q %(minimum_mapq)s -F 4 -bS - > %(targets)s'],
                 "targets"  : [with_extension(input_fastq, ".bam")],
                 "file_dep" : [input_fastq],
               }
@@ -116,6 +118,36 @@ def get_segmentation(args):
 
         yield task
 
+
+def get_segmentation_bed(args):
+
+    for window_size in args.window_sizes:
+        for input_fastq in args.input_fastqs:
+
+            yield {
+                'basename' : 'Getting segmentation bed',
+                'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
+                'actions'  : ['%(python_exec)s %(segmentation_bed_script)s -s %(dependencies)s -n {input_bam}  | tr "-" "\t" | bedtools merge > %(targets)s.unsorted'.format(input_bam=with_extension(input_fastq, '.rmdup.bam')),
+                             'sort -k1,1 -k2,2n %(targets)s.unsorted > %(targets)s',
+                             'rm %(targets)s.unsorted',],
+                'targets'  : [with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
+                'file_dep' : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))],
+                }
+
+def get_segmentation_bigbed(args):
+
+    for window_size in args.window_sizes:
+        for input_fastq in args.input_fastqs:
+
+            yield {
+                'basename' : 'Getting segmentation bigBed',
+                'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
+                'actions'  : ['bedToBigBed %(dependencies)s %(genome_file)s %(targets)s',],
+                'targets'  : [with_extension(input_fastq, ".segmentation_{0}bp.bb".format(window_size))],
+                'file_dep' : [with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
+                  }
+
+        """
 def get_matrix(args):
     last_name = []
     for window_size in reversed(args.window_sizes):
@@ -133,41 +165,6 @@ def get_matrix(args):
 
         yield task
 
-    """
-def get_segmentation_bed_tasks(tasks_to_run, segmentation_file, window):
-
-    bamfiles = []
-    for task in tasks_to_run:
-        if task['name'].startswith('Removing'):
-            bamfiles.extend(task['targets'])
-
-    for input_bam in bamfiles:
-
-        output_dir = os.path.dirname(input_bam)
-        basename = os.path.splitext(os.path.basename(input_bam))[0]
-
-        def with_extension(extension): return os.path.join(output_dir, basename + extension)
-
-        tasks_to_run.append({
-                    'name'     : 'Getting segmentation bed at {0}bp for {1}'.format(window, input_bam),
-                    'actions'  : ['%(python_exec)s %(segmentation_bed_script)s -s %(dependencies)s -n {input_bam}  | tr "-" "\t" | bedtools merge > %(targets)s'.format(input_bam=input_bam),],
-                    'targets'  : [with_extension(".segmentation_{0}bp.bed".format(window))],
-                    'file_dep' : [segmentation_file],
-                    })
-
-        tasks_to_run.append({
-                    'name'     : 'Sorting segmentation bed at {0}bp for {1}'.format(window, input_bam),
-                    'actions'  : ['sort -k1,1 -k2,2n %(dependencies)s > %(targets)s',],
-                    'targets'  : [with_extension(".segmentation_{0}bp.sorted.bed".format(window))],
-                    'file_dep' : [with_extension(".segmentation_{0}bp.bed".format(window))],
-                    })
-
-        tasks_to_run.append({
-                    'name'     : 'Making segmentation bigBed at {0}bp for {1}'.format(window, input_bam),
-                    'actions'  : ['bedToBigBed %(dependencies)s %(genome_file)s %(targets)s',],
-                    'targets'  : [with_extension(".segmentation_{0}bp.bb".format(window))],
-                    'file_dep' : [with_extension(".segmentation_{0}bp.sorted.bed".format(window))],
-                    })
 
     return tasks_to_run
             """
@@ -215,7 +212,12 @@ def main(args):
     tasks_to_run  += generate_tasks('task_bigwig', make_bigwig(args.input_fastqs))
     tasks_to_run  += generate_tasks('task_coverage', get_coverage(args))
     tasks_to_run  += generate_tasks('task_segmentation', get_segmentation(args))
-    tasks_to_run  += generate_tasks('task_matrix', get_matrix(args))
+
+    if args.bigbeds:
+
+        tasks_to_run  += generate_tasks('task_segmentation_bed', get_segmentation_bed(args))
+        tasks_to_run  += generate_tasks('task_segmentation_bigBed', get_segmentation_bigbed(args))
+    #tasks_to_run  += generate_tasks('task_matrix', get_matrix(args))
     
     sys.exit(DoitMain(MyTaskLoader(tasks_to_run, args)).run([]))
 
