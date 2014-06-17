@@ -16,6 +16,8 @@ parser.add_argument('-i','--bigwigs', action='append_const',
                     dest='to_run', const='Converting bedgraph to bigwig', help='Make bigWig files.')
 parser.add_argument('-b','--bigbeds', action='append_const',
                     dest='to_run', const='Getting segmentation bigBed', help='Make bed files for segmentation')
+parser.add_argument('-c','--do-qc', action='append_const',
+                    dest='to_run', const='do_qc', help='Run various qc scripts.')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
 parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=0, type=int, help='Filter out any mapped read with a mapping quality less than x (default is not to filter based on quality')
 
@@ -153,6 +155,37 @@ def task_get_segmentation_bigbed(args):
                 'file_dep' : [with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
                   }
 
+def fastqc_data_file(input_fastq):
+    
+    base_folder = input_fastq.split('.')[0]
+
+    fastqc_folder = base_folder + '_fastqc'
+
+    return os.path.join(fastqc_folder, 'fastqc_data.txt')
+
+def task_run_fastqc(args):
+    for input_fastq in args.input_fastqs:
+        yield {
+                "name"     : input_fastq,
+                "basename" : 'Running fastqc',
+                "actions"  : ['fastqc %(dependencies)s'],
+                "targets"  : [fastqc_data_file(input_fastq)],
+                "file_dep" : [input_fastq],
+              }
+
+def task_run_fastq_screen(args):
+    for input_fastq in args.input_fastqs:
+        yield {
+                "name"     : input_fastq,
+                "basename" : 'Running fastq_screen',
+                "actions"  : ['fastq_screen %(dependencies)s'],
+                "targets"  : [input_fastq + '_screen.txt'],
+                "file_dep" : [input_fastq],
+              }
+
+def task_do_qc():
+    return {'actions': None,
+            'task_dep': ['Running fastq_screen', 'Running fastqc']}
 
 def main(args):
 
