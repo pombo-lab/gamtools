@@ -16,6 +16,11 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     packages=['GamTools'],
+    entry_points = {'EIYBrowse.filetypes': [
+                        'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
+                        'gam_npz_folder = GamTools.segmentation:GamNpzFolder', 
+                    ]
+                   },
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
