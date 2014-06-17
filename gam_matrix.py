@@ -57,7 +57,7 @@ def chrom_main(args):
 
 parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
 parser.add_argument('-r','--region', metavar='REGION', required=True, help='Specific genomic region to calculate matrices for')
-parser.add_argument('segmentation_file', help='A segmentation file to use as input')
+parser.add_argument('-s', '--segmentation_file', required=False, help='A segmentation file to use as input')
 parser.set_defaults(func=chrom_main)
 
 if __name__ == "__main__":
