@@ -12,6 +12,8 @@ parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', required=True,
                     help='File containing chromosome names and lengths')
 parser.add_argument('-o','--output_dir', metavar='OUPUT_DIRECTORY', help='Write segmentation, matrix etc. to this directory')
 parser.add_argument('-f','--fittings_dir', metavar='FITTINGS_DIR', help='Write segmentation curve fitting plots to this directory')
+parser.add_argument('-i','--bigwigs', action='append_const',
+                    dest='to_run', const='Converting bedgraph to bigwig', help='Make bigWig files.')
 parser.add_argument('-b','--bigbeds', action='append_const',
                     dest='to_run', const='Getting segmentation bigBed', help='Make bed files for segmentation')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
@@ -23,7 +25,7 @@ parser.set_defaults(python_exec=sys.executable,
                     segmentation_script=get_script('threshold_by_reads.py'),
                     segmentation_bed_script=get_script('extract_segmentation.py'),
                     matrix_script=get_script('gam_matrix.py'),
-                    to_run=['Getting coverage'])
+                    to_run=['Segmenting data'])
 
 def with_extension(input_fastq, extension): 
     output_dir = os.path.dirname(input_fastq)
