@@ -40,7 +40,7 @@ def get_cosegregation_freqs(*regions):
 
     combinations = get_index_combinations(regions)
 
-    full_data = np.concatenate(regions, axis=0).transpose()
+    full_data = np.concatenate(regions, axis=0).transpose().astype(int)
     
     def get_frequency(indices):
 
