@@ -4,7 +4,8 @@ import itertools
 import os
 import glob
 from .cosegregation import Dprime
-from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
+from .cosegregation_frequency import cosegregation_frequency
+#from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
@@ -15,20 +16,6 @@ def open_segmentation(path_or_buffer):
     return pd.read_csv(path_or_buffer, 
                        index_col=[0,1,2], 
                        delim_whitespace=True)
-
-
-def cosegregation_frequency(samples):
-    """Take a table of n columns and return the co-segregation frequencies"""
-
-    counts_shape = (2,) * samples.shape[0] 
-
-    counts = np.zeros(counts_shape)
-
-    for s in samples.T:
-
-        counts[tuple(s)] += 1
-
-    return counts
 
 
 def get_index_combinations(regions):
@@ -53,11 +40,11 @@ def get_cosegregation_freqs(*regions):
 
     combinations = get_index_combinations(regions)
 
-    full_data = np.concatenate(regions, axis=0)
+    full_data = np.concatenate(regions, axis=0).transpose()
     
     def get_frequency(indices):
 
-        return cosegregation_frequency(full_data[indices, :])
+        return cosegregation_frequency(full_data[:, indices])
 
     result = map(get_frequency, combinations)
 
@@ -196,6 +183,7 @@ class TooManyFilesError(Exception):
 class NoFilesError(Exception):
     pass
 
+"""
 class GamNpzFolder(My5CFolder):
     def __init__(self, folder_path):
         
@@ -216,6 +204,7 @@ class GamNpzFolder(My5CFolder):
         return found_files[0]
     
 class GamNpzFile(My5cFile):
+
     def __init__(self, file_path):
         
         data = np.load(file_path)
@@ -232,3 +221,4 @@ class GamNpzFile(My5cFile):
         
         return pd.MultiIndex.from_tuples(map(format_window, windows),
                                          names=['chrom', 'start', 'stop'])
+    """

@@ -1,5 +1,6 @@
 import os
-from setuptools import setup
+from distutils.core import setup
+from Cython.Build import cythonize
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -16,6 +17,7 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     packages=['GamTools'],
+    ext_modules = cythonize("GamTools/cosegregation_frequency.pyx"),
     entry_points = {'EIYBrowse.filetypes': [
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
                         'gam_npz_folder = GamTools.segmentation:GamNpzFolder', 
