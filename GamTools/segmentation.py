@@ -4,7 +4,6 @@ import itertools
 import os
 import glob
 from .cosegregation import Dprime
-import pybedtools
 
 
 def open_segmentation(path_or_buffer):
@@ -247,6 +246,7 @@ class GamNpzFile(object):
     
     def indices_to_interval(self, start, stop):
         
+        import pybedtools
         start_window = self.windows[start]
         stop_window = self.windows[stop - 1]
         return pybedtools.Interval(start_window[0], start_window[1], stop_window[2])
