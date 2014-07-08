@@ -4,7 +4,11 @@ import itertools
 import os
 import glob
 from .cosegregation import Dprime
+from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
 
+class InvalidChromError(Exception):
+    """Exception to be raised when an invalid chromosome is specified"""
+    pass
 
 def open_segmentation(path_or_buffer):
 
@@ -31,6 +35,8 @@ def get_index_combinations(regions):
 
     indexes = []
     start = 0
+
+    assert len(regions) > 1
 
     for region in regions:
 
@@ -73,13 +79,21 @@ def index_from_interval(segmentation_data, interval):
 
     chrom, start, stop = interval
 
+    if not start < stop:
+        raise ValueError('Interval start {1} larger than interval end {2}'.format(*interval))
+
     window_in_region = np.logical_and(
                             np.logical_and(
-                                segmentation_data.index.get_level_values('stop') >= start,
-                                segmentation_data.index.get_level_values('start') <= stop),
+                                segmentation_data.index.get_level_values('stop') > start,
+                                segmentation_data.index.get_level_values('start') < stop),
                                 segmentation_data.index.get_level_values('chrom') == chrom)
 
     covered_windows = np.nonzero(window_in_region)[0]
+
+    if not len(covered_windows):
+        if not chrom in segmentation_data.index.levels[0]:
+            raise InvalidChromError('{0} not found in the list of windows'.format(chrom))
+
     start_index = covered_windows[0]
     stop_index = covered_windows[-1] + 1
 
@@ -162,10 +176,11 @@ def map_sample_name_to_column(segmentation_data):
 
 class GamSegmentationFile(object):
     """Panel for displaying a continuous signal (e.g. ChIP-seq) across a genomic region"""
-    def __init__(self, segmentation_path):
+    def __init__(self, segmentation_path, method=Dprime):
         super(GamSegmentationFile, self).__init__()
 
         self.data = open_segmentation(segmentation_path)
+        self.method = method
     
     def interactions(self, feature):
         
@@ -173,40 +188,34 @@ class GamSegmentationFile(object):
         ix_start, ix_stop = index_from_interval(self.data, interval)
         region = self.data.iloc[ix_start:ix_stop,]
                 
-        return get_matrix_from_regions(region), feature
+        return get_matrix_from_regions(region, method=self.method), feature
 
 class TooManyFilesError(Exception):
     pass
 
-class GamNpzFolder(object):
+class NoFilesError(Exception):
+    pass
+
+class GamNpzFolder(My5CFolder):
     def __init__(self, folder_path):
         
         self.folder_path = folder_path
+        self.file_class = GamNpzFile
         
     def find_chrom_file(self, chrom):
         
-        search_string = '*.{0}.npz'.format(chrom)
+        search_string = '*{0}[_\.]*npz'.format(chrom)
         
         found_files = glob.glob(os.path.join(self.folder_path, search_string))
         
         if len(found_files) > 1:
-            raise TooManyFilesError('folder containing npzs must have only one npz per chromosome')
+            raise TooManyFilesError('folder containing npzs must have only one npz per chromosome. Found {0}'.format(found_files))
+        elif not found_files:
+            raise NoFilesError('No npz file found matching {0} with search string "{1}"'.format(chrom, search_string))
             
         return found_files[0]
-
-    def get_npz_file(self, chrom):
-
-        npz_path = self.find_chrom_file(chrom)
-
-        return GamNpzFile(npz_path)
     
-    def interactions(self, feature):
-        
-        npz_file = self.get_npz_file(feature.chrom)
-        
-        return npz_file.get_interactions(feature)
-    
-class GamNpzFile(object):
+class GamNpzFile(My5cFile):
     def __init__(self, file_path):
         
         data = np.load(file_path)
@@ -223,30 +232,3 @@ class GamNpzFile(object):
         
         return pd.MultiIndex.from_tuples(map(format_window, windows),
                                          names=['chrom', 'start', 'stop'])
-    
-    def index_from_interval(self, feature):
-
-        window_in_region = np.logical_and(
-                                np.logical_and(
-                                    self.windows.get_level_values('start') >= feature.start,
-                                    self.windows.get_level_values('stop') <= feature.stop),
-                                    self.windows.get_level_values('chrom') == feature.chrom)
-
-        covered_windows = np.nonzero(window_in_region)[0]
-        start_index = covered_windows[0]
-        stop_index = covered_windows[-1] + 1 
-
-        return start_index, stop_index
-
-    def get_interactions(self, feature):
-        
-        start, stop = self.index_from_interval(feature)
-        
-        return self.interactions[start:stop, start:stop], self.indices_to_interval(start, stop)
-    
-    def indices_to_interval(self, start, stop):
-        
-        import pybedtools
-        start_window = self.windows[start]
-        stop_window = self.windows[stop - 1]
-        return pybedtools.Interval(start_window[0], start_window[1], stop_window[2])
