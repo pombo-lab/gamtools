@@ -27,6 +27,7 @@ parser.set_defaults(python_exec=sys.executable,
                     segmentation_script=get_script('threshold_by_reads.py'),
                     segmentation_bed_script=get_script('extract_segmentation.py'),
                     matrix_script=get_script('gam_matrix.py'),
+                    contamination_script=get_script('extract_contamination.py'),
                     to_run=['Segmenting data'])
 
 def with_extension(input_fastq, extension): 
@@ -183,9 +184,18 @@ def task_run_fastq_screen(args):
                 "file_dep" : [input_fastq],
               }
 
+def task_extract_contamination(args):
+    fastq_screen_files = [ input_fastq + '_screen.txt' for input_fastq in args.input_fastqs ]
+    return {
+            'actions' : ['%(python_exec)s %(contamination_script)s %(dependencies)s > %(targets)s'],
+            'targets' : [os.path.join(args.output_dir, 'contamination_stats.txt')],
+            'file_dep' : fastq_screen_files,
+           }
+
 def task_do_qc():
     return {'actions': None,
-            'task_dep': ['Running fastq_screen', 'Running fastqc']}
+            'task_dep': ['Running fastq_screen', 'Running fastqc',
+                         'extract_contamination']}
 
 def main(args):
 
