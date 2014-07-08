@@ -41,6 +41,15 @@ def raw(n):
 
     return f.flat[-1]
 
+def expected(n):
+    f = frequency_to_probability(n)
+    probs = get_marginal_probabilities(f)
+
+    if either_locus_not_detected(probs):
+        return np.NAN
+
+    expected = probs.prod(axis=0)[0]
+    return expected
 
 def D(n):
     f = frequency_to_probability(n)
@@ -51,6 +60,8 @@ def D(n):
 
     expected = probs.prod(axis=0)[0]
     observed = f.flat[-1]
+    if observed == 0:
+        return np.NAN
     return observed - expected
 
 
