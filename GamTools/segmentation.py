@@ -80,7 +80,7 @@ def index_from_interval(segmentation_data, interval):
     chrom, start, stop = interval
 
     if not start < stop:
-        raise ValueError('Interval start {1} larger than interval end {2}'.format(*interval))
+        raise ValueError('Interval start {0} larger than interval end {1}'.format(*interval))
 
     window_in_region = np.logical_and(
                             np.logical_and(

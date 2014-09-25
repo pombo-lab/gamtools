@@ -72,7 +72,7 @@ class ZipChroms(object):
         
     def load_matrix(self, path):
         
-        arr = np.load(path)['corr']
+        arr = np.load(path)['scores']
         old_shape = arr.shape
         indices = itertools.product(range(old_shape[0]), range(old_shape[1]))
         
