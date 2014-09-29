@@ -16,9 +16,11 @@ def open_segmentation(path_or_buffer):
                        index_col=[0,1,2], 
                        delim_whitespace=True)
 
-
 def cosegregation_frequency(samples):
     """Take a table of n columns and return the co-segregation frequencies"""
+
+    if samples.shape[0] == 2:
+        return fast_cosegregation_frequency(samples)
 
     counts_shape = (2,) * samples.shape[0] 
 
@@ -29,6 +31,18 @@ def cosegregation_frequency(samples):
         counts[tuple(s)] += 1
 
     return counts
+
+
+def fast_cosegregation_frequency(samples):
+    """Take a table of 2 columns and return the co-segregation frequencies"""
+
+    coseg = np.product(samples, axis=0).sum()
+    marga, margb = np.sum(samples, axis=1)
+
+    return np.array([[len(samples[0]) - marga - margb + coseg,
+                      margb - coseg],[
+                      marga - coseg, 
+                      coseg]])
 
 
 def get_index_combinations(regions):
