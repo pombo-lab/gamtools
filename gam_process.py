@@ -19,7 +19,11 @@ parser.add_argument('-b','--bigbeds', action='append_const',
 parser.add_argument('-c','--do-qc', action='append_const',
                     dest='to_run', const='do_qc', help='Run various qc scripts.')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
+parser.add_argument('--qc-window-size', type=int, help='Use this window size for qc (default is median window size).')
 parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=0, type=int, help='Filter out any mapped read with a mapping quality less than x (default is not to filter based on quality')
+
+def get_middle_value(_list):
+    return sorted(_list)[len(_list)/2]
 
 def get_script(script_name): return os.path.join(os.path.dirname(__file__), script_name)
 
@@ -28,6 +32,8 @@ parser.set_defaults(python_exec=sys.executable,
                     segmentation_bed_script=get_script('extract_segmentation.py'),
                     matrix_script=get_script('gam_matrix.py'),
                     contamination_script=get_script('extract_contamination.py'),
+                    quality_script=get_script('extract_fastqc.py'),
+                    segmentation_stats_script=get_script('get_coverage_stats.py'),
                     to_run=['Segmenting data'])
 
 def with_extension(input_fastq, extension): 
@@ -158,7 +164,7 @@ def task_get_segmentation_bigbed(args):
 
 def fastqc_data_file(input_fastq):
     
-    base_folder = input_fastq.split('.')[0]
+    base_folder = '.'.join(input_fastq.split('.')[:-1])
 
     fastqc_folder = base_folder + '_fastqc'
 
@@ -169,7 +175,8 @@ def task_run_fastqc(args):
         yield {
                 "name"     : input_fastq,
                 "basename" : 'Running fastqc',
-                "actions"  : ['fastqc %(dependencies)s'],
+                "actions"  : ['fastqc %(dependencies)s',
+                              'head %(targets)s'],
                 "targets"  : [fastqc_data_file(input_fastq)],
                 "file_dep" : [input_fastq],
               }
@@ -192,10 +199,45 @@ def task_extract_contamination(args):
             'file_dep' : fastq_screen_files,
            }
 
+def task_extract_quality(args):
+    fastqc_files = [ fastqc_data_file(input_fastq) for input_fastq in args.input_fastqs ]
+    return {
+            'actions' : ['%(python_exec)s %(quality_script)s -i %(dependencies)s > %(targets)s'],
+            'targets' : [os.path.join(args.output_dir, 'quality_stats.txt')],
+            'file_dep' : fastqc_files,
+           }
+
+def task_mapping_stats(args):
+    return {
+            'actions' : ['echo "Sample\tReads_sequenced\tReads_mapped\tUnique_reads_mapped" > %(targets)s',
+                         """for fq in %(dependencies)s; 
+                         do 
+                            sample=$(basename $fq);
+                            nlines=$(zcat ${fq} | wc -l);
+                            nreads=$(echo "${nlines} / 4" | bc);
+                            nmap=$(samtools view -c ${fq%%.*}.bam);
+                            nnodup=$(samtools view -c ${fq%%.*}.rmdup.bam);
+                            echo "${sample%%%%.*}\t${nreads}\t${nmap}\t${nnodup}"; 
+                         done >> %(targets)s"""],
+            'targets' : [os.path.join(args.output_dir, 'mapping_stats.txt')],
+            'file_dep' : args.input_fastqs,
+           }
+
+def task_segmentation_stats(args):
+
+    input_segmentation = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(args.qc_window_size))
+
+    return {
+            'actions' : ['%(python_exec)s %(segmentation_stats_script)s %(dependencies)s > %(targets)s'],
+            'targets' : [os.path.join(args.output_dir, 'segmentation_stats.txt')],
+            'file_dep' : [input_segmentation]
+           }
+
 def task_do_qc():
     return {'actions': None,
             'task_dep': ['Running fastq_screen', 'Running fastqc',
-                         'extract_contamination']}
+                         'extract_contamination', 'extract_quality',
+                         'mapping_stats', 'segmentation_stats']}
 
 def main(args):
 
@@ -204,6 +246,8 @@ def main(args):
 if __name__ == "__main__":
 
     args = parser.parse_args()
+    if args.qc_window_size is None:
+        args.qc_window_size = get_middle_value(args.window_sizes)
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
