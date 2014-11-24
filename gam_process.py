@@ -20,6 +20,8 @@ parser.add_argument('-c','--do-qc', action='append_const',
                     dest='to_run', const='do_qc', help='Run various qc scripts.')
 parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
 parser.add_argument('--qc-window-size', type=int, help='Use this window size for qc (default is median window size).')
+parser.add_argument('--additional-qc-files', nargs='*', default=[],
+                    help='Any additional qc files to filter on')
 parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=0, type=int, help='Filter out any mapped read with a mapping quality less than x (default is not to filter based on quality')
 
 def get_middle_value(_list):
@@ -33,7 +35,12 @@ parser.set_defaults(python_exec=sys.executable,
                     matrix_script=get_script('gam_matrix.py'),
                     contamination_script=get_script('extract_contamination.py'),
                     quality_script=get_script('extract_fastqc.py'),
-                    segmentation_stats_script=get_script('get_coverage_stats.py'),
+                    segmentation_stats_script=get_script('segmentation_stats.py'),
+                    stats_merge_script=get_script('merge_stats.py'),
+                    pass_qc_script=get_script('pass_qc.py'),
+                    filter_script=get_script('select_samples.py'),
+                    default_stats=['contamination_stats.txt', 'mapping_stats.txt',
+                                   'quality_stats.txt', 'segmentation_stats.txt'],
                     to_run=['Segmenting data'])
 
 def with_extension(input_fastq, extension): 
@@ -233,11 +240,41 @@ def task_segmentation_stats(args):
             'file_dep' : [input_segmentation]
            }
 
+def task_merge_stats(args):
+
+    files_to_merge = [os.path.join(args.output_dir, sf) for sf in args.default_stats] + args.additional_qc_files
+
+    return {
+            'actions' : ['%(python_exec)s %(stats_merge_script)s %(dependencies)s > %(targets)s'],
+            'targets' : [os.path.join(args.output_dir, 'merged_stats.txt')],
+            'file_dep' : files_to_merge
+           }
+
+def task_samples_passing_qc(args):
+
+    return {
+            'actions' : ['%(python_exec)s %(pass_qc_script)s %(dependencies)s > %(targets)s'],
+            'targets' : [os.path.join(args.output_dir, 'pass_qc.txt')],
+            'file_dep' : [os.path.join(args.output_dir, 'merged_stats.txt')]
+           }
+
+def task_filter_segmentation(args):
+    for window_size in args.window_sizes:
+
+        segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))
+        task = {
+            'basename' : 'Filtering out failed qc samples',
+            'name'     : '{0}bp'.format(window_size),
+            'targets'  : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))],
+            'file_dep' : [os.path.join(args.output_dir, 'pass_qc.txt')],
+            'actions'  : [ 'cat %(dependencies)s | xargs %(python_exec)s %(filter_script)s -s {seg_file} -g -n > %(targets)s'.format(seg_file=segmentation_file)]
+            }
+
+        yield task
+
 def task_do_qc():
     return {'actions': None,
-            'task_dep': ['Running fastq_screen', 'Running fastqc',
-                         'extract_contamination', 'extract_quality',
-                         'mapping_stats', 'segmentation_stats']}
+            'task_dep': ['Filtering out failed qc samples']}
 
 def main(args):
 
