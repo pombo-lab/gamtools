@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import os
-import glob
 from .cosegregation import Dprime
-from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
@@ -204,45 +202,3 @@ class GamSegmentationFile(object):
                 
         return get_matrix_from_regions(region, method=self.method), feature
 
-class TooManyFilesError(Exception):
-    pass
-
-class NoFilesError(Exception):
-    pass
-
-class GamNpzFolder(My5CFolder):
-    def __init__(self, folder_path):
-        
-        self.folder_path = folder_path
-        self.file_class = GamNpzFile
-        
-    def find_chrom_file(self, chrom):
-        
-        search_string = '*{0}[_\.]*npz'.format(chrom)
-        
-        found_files = glob.glob(os.path.join(self.folder_path, search_string))
-        
-        if len(found_files) > 1:
-            raise TooManyFilesError('folder containing npzs must have only one npz per chromosome. Found {0}'.format(found_files))
-        elif not found_files:
-            raise NoFilesError('No npz file found matching {0} with search string "{1}"'.format(chrom, search_string))
-            
-        return found_files[0]
-    
-class GamNpzFile(My5cFile):
-    def __init__(self, file_path):
-        
-        data = np.load(file_path)
-        self.interactions = data['scores']
-        self.windows = self.format_windows(data['windows'])
-        
-    def format_windows(self, windows):
-        
-        def format_window(window):
-            
-            chrom = window[0]
-            start, stop = map(int, window[1:])
-            return chrom, start, stop
-        
-        return pd.MultiIndex.from_tuples(map(format_window, windows),
-                                         names=['chrom', 'start', 'stop'])
