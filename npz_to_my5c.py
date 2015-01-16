@@ -14,4 +14,4 @@ def open_npz(fp):
 
 windows, data = open_npz(args.npz_frequencies_file)
 names = [ '{}:{}-{}'.format(*i) for i in windows ]
-pd.DataFrame(data, index=names, columns=names).to_csv(sys.stdout, sep='\t')
+pd.DataFrame(data, index=names, columns=names).to_csv(sys.stdout, sep='\t', na_rep="NaN")
