@@ -4,7 +4,7 @@ import itertools
 import os
 import glob
 from .cosegregation import Dprime
-from .cosegregation_frequency import cosegregation_frequency
+from .coseg_3 import cosegregation_frequency_3
 #from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
 
 class InvalidChromError(Exception):
@@ -22,6 +22,9 @@ def cosegregation_frequency(samples):
 
     if samples.shape[0] == 2:
         return fast_cosegregation_frequency(samples)
+
+    elif samples.shape[0] == 3:
+        return cosegregation_frequency_3(samples.T)
 
     counts_shape = (2,) * samples.shape[0] 
 
@@ -71,7 +74,7 @@ def get_cosegregation_freqs(*regions):
     
     def get_frequency(indices):
 
-        return cosegregation_frequency(full_data[:, indices])
+        return cosegregation_frequency(full_data[:, indices].T)
 
     result = map(get_frequency, combinations)
 
