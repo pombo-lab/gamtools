@@ -18,7 +18,10 @@ parser.add_argument('-b','--bigbeds', action='append_const',
                     dest='to_run', const='Getting segmentation bigBed', help='Make bed files for segmentation')
 parser.add_argument('-c','--do-qc', action='append_const',
                     dest='to_run', const='do_qc', help='Run various qc scripts.')
-parser.add_argument('-w','--window_sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
+parser.add_argument('-w','--window-sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
+parser.add_argument('-m','--calculate-matrices', action='append_const',
+                    dest='to_run', const='Calculating linkage matrix', help='Calculate linkage matrices.')
+parser.add_argument('-s','--matrix-sizes', metavar='MATRIX_SIZE', default=[], type=int, nargs='+', help='Resolutions for which linkage matrices should be produced.')
 parser.add_argument('--qc-window-size', type=int, help='Use this window size for qc (default is median window size).')
 parser.add_argument('--additional-qc-files', nargs='*', default=[],
                     help='Any additional qc files to filter on')
@@ -39,6 +42,11 @@ parser.set_defaults(python_exec=sys.executable,
                     stats_merge_script=get_script('merge_stats.py'),
                     pass_qc_script=get_script('pass_qc.py'),
                     filter_script=get_script('select_samples.py'),
+                    freq_matrix_script=get_script('gam_matrix.py'),
+                    linkage_matrix_script=get_script('distance_matrix.py'),
+                    linkage_matrix_dir='matrices/Dprime',
+                    frequency_matrix_dir='matrices/freq',
+                    empty_bw='/home/rbeagrie/scripts/pombo_rnaseq/mm9_empty.bw',
                     default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                    'quality_stats.txt', 'segmentation_stats.txt'],
                     to_run=['Segmenting data'])
@@ -104,7 +112,9 @@ def task_make_bigwig(args):
         yield {
                 "name"     : input_fastq,
                 "basename" : 'Converting bedgraph to bigwig',
-                "actions"  : ['bedGraphToBigWig %(dependencies)s %(genome_file)s %(targets)s'],
+                "actions"  : ['if [ -s "%(dependencies)s" ]; '
+                              'then bedGraphToBigWig %(dependencies)s %(genome_file)s %(targets)s; '
+                              'else cp %(empty_bw)s %(targets)s; fi'],
                 "targets"  : [with_extension(input_fastq, ".bw")],
                 "file_dep" : [with_extension(input_fastq, ".bedgraph")],
               }
@@ -261,7 +271,7 @@ def task_samples_passing_qc(args):
 def task_filter_segmentation(args):
     for window_size in args.window_sizes:
 
-        segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))
+        segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
         task = {
             'basename' : 'Filtering out failed qc samples',
             'name'     : '{0}bp'.format(window_size),
@@ -276,6 +286,76 @@ def task_do_qc():
     return {'actions': None,
             'task_dep': ['Filtering out failed qc samples']}
 
+def task_freq_matrices(args):
+
+    chroms = ['chr{0}'.format(c) for c in range(1,20)]
+
+    for window_size in args.matrix_sizes:
+
+        for chrom in chroms:
+
+            if 'do_qc' in args.to_run:
+                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))
+            else:
+                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+
+            matrix_out_initial = '{seg_file}.freqs.{chrom}.npz'.format(seg_file=segmentation_file,
+                                                                    chrom=chrom)
+
+            matrix_out_final = os.path.join(args.output_dir,
+                                            args.frequency_matrix_dir,
+                                            '{0}bp'.format(window_size),
+                                            os.path.basename(matrix_out_initial))
+
+            yield {'basename' : 'Calculating co-segregation matrix',
+                   'name'     : '{0} at {1}bp'.format(chrom, window_size),
+                   'targets'  : [matrix_out_final],
+                   'file_dep' : [segmentation_file],
+                   'actions' : ['mkdir -p $(dirname %(targets)s)',
+                                '%(python_exec)s %(freq_matrix_script)s -s %(dependencies)s -r {chrom}'.format(chrom=chrom),
+                                'mv {initial} %(targets)s'.format(initial=matrix_out_initial)],}
+
+def task_linkage_matrices(args):
+
+    chroms = ['chr{0}'.format(c) for c in range(1,20)]
+
+    for window_size in args.matrix_sizes:
+
+        for chrom in chroms:
+
+            if 'do_qc' in args.to_run:
+                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))
+            else:
+                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+
+            matrix_in_fname = '{seg_file}.freqs.{chrom}.npz'.format(seg_file=segmentation_file,
+                                                                    chrom=chrom)
+            matrix_in_path = os.path.join(args.output_dir,
+                                          args.frequency_matrix_dir,
+                                          '{0}bp'.format(window_size),
+                                          os.path.basename(matrix_in_fname))
+
+            matrix_out_fname = '{seg_file}.Dprime.{chrom}.npz'.format(seg_file=segmentation_file,
+                                                                    chrom=chrom)
+            matrix_out_initial = os.path.join(args.output_dir,
+                                          args.frequency_matrix_dir,
+                                          '{0}bp'.format(window_size),
+                                          os.path.basename(matrix_out_fname))
+
+
+            matrix_out_path = os.path.join(args.output_dir,
+                                           args.linkage_matrix_dir,
+                                           '{0}bp'.format(window_size),
+                                            os.path.basename(matrix_out_initial))
+
+            yield {'basename' : 'Calculating linkage matrix',
+                   'name'     : '{0} at {1}bp'.format(chrom, window_size),
+                   'targets'  : [matrix_out_path],
+                   'file_dep' : [matrix_in_path],
+                   'actions' : ['mkdir -p $(dirname %(targets)s)',
+                                '%(python_exec)s %(linkage_matrix_script)s -m Dprime -n %(dependencies)s',
+                                'mv {initial} %(targets)s'.format(initial=matrix_out_initial)],}
+
 def main(args):
 
     run(globals(), args, args.to_run)
@@ -285,6 +365,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.qc_window_size is None:
         args.qc_window_size = get_middle_value(args.window_sizes)
+    if 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):
+        sys.exit('If you want to calculate linkage matrices (-m/--calculate-matrices) '
+                 'you must specify the desired resolution using -s/--matrix-sizes')
 
     if not args.output_dir:
         args.output_dir = os.getcwd()
