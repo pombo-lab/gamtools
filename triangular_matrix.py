@@ -6,7 +6,9 @@ import argparse
 parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
 parser.add_argument('-t', '--triangular-matrix', required=True, help='An npz file containing co-segregation frequencies to convert to correlations')
 parser.add_argument('-c', '--chrom', required=True, help='An npz file containing co-segregation frequencies to convert to correlations')
+parser.add_argument('-s', '--skip', default=None, type=int, help='rows/columns at the end or beginning to skip')
 parser.add_argument('-w', '--windows-file', required=True, help='An npz file containing co-segregation frequencies to convert to correlations')
+parser.add_argument('--no-threshold', action='store_true', help='Do not apply a threshold when converting')
 
 args = parser.parse_args()
 
@@ -24,9 +26,10 @@ def open_triangular_matrix(filepath):
     full_array[:] = np.NAN
     full_array[lower_i] = list(itertools.chain(*arr))
     full_array[upper_i] = full_array.T[upper_i]
-    full_array[full_array > 1.] = np.NAN
+    if not args.no_threshold:
+        full_array[full_array > 1.] = np.NAN
     
-    return full_array
+    return full_array[:args.skip, :args.skip]
 
 def open_windows(filepath, chrom):
     data = pd.read_csv(filepath, delim_whitespace=True, header=None)
