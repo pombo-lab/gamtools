@@ -20,7 +20,6 @@ setup(
     ext_modules = cythonize("GamTools/coseg_3.pyx"),
     entry_points = {'EIYBrowse.filetypes': [
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
-                        'gam_npz_folder = GamTools.segmentation:GamNpzFolder', 
                     ]
                    },
     long_description=read('README'),
