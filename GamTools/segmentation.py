@@ -4,7 +4,7 @@ import itertools
 import os
 import glob
 from .cosegregation import Dprime
-from .coseg_3 import cosegregation_frequency_3
+from .coseg_3 import cosegregation_frequency_3, coseg_explicit_2_cy, coseg_explicit_3_cy
 #from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
 
 class InvalidChromError(Exception):
@@ -19,12 +19,6 @@ def open_segmentation(path_or_buffer):
 
 def cosegregation_frequency(samples):
     """Take a table of n columns and return the co-segregation frequencies"""
-
-    if samples.shape[0] == 2:
-        return fast_cosegregation_frequency(samples)
-
-    elif samples.shape[0] == 3:
-        return cosegregation_frequency_3(samples.T)
 
     counts_shape = (2,) * samples.shape[0] 
 
@@ -65,16 +59,22 @@ def get_index_combinations(regions):
 def get_cosegregation_freqs(*regions):
 
     if len(regions) == 1:
-
         regions = regions * 2
+
+    if len(regions) == 2:
+        coseg_func = fast_cosegregation_frequency
+    elif len(regions) == 3:
+        coseg_func = cosegregation_frequency_3
+    else:
+        coseg_func = cosegregation_frequency
 
     combinations = get_index_combinations(regions)
 
-    full_data = np.concatenate(regions, axis=0).transpose().astype(int)
+    full_data = np.concatenate(regions, axis=0).astype(int)
     
     def get_frequency(indices):
 
-        return cosegregation_frequency(full_data[:, indices].T)
+        return coseg_func(full_data[indices, :])
 
     result = map(get_frequency, combinations)
 
@@ -84,6 +84,50 @@ def get_cosegregation_freqs(*regions):
 
     return freqs
 
+def coseg_explicit_2(seg1, seg2):
+
+    counts = np.zeros((2,2))
+
+    for i in range(len(seg1)):
+
+        counts[seg1[i], seg2[i]] += 1
+
+    return counts
+
+def get_cosegregation_freqs_explicit_2(region_1, region_2):
+
+    result = []
+    res_append = result.append
+
+    for xi, yi in itertools.product(range(len(region_1)), range(len(region_2))):
+        res_append(coseg_explicit_2_cy(region_1[xi], region_2[yi]))
+
+    result_shape = (len(region_1), len(region_2), 2, 2)
+
+    freqs = np.array(result).reshape(result_shape)
+
+    return freqs
+
+
+def get_cosegregation_freqs_explicit_3(region_1, region_2, region_3):
+
+    result = []
+    res_append = result.append
+
+    for xi, yi, zi in itertools.product(xrange(len(region_1)),
+                                        xrange(len(region_2)),
+                                        xrange(len(region_3))):
+
+        res_append(coseg_explicit_3_cy(region_1[xi],
+                                       region_2[yi],
+                                       region_3[zi]))
+
+    result_shape = (len(region_1), len(region_2), len(region_3),
+                    2, 2, 2)
+
+    freqs = np.array(result).reshape(result_shape)
+
+    return freqs
 
 def map_freqs(func, fqs):
     old_shape = fqs.shape
