@@ -3,6 +3,7 @@ import pandas as pd
 import itertools
 import os
 from .cosegregation import Dprime
+from .cosegregation_internal import dprime_2d, dprime_3d
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
@@ -16,9 +17,6 @@ def open_segmentation(path_or_buffer):
 
 def cosegregation_frequency(samples):
     """Take a table of n columns and return the co-segregation frequencies"""
-
-    if samples.shape[0] == 2:
-        return fast_cosegregation_frequency(samples)
 
     counts_shape = (2,) * samples.shape[0] 
 
@@ -42,7 +40,6 @@ def fast_cosegregation_frequency(samples):
                       marga - coseg, 
                       coseg]])
 
-
 def get_index_combinations(regions):
 
     indexes = []
@@ -60,16 +57,22 @@ def get_index_combinations(regions):
 def get_cosegregation_freqs(*regions):
 
     if len(regions) == 1:
-
         regions = regions * 2
+
+    if len(regions) == 2:
+        coseg_func = fast_cosegregation_frequency
+    elif len(regions) == 3:
+        coseg_func = cosegregation_frequency_3
+    else:
+        coseg_func = cosegregation_frequency
 
     combinations = get_index_combinations(regions)
 
-    full_data = np.concatenate(regions, axis=0)
+    full_data = np.concatenate(regions, axis=0).astype(int)
     
     def get_frequency(indices):
 
-        return cosegregation_frequency(full_data[indices, :])
+        return coseg_func(full_data[indices, :])
 
     result = map(get_frequency, combinations)
 
@@ -78,7 +81,6 @@ def get_cosegregation_freqs(*regions):
     freqs = np.array(result).reshape(result_shape)
 
     return freqs
-
 
 def map_freqs(func, fqs):
     old_shape = fqs.shape
@@ -145,7 +147,7 @@ def region_from_location_string(segmentation_data, loc_string):
     return segmentation_data.iloc[ix_start:ix_stop,]
 
 
-def get_matrix(segmentation_data, *location_strings, **kwargs):
+def get_dprime(segmentation_data, *location_strings, **kwargs):
 
     def get_region(loc_string):
 
@@ -153,23 +155,32 @@ def get_matrix(segmentation_data, *location_strings, **kwargs):
 
     regions = map(get_region, location_strings)
 
-    return get_matrix_from_regions(*regions, **kwargs)
+    return get_dprime_from_regions(*regions, **kwargs)
 
 
-def get_matrix_from_regions(*regions, **kwargs):
-
-    defaults = {'method' : Dprime,
-               }
-
-    defaults.update(kwargs)
-    
-    method = defaults['method']
+def get_dprime_n_dimension(*regions):
 
     freqs = get_cosegregation_freqs(*regions)
 
-    matrix = map_freqs(method, freqs)
+    matrix = map_freqs(Dprime, freqs)
 
     return matrix
+
+def get_dprime_from_regions(*regions):
+
+    if len(regions) == 1:
+        regions = regions * 2
+         
+    regions = [np.array(r.astype(int)) for r in regions]
+
+    if len(regions) == 2:
+        dprime_func = dprime_2d
+    elif len(regions) == 3:
+        dprime_func = dprime_3d
+    else:
+        dprime_func = get_dprime_n_dimension
+
+    return dprime_func(*regions)
 
 
 def get_marginals(region):
@@ -200,5 +211,4 @@ class GamSegmentationFile(object):
         ix_start, ix_stop = index_from_interval(self.data, interval)
         region = self.data.iloc[ix_start:ix_stop,]
                 
-        return get_matrix_from_regions(region, method=self.method), feature
-
+        return get_dprime_from_regions(region), feature
