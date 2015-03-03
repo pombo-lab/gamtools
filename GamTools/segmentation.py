@@ -3,11 +3,8 @@ import pandas as pd
 import itertools
 import os
 from .cosegregation import Dprime
-<<<<<<< HEAD
-=======
 from .coseg_3 import cosegregation_frequency_3, coseg_explicit_2_cy, coseg_explicit_3_cy
 #from EIYBrowse.filetypes.my5c_folder import My5CFolder, My5cFile
->>>>>>> cythonizing
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
