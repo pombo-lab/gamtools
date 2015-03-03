@@ -174,7 +174,10 @@ def task_get_segmentation_bigbed(args):
             yield {
                 'basename' : 'Getting segmentation bigBed',
                 'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
-                'actions'  : ['bedToBigBed %(dependencies)s %(genome_file)s %(targets)s',],
+                # If the input bed is empty, bedToBigBed will fail. We can force it not to return an
+                # error code, but we must touch the target first to ensure it gets created.
+                'actions'  : ['touch %(targets)s',
+                              'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || true',],
                 'targets'  : [with_extension(input_fastq, ".segmentation_{0}bp.bb".format(window_size))],
                 'file_dep' : [with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
                   }

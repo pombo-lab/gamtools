@@ -16,16 +16,22 @@ for fi in sys.argv[1:]:
                 results[fields[0] + '_single'] = int(fields[4])
                 results[fields[0] + '_multiple'] = int(fields[6])
                 results['no_reads'] = int(fields[1])
+        
+    if not len(results):
+        data = ['0'] * 5
 
-    try:
-        data = [results['Mouse_single'],
-                results['Mouse_multiple'],
-                results['Human_single'] + results['Human_multiple']]
-    except:
-        sys.exit('Malformed file: {0}'.format(fi))
+    else:
 
-    data.append(results['no_reads'] - sum(data) - results['unmapped'])
-    data.append(results['unmapped'])
-    data = map(lambda i:str(i / float(sum(data))),data)
+        try:
+            data = [results['Mouse_single'],
+                    results['Mouse_multiple'],
+                    results['Human_single'] + results['Human_multiple']]
+        except:
+            sys.exit('Malformed file: {0}'.format(fi))
+
+        data.append(results['no_reads'] - sum(data) - results['unmapped'])
+        data.append(results['unmapped'])
+        data = map(lambda i:str(i / float(sum(data))),data)
+
     data = [sample] + data
     print '\t'.join(data)
