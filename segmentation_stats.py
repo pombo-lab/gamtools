@@ -17,7 +17,10 @@ def proportion_with_neighbours(block_list):
         if k and len(g) > 1:
             no_with_neighbours += len(g)
             
-    return float(no_with_neighbours) / sum(block_list)
+    try:
+        return float(no_with_neighbours) / sum(block_list)
+    except ZeroDivisionError:
+        return 0.
 
 def extract_sample_name(path):
     return os.path.basename(path).split('.')[0]
