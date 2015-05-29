@@ -113,13 +113,13 @@ def threshold_n_binom(params, p_value, thresh_range=range(500)):
     index = bisect_left(prob_dist[::-1], p_value)
     return thresh_range[::-1][index]
 
-def fit_histogram(breaks, counts):
+def fit_histogram(breaks, counts, initial_params=(6.89799811e-01,   5.08503431e-01,
+                                      2.69945316,  0.23982432,
+                                      0.15)):
     old_stdout = sys.stdout
     with open(os.devnull, "w") as sys.stdout:
         params = fmin(cf.squared_difference, 
-                                 (6.89799811e-01,   5.08503431e-01,
-                                      2.69945316,  0.23982432,
-                                      0.15),
+                                 initial_params,
                                  (n_binom_plus_log_normal, breaks, counts / float(sum(counts))),
                                  xtol=0.00001, ftol=0.00001 )
     sys.stdout = old_stdout
