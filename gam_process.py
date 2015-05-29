@@ -39,6 +39,7 @@ parser.set_defaults(python_exec=sys.executable,
                     contamination_script=get_script('extract_contamination.py'),
                     quality_script=get_script('extract_fastqc.py'),
                     segmentation_stats_script=get_script('segmentation_stats.py'),
+                    normalization_script=get_script('normalise_bedgraph.py'),
                     stats_merge_script=get_script('merge_stats.py'),
                     pass_qc_script=get_script('pass_qc.py'),
                     filter_script=get_script('select_samples.py'),
@@ -107,6 +108,17 @@ def task_make_bedgraph(args):
                 "file_dep" : [with_extension(input_fastq, ".rmdup.bam")],
               }
 
+def task_normalize_bedgraph(args):
+    for input_fastq in args.input_fastqs:
+        yield {
+                "name"     : input_fastq,
+                "basename" : 'Normalizing bedgraph',
+                "actions"  : ['%(python_exec)s %(normalization_script)s %(dependencies)s $(grep $(basename %(dependencies)s | sed "s/\..*$//") mapping_stats.txt | cut -f 4) > %(targets)s'],
+                "targets"  : [with_extension(input_fastq, ".normalized.bedgraph")],
+                "file_dep" : [with_extension(input_fastq, ".bedgraph")],
+                "task_dep" : ['mapping_stats'],
+              }
+
 def task_make_bigwig(args):
     for input_fastq in args.input_fastqs:
         yield {
@@ -116,7 +128,7 @@ def task_make_bigwig(args):
                               'then bedGraphToBigWig %(dependencies)s %(genome_file)s %(targets)s; '
                               'else cp %(empty_bw)s %(targets)s; fi'],
                 "targets"  : [with_extension(input_fastq, ".bw")],
-                "file_dep" : [with_extension(input_fastq, ".bedgraph")],
+                "file_dep" : [with_extension(input_fastq, ".normalized.bedgraph")],
               }
 
 def task_get_coverage(args):
