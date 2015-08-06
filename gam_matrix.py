@@ -38,7 +38,7 @@ def query_yes_no(question, default="yes"):
 
 def get_npz_path(args):
 
-    return args.segmentation_file + '.freqs.' + args.region
+    return args.segmentation_file + '.dprime.' + args.region
 
 def chrom_main(args):
 
@@ -46,11 +46,11 @@ def chrom_main(args):
     print 'starting calculation for', args.region
     start_time = time.clock()
     region = segmentation.region_from_location_string(data, args.region)
-    freqs = segmentation.get_cosegregation_freqs(region)
+    matrix = segmentation.get_dprime_from_regions(region)
     windows = np.array(list(region.index))
     npz_path = get_npz_path(args)
-    np.savez_compressed(npz_path, freqs=freqs, windows=windows)
-    region_shape = freqs.shape
+    np.savez_compressed(npz_path, scores=matrix, windows=windows)
+    region_shape = matrix.shape
     print 'region size is: {0} x {1}'.format(*region_shape), 
     print 'Calculation took {0}s'.format(time.clock() - start_time)
     print 'Done!'
