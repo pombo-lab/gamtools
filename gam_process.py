@@ -196,7 +196,8 @@ def task_get_segmentation_bigbed(args):
 
 def fastqc_data_file(input_fastq):
     
-    base_folder = '.'.join(input_fastq.split('.')[:-1])
+    base_folder = input_fastq.split('.')[0]
+    #base_folder = '.'.join(input_fastq.split('.')[:-1])
 
     fastqc_folder = base_folder + '_fastqc'
 
@@ -248,7 +249,9 @@ def task_mapping_stats(args):
                             nlines=$(zcat ${fq} | wc -l);
                             nreads=$(echo "${nlines} / 4" | bc);
                             nmap=$(samtools view -c ${fq%%.*}.bam);
+                            if [ -z $nmap ]; then $nmap=0; fi;
                             nnodup=$(samtools view -c ${fq%%.*}.rmdup.bam);
+                            if [ -z $nnodup ]; then $nnodup=0; fi;
                             echo "${sample%%%%.*}\t${nreads}\t${nmap}\t${nnodup}"; 
                          done >> %(targets)s"""],
             'targets' : [os.path.join(args.output_dir, 'mapping_stats.txt')],
