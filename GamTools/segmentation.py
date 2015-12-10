@@ -3,7 +3,7 @@ import pandas as pd
 import itertools
 import os
 from .cosegregation import Dprime
-from .cosegregation_internal import dprime_2d, dprime_3d
+from .cosegregation_internal import dprime_2d, d_3d, cosegregation_3d
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
@@ -62,7 +62,7 @@ def get_cosegregation_freqs(*regions):
     if len(regions) == 2:
         coseg_func = fast_cosegregation_frequency
     elif len(regions) == 3:
-        coseg_func = cosegregation_frequency_3
+        coseg_func = cosegregation_3d
     else:
         coseg_func = cosegregation_frequency
 
@@ -176,7 +176,7 @@ def get_dprime_from_regions(*regions):
     if len(regions) == 2:
         dprime_func = dprime_2d
     elif len(regions) == 3:
-        dprime_func = dprime_3d
+        dprime_func = d_3d
     else:
         dprime_func = get_dprime_n_dimension
 

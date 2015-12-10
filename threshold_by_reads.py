@@ -95,8 +95,16 @@ def filter_data(x, percentile, no_zeros=True):
         
     else:
         points_to_keep = less_than_percentile
+
+    out_data = x[points_to_keep]
+
+    if len(out_data):
         
-    return x[points_to_keep]
+        return out_data
+
+    else:
+
+        return x[not_a_zero]
 
 def threshold_n_binom(params, p_value, thresh_range=range(500)):
     
@@ -257,7 +265,10 @@ if __name__ == '__main__':
         else:
             plot_path = None
 
-        read_threshold = get_threshold(data, i, sample_name, plot_path)
+        try:
+            read_threshold = get_threshold(data, i, sample_name, plot_path)
+        except IndexError:
+            import pdb; pdb.set_trace()
         
         above_threshold = data.iloc[:,i] > read_threshold
         
