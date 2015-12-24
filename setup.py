@@ -16,7 +16,7 @@ setup(
     author_email = "rob@beagrie.com",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
-    packages=['GamTools', 'wrapit'],
+    packages=['GamTools', 'wrapit', 'doit'],
     ext_modules = cythonize("GamTools/cosegregation_internal.pyx"),
     entry_points = {'EIYBrowse.filetypes': [
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
