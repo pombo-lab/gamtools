@@ -1,10 +1,12 @@
 import sys
 import os
 
-header = ['Mouse_single', 'Mouse_multiple', 'Human', 'Other', 'Unmapped']
+header = ['Sample', 'Mouse_single', 'Mouse_multiple', 'Human', 'Other', 'Unmapped']
 print '\t'.join(header)
 for fi in sys.argv[1:]:
     sample = os.path.basename(fi).split('.')[0]
+    if sample[-7:] == '_screen':
+        sample = sample[:-7]
     with open(fi) as screen_results:
         results = {}
         for line in screen_results:
@@ -32,6 +34,7 @@ for fi in sys.argv[1:]:
         data.append(results['no_reads'] - sum(data) - results['unmapped'])
         data.append(results['unmapped'])
         data = map(lambda i:str(i / float(sum(data))),data)
+
 
     data = [sample] + data
     print '\t'.join(data)
