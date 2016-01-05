@@ -6,7 +6,7 @@ import os
 import sys
 
 
-parser.description='Map GAM-seq reads and create BigWigs and fastQC files'
+parser.description='Map GAM-seq reads and call positive windows'
 parser.add_argument('input_fastqs', metavar='INPUT_FASTQ', nargs='+', help='One or more input fastq files.')
 parser.add_argument('-g','--genome_file', metavar='GENOME_FILE', required=True, 
                     help='File containing chromosome names and lengths')
@@ -15,17 +15,17 @@ parser.add_argument('-f','--fittings_dir', metavar='FITTINGS_DIR', help='Write s
 parser.add_argument('-i','--bigwigs', action='append_const',
                     dest='to_run', const='Converting bedgraph to bigwig', help='Make bigWig files.')
 parser.add_argument('-b','--bigbeds', action='append_const',
-                    dest='to_run', const='Getting segmentation bigBed', help='Make bed files for segmentation')
+                    dest='to_run', const='Getting segmentation bigBed', help='Make bed files of positive windows')
 parser.add_argument('-c','--do-qc', action='append_const',
-                    dest='to_run', const='do_qc', help='Run various qc scripts.')
-parser.add_argument('-w','--window-sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='File containing chromosome names and lengths')
+                    dest='to_run', const='do_qc', help='Perform sample quality control.')
+parser.add_argument('-w','--window-sizes', metavar='WINDOW_SIZE', default=[1000,5000,10000,50000,100000,500000], type=int, nargs='+', help='One or more window sizes for calling positive windows')
 parser.add_argument('-m','--calculate-matrices', action='append_const',
                     dest='to_run', const='Calculating linkage matrix', help='Calculate linkage matrices.')
 parser.add_argument('-s','--matrix-sizes', metavar='MATRIX_SIZE', default=[], type=int, nargs='+', help='Resolutions for which linkage matrices should be produced.')
 parser.add_argument('--qc-window-size', type=int, help='Use this window size for qc (default is median window size).')
 parser.add_argument('--additional-qc-files', nargs='*', default=[],
                     help='Any additional qc files to filter on')
-parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=0, type=int, help='Filter out any mapped read with a mapping quality less than x (default is not to filter based on quality')
+parser.add_argument('-q','--minimum-mapq', metavar='MINIMUM_MAPQ', default=20, type=int, help='Filter out any mapped read with a mapping quality less than x (default is 20, use -q 0 for no filtering)')
 
 def get_middle_value(_list):
     return sorted(_list)[len(_list)/2]
