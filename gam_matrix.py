@@ -55,7 +55,7 @@ def chrom_main(args):
     print 'Calculation took {0}s'.format(time.clock() - start_time)
     print 'Done!'
 
-parser = argparse.ArgumentParser(description='Generate GAM heat maps from a table of positive windows by NP.')
+parser = argparse.ArgumentParser(description='Generate GAM normalized linkage disequilibrium heat maps from a table of positive windows by NP.')
 parser.add_argument('-r','--region', metavar='REGION', required=True, help='Specific genomic region to calculate matrices for')
 parser.add_argument('-s', '--segmentation_file', required=False, help='A segmentation file to use as input')
 parser.set_defaults(func=chrom_main)

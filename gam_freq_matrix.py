@@ -70,7 +70,7 @@ def chrom_main(args):
     print 'Calculation took {0}s'.format(time.clock() - start_time)
     print 'Done!'
 
-parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
+parser = argparse.ArgumentParser(description='Generate GAM co-segregation heat maps from a table of positive windows by NP.')
 parser.add_argument('-r','--region', metavar='REGION', help='Specific genomic region to calculate matrices for', default=None)
 parser.add_argument('-i1','--index1', metavar='START-STOP', help='First set of indices to calculate co-segregation for.', default=None)
 parser.add_argument('-i2','--index2', metavar='START-STOP', help='Second set of indices to calculate co-segregation for.', default=None)

@@ -3,7 +3,7 @@ import argparse
 import sys
 import pandas as pd
 
-parser = argparse.ArgumentParser(description='Calculate coverage over different window sizes for a list of bam files.')
+parser = argparse.ArgumentParser(description='Convert gam heatmap in npz format to txt format.')
 parser.add_argument('-n', '--npz_frequencies_file', required=True, help='An npz file containing co-segregation frequencies to convert to correlations')
 
 args = parser.parse_args()
