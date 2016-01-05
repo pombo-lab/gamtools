@@ -9,11 +9,21 @@ args = parser.parse_args()
 
 stats_data = pd.read_csv(args.stats_file, index_col=0, delim_whitespace=True)
 
-right_type = (stats_data.Type == '1NP')
+enough_mapped_reads = (stats_data.Reads_mapped / stats_data.Reads_sequenced) > 0.15
 
-enough_mapped_reads = (stats_data.Unique_reads_mapped / stats_data.Reads_sequenced) > 0.05
+if 'Type' in stats_data.columns:
+    right_type = (stats_data.Type == '1NP')
+else:
+    sys.stderr.write('No "Type" column found, assuming all samples are NPs\n')
+    right_type = True
 
-not_contaminated = ((stats_data.Mouse_multiple + stats_data.Mouse_single) > stats_data.Human)
+missing_contam_cols = [col for col in ['Mouse_multiple', 'Mouse_single', 'Human'] if col not in stats_data.columns]
+if len(missing_contam_cols) == 0:
+    # not_contaminated = ((stats_data.Mouse_multiple + stats_data.Mouse_single) > stats_data.Human)
+    not_contaminated = True
+else:
+    sys.stderr.write('Missing QC columns: {}, check your fastqc_screen configuration\n'.format(missing_contam_cols))
+    not_contaminated = True
 
 pd.Series(stats_data[right_type &
            not_contaminated &
