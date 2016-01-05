@@ -1,5 +1,5 @@
 import os
-from distutils.core import setup
+from setuptools import setup
 from Cython.Build import cythonize
 
 # Utility function to read the README file.
@@ -16,7 +16,8 @@ setup(
     author_email = "rob@beagrie.com",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
-    packages=['GamTools', 'wrapit', 'doit'],
+    packages=['GamTools', 'wrapit', 'doit', 'CurveFitting'],
+    install_requires = ['numpy', 'pandas', 'scipy'],
     ext_modules = cythonize("GamTools/cosegregation_internal.pyx"),
     entry_points = {'EIYBrowse.filetypes': [
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
