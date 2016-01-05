@@ -12,7 +12,7 @@ from bisect import bisect_left
 import argparse
 import pandas as pd
 
-parser = argparse.ArgumentParser(description='plot coverage over different window sizes for a list of bam files.')
+parser = argparse.ArgumentParser(description='Identify positive windows from a table of read coverage per window per NP.')
 parser.add_argument('input_file', metavar='INPUT_FILE', help='Input coverage file')
 parser.add_argument('-f','--fitting-folder', metavar='FITTING_FOLDER', default=False, help='If specified, save the individual curve fittings to this folder')
 

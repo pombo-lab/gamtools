@@ -43,10 +43,9 @@ parser.set_defaults(python_exec=sys.executable,
                     stats_merge_script=get_script('merge_stats.py'),
                     pass_qc_script=get_script('pass_qc.py'),
                     filter_script=get_script('select_samples.py'),
-                    freq_matrix_script=get_script('gam_matrix.py'),
-                    linkage_matrix_script=get_script('distance_matrix.py'),
-                    linkage_matrix_dir='matrices/Dprime',
-                    frequency_matrix_dir='matrices/freq',
+                    linkage_matrix_script=get_script('gam_matrix.py'),
+                    linkage_matrix_dir='matrices/dprime',
+                    #TODO: Create empty bigwig on the fly if needed
                     empty_bw='/home/rbeagrie/scripts/pombo_rnaseq/mm9_empty.bw',
                     default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                    'quality_stats.txt', 'segmentation_stats.txt'],
@@ -208,11 +207,25 @@ def task_run_fastqc(args):
         yield {
                 "name"     : input_fastq,
                 "basename" : 'Running fastqc',
-                "actions"  : ['fastqc %(dependencies)s',
-                              'head %(targets)s'],
+                "actions"  : ['fastqc %(dependencies)s'],
                 "targets"  : [fastqc_data_file(input_fastq)],
                 "file_dep" : [input_fastq],
               }
+
+def fastq_screen_file(input_fastq):
+    
+    path_parts = input_fastq.split('.')
+
+    if path_parts[-1] == 'gz':
+        path_parts.pop()
+
+    if path_parts[-1] in ['txt','seq','fastq','fq']:
+        path_parts.pop()
+
+    path_parts[-1] += '_screen'
+    path_parts.append('txt')
+
+    return '.'.join(path_parts)
 
 def task_run_fastq_screen(args):
     for input_fastq in args.input_fastqs:
@@ -220,12 +233,12 @@ def task_run_fastq_screen(args):
                 "name"     : input_fastq,
                 "basename" : 'Running fastq_screen',
                 "actions"  : ['fastq_screen %(dependencies)s'],
-                "targets"  : [input_fastq + '_screen.txt'],
+                "targets"  : [fastq_screen_file(input_fastq)],
                 "file_dep" : [input_fastq],
               }
 
 def task_extract_contamination(args):
-    fastq_screen_files = [ input_fastq + '_screen.txt' for input_fastq in args.input_fastqs ]
+    fastq_screen_files = [ fastq_screen_file(input_fastq) for input_fastq in args.input_fastqs ]
     return {
             'actions' : ['%(python_exec)s %(contamination_script)s %(dependencies)s > %(targets)s'],
             'targets' : [os.path.join(args.output_dir, 'contamination_stats.txt')],
@@ -304,35 +317,6 @@ def task_do_qc():
     return {'actions': None,
             'task_dep': ['Filtering out failed qc samples']}
 
-def task_freq_matrices(args):
-
-    chroms = ['chr{0}'.format(c) for c in range(1,20)]
-
-    for window_size in args.matrix_sizes:
-
-        for chrom in chroms:
-
-            if 'do_qc' in args.to_run:
-                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))
-            else:
-                segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
-
-            matrix_out_initial = '{seg_file}.freqs.{chrom}.npz'.format(seg_file=segmentation_file,
-                                                                    chrom=chrom)
-
-            matrix_out_final = os.path.join(args.output_dir,
-                                            args.frequency_matrix_dir,
-                                            '{0}bp'.format(window_size),
-                                            os.path.basename(matrix_out_initial))
-
-            yield {'basename' : 'Calculating co-segregation matrix',
-                   'name'     : '{0} at {1}bp'.format(chrom, window_size),
-                   'targets'  : [matrix_out_final],
-                   'file_dep' : [segmentation_file],
-                   'actions' : ['mkdir -p $(dirname %(targets)s)',
-                                '%(python_exec)s %(freq_matrix_script)s -s %(dependencies)s -r {chrom}'.format(chrom=chrom),
-                                'mv {initial} %(targets)s'.format(initial=matrix_out_initial)],}
-
 def task_linkage_matrices(args):
 
     chroms = ['chr{0}'.format(c) for c in range(1,20)]
@@ -346,32 +330,20 @@ def task_linkage_matrices(args):
             else:
                 segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
 
-            matrix_in_fname = '{seg_file}.freqs.{chrom}.npz'.format(seg_file=segmentation_file,
+            matrix_out_initial = '{seg_file}.dprime.{chrom}.npz'.format(seg_file=segmentation_file,
                                                                     chrom=chrom)
-            matrix_in_path = os.path.join(args.output_dir,
-                                          args.frequency_matrix_dir,
-                                          '{0}bp'.format(window_size),
-                                          os.path.basename(matrix_in_fname))
 
-            matrix_out_fname = '{seg_file}.Dprime.{chrom}.npz'.format(seg_file=segmentation_file,
-                                                                    chrom=chrom)
-            matrix_out_initial = os.path.join(args.output_dir,
-                                          args.frequency_matrix_dir,
-                                          '{0}bp'.format(window_size),
-                                          os.path.basename(matrix_out_fname))
-
-
-            matrix_out_path = os.path.join(args.output_dir,
-                                           args.linkage_matrix_dir,
-                                           '{0}bp'.format(window_size),
+            matrix_out_final = os.path.join(args.output_dir,
+                                            args.linkage_matrix_dir,
+                                            '{0}bp'.format(window_size),
                                             os.path.basename(matrix_out_initial))
 
             yield {'basename' : 'Calculating linkage matrix',
                    'name'     : '{0} at {1}bp'.format(chrom, window_size),
-                   'targets'  : [matrix_out_path],
-                   'file_dep' : [matrix_in_path],
+                   'targets'  : [matrix_out_final],
+                   'file_dep' : [segmentation_file],
                    'actions' : ['mkdir -p $(dirname %(targets)s)',
-                                '%(python_exec)s %(linkage_matrix_script)s -m Dprime -n %(dependencies)s',
+                                '%(python_exec)s %(linkage_matrix_script)s -s %(dependencies)s -r {chrom}'.format(chrom=chrom),
                                 'mv {initial} %(targets)s'.format(initial=matrix_out_initial)],}
 
 def main(args):
