@@ -40,6 +40,7 @@ parser.set_defaults(python_exec=sys.executable,
                     quality_script=get_script('extract_fastqc.py'),
                     segmentation_stats_script=get_script('segmentation_stats.py'),
                     normalization_script=get_script('normalise_bedgraph.py'),
+                    mapping_stats_script=get_script('mapping_stats.sh'),
                     stats_merge_script=get_script('merge_stats.py'),
                     pass_qc_script=get_script('pass_qc.py'),
                     filter_script=get_script('select_samples.py'),
@@ -255,20 +256,10 @@ def task_extract_quality(args):
 
 def task_mapping_stats(args):
     return {
-            'actions' : ['echo "Sample\tReads_sequenced\tReads_mapped\tUnique_reads_mapped" > %(targets)s',
-                         """for fq in %(dependencies)s; 
-                         do 
-                            sample=$(basename $fq);
-                            nlines=$(zcat ${fq} | wc -l);
-                            nreads=$(echo "${nlines} / 4" | bc);
-                            nmap=$(samtools view -c ${fq%%.*}.bam);
-                            if [ -z $nmap ]; then $nmap=0; fi;
-                            nnodup=$(samtools view -c ${fq%%.*}.rmdup.bam);
-                            if [ -z $nnodup ]; then $nnodup=0; fi;
-                            echo "${sample%%%%.*}\t${nreads}\t${nmap}\t${nnodup}"; 
-                         done >> %(targets)s"""],
+            'actions' : ['%(mapping_stats_script)s %(dependencies)s > %(targets)s'],
             'targets' : [os.path.join(args.output_dir, 'mapping_stats.txt')],
-            'file_dep' : args.input_fastqs,
+            'file_dep' : (args.input_fastqs + 
+                          [with_extension(input_fastq, ".rmdup.bam") for input_fastq in args.input_fastqs]),
            }
 
 def task_segmentation_stats(args):
@@ -300,15 +291,19 @@ def task_samples_passing_qc(args):
            }
 
 def task_filter_segmentation(args):
+
+    passqc_file = os.path.join(args.output_dir, 'pass_qc.txt')
+
     for window_size in args.window_sizes:
 
         segmentation_file = os.path.join(args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+
         task = {
             'basename' : 'Filtering out failed qc samples',
             'name'     : '{0}bp'.format(window_size),
             'targets'  : [os.path.join(args.output_dir, 'segmentation_at_{0}bp.passqc.multibam'.format(window_size))],
-            'file_dep' : [os.path.join(args.output_dir, 'pass_qc.txt')],
-            'actions'  : [ 'cat %(dependencies)s | xargs %(python_exec)s %(filter_script)s -s {seg_file} -g -n > %(targets)s'.format(seg_file=segmentation_file)]
+            'file_dep' : [passqc_file, segmentation_file],
+            'actions'  : [ 'cat {passqc} | xargs %(python_exec)s %(filter_script)s -s {seg_file} -g -n > %(targets)s'.format(seg_file=segmentation_file, passqc=passqc_file)]
             }
 
         yield task
@@ -319,6 +314,7 @@ def task_do_qc():
 
 def task_linkage_matrices(args):
 
+    #TODO: Allow specification of which chromosomes to generate matrices for
     chroms = ['chr{0}'.format(c) for c in range(1,20)]
 
     for window_size in args.matrix_sizes:
