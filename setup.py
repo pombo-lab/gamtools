@@ -1,6 +1,7 @@
 import os
-from distutils.core import setup
+from setuptools import setup
 from Cython.Build import cythonize
+import numpy
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -18,6 +19,7 @@ setup(
     license = "BSD",
     packages=['GamTools'],
     ext_modules = cythonize("GamTools/cosegregation_internal.pyx"),
+    include_dirs=[numpy.get_include()],
     entry_points = {'EIYBrowse.filetypes': [
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
                     ]
