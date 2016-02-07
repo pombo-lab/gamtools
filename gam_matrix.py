@@ -2,7 +2,7 @@ import argparse
 import sys
 import time
 import numpy as np
-from GamTools import segmentation
+from GamTools import segmentation, cosegregation
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -46,7 +46,7 @@ def chrom_main(args):
     print 'starting calculation for', args.region
     start_time = time.clock()
     region = segmentation.region_from_location_string(data, args.region)
-    matrix = segmentation.get_dprime_from_regions(region)
+    matrix = cosegregation.get_dprime_from_regions(region)
     windows = np.array(list(region.index))
     npz_path = get_npz_path(args)
     np.savez_compressed(npz_path, scores=matrix, windows=windows)

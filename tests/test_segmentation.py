@@ -1,8 +1,6 @@
 from GamTools import segmentation
 import StringIO
 from nose.tools import assert_raises
-from numpy.testing import assert_array_equal
-import numpy as np
 
 fixture_two_samples = StringIO.StringIO("""chrom   start   stop    Sample_A    Sample_B
 chr1    0   50000   0   0
@@ -17,47 +15,6 @@ chr1    400000  450000  0   0
 """)
 
 data_two_samples = segmentation.open_segmentation(fixture_two_samples)
-
-fixture_two_windows = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
-chr1    0       50000   0 0 0 1 1 1 1 1 1 1
-chr1    50000   100000  0 1 1 0 0 0 1 1 1 1
-""")
-
-data_two_windows = segmentation.open_segmentation(fixture_two_windows)
-
-fixture_window1_only = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
-chr1    0       50000   0 0 0 1 1 1 1 1 1 1
-chr1    50000   100000  0 0 0 0 0 0 0 0 0 0
-""")
-
-data_window1_only = segmentation.open_segmentation(fixture_window1_only)
-
-fixture_window2_only = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
-chr1    0       50000   0 0 0 0 0 0 0 0 0 0
-chr1    50000   100000  0 1 1 0 0 0 1 1 1 1
-""")
-
-data_window2_only = segmentation.open_segmentation(fixture_window2_only)
-
-fixture_three_windows = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j
-chr1    0       50000   0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-chr1    50000   100000  0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-chr1    100000  150000  0 1 1 0 0 0 1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1
-""")
-
-data_three_windows = segmentation.open_segmentation(fixture_three_windows)
-
-fixture_invalid_data = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
-chr1    0       50000   0 0 0 2 1 1 1 1 1 1
-chr1    50000   100000  0 1 1 0 0 0 1 1 1 1
-""")
-
-data_invalid_data = segmentation.open_segmentation(fixture_invalid_data)
 
 #########################################
 #
@@ -122,67 +79,4 @@ def test_invalid_chromosome():
                   segmentation.index_from_interval,
                   data_two_samples,
                   interval)
-
-#########################################
-#
-# segmentation.cosegregation_frequency tests
-#
-#########################################
-
-def test_cosegregation_two_loci():
-    
-    segregation_freqs = segmentation.cosegregation_frequency(np.array(data_two_windows))
-
-    assert_array_equal(segregation_freqs, np.array([[ 1., 2.],
-                                                    [ 3., 4.]]))
-
-def test_cosegregation_three_loci():
-    
-    segregation_freqs = segmentation.cosegregation_frequency(np.array(data_three_windows))
-
-    assert_array_equal(segregation_freqs, np.array([[[ 1., 2.],
-                                                     [ 3., 4.]],
-                                                    [[ 5., 6.],
-                                                     [ 7., 8.]]]))
-
-def test_cosegregation_window1_only():
-
-    segregation_freqs = segmentation.cosegregation_frequency(np.array(data_window1_only))
-
-    print segregation_freqs
-
-    assert_array_equal(segregation_freqs, np.array([[ 3., 0.],
-                                                    [ 7., 0.]]))
-
-def test_cosegregation_window2_only():
-
-    segregation_freqs = segmentation.cosegregation_frequency(np.array(data_window2_only))
-
-    print segregation_freqs
-
-    assert_array_equal(segregation_freqs, np.array([[ 4., 6.],
-                                                    [ 0., 0.]]))
-
-def test_cosegregation_invalid_data():
-
-    assert_raises(IndexError,
-                  segmentation.cosegregation_frequency,
-                  np.array(data_invalid_data))
-
-def test_index_combinations_one_region():
-
-    regions = (['a'] * 3, ['a'] * 3)
-
-    combinations = segmentation.get_index_combinations(regions)
-
-    assert len(list(combinations)) == 9
-
-def test_index_combinations_three_regions():
-
-    regions = (['a'], ['b'] * 2, ['c'] * 3)
-
-    combinations = segmentation.get_index_combinations(regions)
-
-    assert len(list(combinations)) == 6
-
 
