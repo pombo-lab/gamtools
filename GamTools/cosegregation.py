@@ -148,3 +148,9 @@ def get_dprime(segmentation_data, *location_strings):
     regions = [region_from_location_string(segmentation_data, l) for l in location_strings]
 
     return get_dprime_from_regions(*regions)
+
+methods = {
+    'dprime': get_dprime_from_regions,
+    'linkage': get_linkage_from_regions,
+    'cosegregation': get_cosegregation_from_regions,
+}
