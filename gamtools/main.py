@@ -260,5 +260,9 @@ select_parser.add_argument(
     '-n', '--sample-names', metavar='SAMPLE_NAME',
     required=True, nargs='*', help='Names of the samples to remove')
 
-if __name__ == '__main__':
+def main():
     parser.parse_args()
+    
+
+if __name__ == '__main__':
+    main()

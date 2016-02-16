@@ -11,17 +11,22 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "GamTools",
+    name = "gamtools",
     version = "0.0.1",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.com",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
-    packages=['GamTools'],
-    ext_modules = cythonize("GamTools/cosegregation_internal.pyx"),
+    packages=['gamtools'],
+    ext_modules = cythonize("gamtools/cosegregation_internal.pyx"),
     include_dirs=[numpy.get_include()],
-    entry_points = {'EIYBrowse.filetypes': [
-                        'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
+    entry_points = {
+                    # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
+                    #'EIYBrowse.filetypes': [
+                    #    'gam_segmentation_file = gamtools.segmentation:GamSegmentationFile',
+                    #],
+                    'console_scripts': [
+                        'gamtools = gamtools.main:main'
                     ]
                    },
     long_description=read('README'),
