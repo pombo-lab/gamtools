@@ -1,4 +1,4 @@
-from . import cosegregation, matrix, call_windows
+from . import cosegregation, matrix, call_windows, enrichment
 from wrapit.parser import add_doit_options
 import sys
 
@@ -105,17 +105,19 @@ enrichment_parser.add_argument(
     help='A file containing classes assigned to each genomic window')
 
 enrichment_parser.add_argument(
-    '-o', '--output-filename', default='permutation_enrichment_results',
+    '-o', '--output-prefix', default='enrichment_results',
     help='First part of the output file name')
 
 # Either permuting the data or not permuting must be specified
 perm_type = enrichment_parser.add_mutually_exclusive_group(required=True)
 perm_type.add_argument(
-    '-p', '--permutations', default=10, type=int,
+    '-p', '--permutations', default=10, type=int, dest='num_permutations',
     help='Number of times to randomly permute the input file')
 perm_type.add_argument(
-    '-n', '--no-permute', action='store_true',
+    '-n', '--no-permute', action='store_const', const=0, dest='num_permutations',
     help='Do not permute the input file, instead calculate observed counts')
+
+enrichment_parser.set_defaults(func=enrichment.enrichment_from_args)
 
 
 # Options for the 'matrix' command
