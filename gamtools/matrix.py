@@ -25,14 +25,18 @@ def read_npz(filepath):
 
     return windows, contact_matrix
 
-def read_txt(filepath):
+def read_txt(filepath, compression='infer'):
 
-    contact_matrix = pd.read_csv(filepath, sep='\t', index_col=0)
+    contact_matrix = pd.read_csv(filepath, compression=compression, sep='\t', index_col=0)
 
     windows_0 = windows_from_name_strings(contact_matrix.index)
     windows_1 = windows_from_name_strings(contact_matrix.columns)
 
     return (windows_0, windows_1), contact_matrix
+
+def read_zipped_txt(filepath):
+
+    return read_txt(filepath, compression='gzip')
 
 def read_windows(filepath, chrom):
 
@@ -61,6 +65,7 @@ def read_triangular(filepath):
 input_formats = {
         'npz': read_npz,
         'txt': read_txt,
+        'txt.gz': read_txt,
         'triangular': read_triangular,
         # TODO: Convert from interactions csv back into a matrix
         #'csv': '',
@@ -74,6 +79,12 @@ def write_txt(windows, contact_matrix, output_file):
     names_0, names_1 = [get_name_strings(axis_windows) for axis_windows in windows]
 
     pd.DataFrame(contact_matrix, index=names_0, columns=names_1).to_csv(output_file, sep='\t', na_rep="NaN")
+
+def write_zipped_txt(windows, contact_matrix, output_file):
+
+    import gzip
+    with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
+        write_txt(windows, contact_matrix, zipped_output)
 
 def write_npz(windows, contact_matrix, output_file):
 
@@ -92,10 +103,18 @@ def write_csv(windows, contact_matrix, output_file):
         output_cols = ['chrom', 'Pos_A', 'Pos_B', 'dist', 'interaction']
         interactions_df[output_cols].to_csv(output_file, sep='\t', index=False)
 
+def write_zipped_csv(windows, contact_matrix, output_file):
+
+    import gzip
+    with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
+        write_csv(windows, contact_matrix, zipped_output)
+
 output_formats = {
         'npz': write_npz,
         'txt': write_txt,
+        'txt.gz': write_zipped_txt,
         'csv': write_csv,
+        'csv.gz': write_zipped_csv,
 }
 
 def detect_file_type(file_name):
@@ -103,11 +122,16 @@ def detect_file_type(file_name):
     if file_name == '-':
         return 'txt'
 
-    file_name, file_ext = os.path.splitext(file_name)
-    if file_ext == '.gz':
-        file_name, file_ext = os.path.splitext(file_name)
+    file_name = os.path.basename(file_name)
+    file_parts = file_name.split('.')
 
-    file_ext = file_ext[1:]
+    if len(file_parts) == 1:
+        raise ValueError('Could not determine file format, file {} has no extension'.format(file_name))
+
+    file_ext = file_parts[-1]
+
+    if file_ext == 'gz':
+        file_ext = '.'.join(file_parts[-2:])
 
     if file_ext in output_formats.keys():
         return file_ext
