@@ -52,30 +52,42 @@ convert_parser = subparsers.add_parser(
     help='Convert between different GAM matrix formats')
 
 convert_parser.add_argument(
-    'matrix_file', metavar='INPUT_MATRIX',
+    'input_file', metavar='INPUT_MATRIX',
     help='Input matrix file to convert')
 
 convert_parser.add_argument(
-    '-i', '--input-format', metavar='INPUT_FORMAT',
-    choices=matrix.input_formats, required=True,
+    'output_file', metavar='OUTPUT_MATRIX',
+    help='Output matrix file to write to '
+    '(or "-" to write to stdout).')
+
+convert_parser.add_argument(
+    '-i', '--input-format',
+    choices=matrix.input_formats,
     help='Input matrix file format (choose from: {})'.format(
         ', '.join(matrix.input_formats.keys())))
 
 convert_parser.add_argument(
-    '-f', '--output-format', metavar='OUTPUT_FORMAT',
-    choices=matrix.output_formats, required=True,
+    '-o', '--output-format',
+    choices=matrix.output_formats,
     help='Output matrix file format (choose from: {})'.format(
         ', '.join(matrix.output_formats.keys())))
 
 convert_parser.add_argument(
-    '-o', '--output-file', metavar='OUTPUT_FILE',
-    help='Output matrix file. If not specified, new file will have the '
-    'same name as the input file, but with a different extension')
+    '-t', '--thresholds-file', metavar='THRESHOLDS_FILE',
+    help='Thresholds file. If specified, any values lower than the specified'
+    ' thresholds will be masked/excluded from the output file')
 
 convert_parser.add_argument(
-    '-t', '--threshold', metavar='THRESHOLD_FILE',
-    help='Threshold file. If specified, any values lower than the specified'
-    ' threshold will be excluded from the output file')
+    '-w', '--windows-file', metavar='WINDOWS_FILE',
+    help='File containing the genomic locations of matrix bins '
+    '(only required if not specified in input matrix file).')
+
+convert_parser.add_argument(
+    '-r', '--region',
+    help='Region covered by the input matrix '
+    'required if -w/--windows-file is specified')
+
+convert_parser.set_defaults(func=matrix.convert_from_args)
 
 
 # Options for the 'enrichment' command
