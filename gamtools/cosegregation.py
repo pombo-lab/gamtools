@@ -1,8 +1,11 @@
 from .cosegregation_internal import cosegregation_2d, cosegregation_3d, linkage_2d, linkage_3d, dprime_2d
-from .segmentation import region_from_location_string
+from . import segmentation, matrix
+from .utils import format_genomic_distance
 import numpy as np
 import itertools
+import time
 import warnings
+import sys
 
 
 class InvalidDataError(Exception):
@@ -97,7 +100,7 @@ def get_cosegregation_from_regions(*regions):
 
 def get_cosesgregation(segmentation_data, *location_strings):
 
-    regions = [region_from_location_string(segmentation_data, l) for l in location_strings]
+    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
 
     return get_cosegregation_from_regions(*regions)
 
@@ -126,7 +129,7 @@ def get_linkage_from_regions(*regions):
 
 def get_linkage(segmentation_data, *location_strings):
 
-    regions = [region_from_location_string(segmentation_data, l) for l in location_strings]
+    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
 
     return get_linkage_from_regions(*regions)
 
@@ -145,12 +148,93 @@ def get_dprime_from_regions(*regions):
 
 def get_dprime(segmentation_data, *location_strings):
 
-    regions = [region_from_location_string(segmentation_data, l) for l in location_strings]
+    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
 
     return get_dprime_from_regions(*regions)
 
-methods = {
+matrix_types = {
     'dprime': get_dprime_from_regions,
     'linkage': get_linkage_from_regions,
     'cosegregation': get_cosegregation_from_regions,
 }
+
+def get_regions_and_windows(segmentation_data, location_strings):
+
+    if len(location_strings) == 1:
+        location_strings = location_strings * 2
+
+    regions = [segmentation.region_from_location_string(segmentation_data, location_str)
+               for location_str in location_strings]
+
+    windows = [np.array(list(region.index)) for region in regions]
+
+    return regions, windows
+
+def matrix_and_windows_from_segmentation_file(
+    segmentation_file, location_strings, matrix_type='dprime'):
+
+    segmentation_data = segmentation.open_segmentation(segmentation_file)
+
+    regions, windows = get_regions_and_windows(segmentation_data, location_strings)
+    matrix_func = matrix_types[matrix_type]
+    contact_matrix = matrix_func(*regions)
+
+    return contact_matrix, windows
+
+
+def create_and_save_contact_matrix(segmentation_file, location_strings,
+                                   output_file, output_format,
+                                   matrix_type='dprime'):
+
+    print 'starting calculation for {}'.format(' x '.join(location_strings))
+    start_time = time.clock()
+
+    contact_matrix, windows = matrix_and_windows_from_segmentation_file(
+        segmentation_file, location_strings, matrix_type)
+
+    size_string = ' x '.join([str(s) for s in contact_matrix.shape])
+    print 'region size is: {}'.format(size_string),
+    print 'Calculation took {0}s'.format(time.clock() - start_time)
+    print 'Saving matrix to file {}'.format(output_file)
+
+    output_func = matrix.output_formats[output_format]
+
+    output_func(windows, contact_matrix, output_file)
+
+    print 'Done!'
+
+def get_output_file(segmentation_file, location_strings, matrix_type, output_format):
+
+    segmentation_base = '.'.join(segmentation_file.split('.')[:-1])
+    locations = [segmentation.parse_location_string(loc_string)
+                 for loc_string in location_strings]
+    formatted_locations = [(chrom, format_genomic_distance(start), format_genomic_distance(stop))
+                           for chrom, start, stop in locations]
+    formatted_locations = ['{}_{}-{}'.format(*loc) for loc in formatted_locations]
+    region_string = '_x_'.join(formatted_locations)
+
+    return '{}.{}_{}.{}'.format(segmentation_base, region_string, matrix_type, output_format)
+
+def matrix_from_args(args):
+
+    if args.output_format is None:
+        if len(args.regions) > 2:
+            args.output_format = 'npz'
+        elif args.output_file is None:
+            args.output_format = 'txt.gz'
+        elif args.output_file == '-':
+            args.output_format = 'txt'
+        else:
+            args.output_format = matrix.detect_file_type(args.output_file)
+
+    if args.output_file is None:
+        args.output_file = get_output_file(
+            args.segmentation_file, args.regions,
+            args.matrix_type, args.output_format)
+
+    elif args.output_file == '-':
+        args.output_file = sys.stdout
+
+    create_and_save_contact_matrix(args.segmentation_file, args.regions,
+                                   args.output_file, args.output_format,
+                                   args.matrix_type)

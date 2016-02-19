@@ -74,7 +74,7 @@ input_formats = {
 def write_txt(windows, contact_matrix, output_file):
 
     if contact_matrix.ndim != 2:
-        raise NotImplementedError('Plain text output is only supported for 2 dimensional matrices')
+        raise NotImplementedError('Plain text output is only supported for 2 dimensional matrices. Please try saving as an npz file.')
 
     names_0, names_1 = [get_name_strings(axis_windows) for axis_windows in windows]
 

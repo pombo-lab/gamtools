@@ -127,7 +127,7 @@ matrix_parser = subparsers.add_parser(
     help='Generate a GAM matrix from a segmentation file')
 
 matrix_parser.add_argument(
-    '-r', '--region', metavar='REGION', required=True, nargs='+',
+    '-r', '--regions', metavar='REGION', required=True, nargs='+',
     help='Specific genomic regions to calculate matrices for. '
     'If one region is specified, a matrix is calculated for that region '
     'against itself. If more than one region is specified, a matrix is '
@@ -140,22 +140,24 @@ matrix_parser.add_argument(
     help='A segmentation file to use as input')
 
 matrix_parser.add_argument(
-    '-f', '--output-format', metavar='OUTPUT_FORMAT',
-    choices=matrix.output_formats, default='npz',
-    help='Output matrix file format (choose from: {}, default is npz)'.format(
+    '-f', '--output-format',
+    choices=matrix.output_formats,
+    help='Output matrix file format (choose from: {}, default is txt.gz)'.format(
         ', '.join(matrix.output_formats.keys())))
 
 matrix_parser.add_argument(
     '-t', '--matrix-type', default='dprime',
-    choices=cosegregation.methods,
+    choices=cosegregation.matrix_types,
     help='Method used to calculate the interaction matrix (choose from: '
-    '{})'.format(', '.join(cosegregation.methods.keys())))
+    '{}, default is dprime)'.format(', '.join(cosegregation.matrix_types.keys())))
 
 matrix_parser.add_argument(
     '-o', '--output-file', metavar='OUTPUT_FILE',
     help='Output matrix file. If not specified, new file will have the '
     'same name as the segmentation file and an extension indicating the '
     'genomic region(s) and the matrix method')
+
+matrix_parser.set_defaults(func=cosegregation.matrix_from_args)
 
 
 # TODO: add Markus' matrix permutation code
