@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import pandas as pd
 import numpy as np
+# TODO: don't import matplotlib unless it's needed
 from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
