@@ -1,4 +1,4 @@
-from . import cosegregation, matrix, call_windows, enrichment, permutation
+from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting
 from wrapit.parser import add_doit_options
 import sys
 
@@ -208,6 +208,8 @@ plot_np_parser.add_argument(
     help='A file containing chromosome sizes for this genome')
 plot_np_parser.add_argument(
     '-o', '--output_file', required=True, help='Output image file to create')
+
+plot_np_parser.set_defaults(func=plotting.plot_np_from_args)
 
 
 # Options for 'process' command
