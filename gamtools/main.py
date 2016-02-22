@@ -1,4 +1,4 @@
-from . import cosegregation, matrix, call_windows, enrichment
+from . import cosegregation, matrix, call_windows, enrichment, permutation
 from wrapit.parser import add_doit_options
 import sys
 
@@ -175,15 +175,20 @@ permute_matrix_parser = subparsers.add_parser(
 
 permute_seg_parser = subparsers.add_parser(
     'permute_segmentation',
-    help='Circularly permute a GAM segmentation file')
+    help='Circularly permute the columns of a GAM segmentation file')
 
 permute_seg_parser.add_argument(
     '-s', '--segmentation_file', required=True,
-    help='A segmentation file to use as input')
+    type=argparse.FileType('r'),
+    help='A segmentation file to circularly permute '
+    '(or - to read from stdin)')
 
 permute_seg_parser.add_argument(
-    '-o', '--output-file', metavar='OUTPUT_FILE', required=True,
-    help='Output matrix file.')
+    '-o', '--output-file', required=True,
+    type=argparse.FileType('w'),
+    help='Output file path (or - to write to stdout)')
+
+permute_seg_parser.set_defaults(func=permutation.permute_segmentation_from_args)
 
 
 # Options for 'plot_np' command
