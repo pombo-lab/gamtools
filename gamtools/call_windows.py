@@ -218,13 +218,6 @@ def prettify_plot(sample_name, fig):
 def plot_signal_and_noise_fitting(sample_name, fitting_folder,
                                   counts, breaks, params, read_threshold):
 
-    safe_sample_name = os.path.basename(sample_name)
-
-    plot_path = os.path.join(fitting_folder, '{0}_fit.png'.format(safe_sample_name))
-
-    if not os.path.isdir(fitting_folder):
-        os.makedirs(fitting_folder)
-
     fig = plt.figure(figsize=( 16, 9 ))
 
     bar_width = (breaks.max() - breaks.min()) / 50.
@@ -246,7 +239,15 @@ def plot_signal_and_noise_fitting(sample_name, fitting_folder,
 
     prettify_plot(sample_name, fig)
 
-    plt.savefig(plot_path)
+    if fitting_folder is not None:
+        safe_sample_name = os.path.basename(sample_name)
+
+        plot_path = os.path.join(fitting_folder, '{0}_fit.png'.format(safe_sample_name))
+
+        if not os.path.isdir(fitting_folder):
+            os.makedirs(fitting_folder)
+
+        plt.savefig(plot_path)
 
     plt.close()
 
@@ -263,7 +264,10 @@ def signal_and_noise_fitting(coverage_data, sample_name, fitting_folder):
 
         plot_signal_and_noise_fitting(sample_name, fitting_folder, counts, breaks, params, read_threshold)
 
-    return {'read_threshold':read_threshold}
+    return {'read_threshold': read_threshold,
+            'counts': counts,
+            'breaks': breaks,
+            'params': params}
 
 def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
