@@ -2,12 +2,14 @@ from __future__ import print_function
 import sys
 import pandas as pd
 import numpy as np
-# TODO: don't import matplotlib unless it's needed
-from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
 import os
 from bisect import bisect_left
+
+# define plt as a global so that we can import
+# matplotlib later if we need it
+plt = None
 
 def parser_function(args):
 
@@ -91,6 +93,9 @@ def squared_difference(params,my_function,x,y):
 
 def mask_x_by_z(x, z):
     return [ xi for i, xi in enumerate(x) if z[i] != 0 ]
+
+def erode(coverage_data, prob):
+    return coverage_data.astype(np.int32).apply(lambda x: np.random.binomial(x, prob))
 
 def filter_data(x, percentile, no_zeros=True):
     percentile_score = scoreatpercentile(x, percentile)
@@ -216,21 +221,35 @@ def prettify_plot(sample_name, fig):
     labels = map(int,10 ** locs)
     plt.xticks( locs, labels )
 
-def plot_signal_and_noise_fitting(sample_name, fitting_folder,
-                                  counts, breaks, params, read_threshold):
+def plot_signal_and_noise_fitting(sample_name, fitting_results):
+
+    global plt
+
+    if plt is None:
+        try:
+            from matplotlib import pyplot
+            plt = pyplot
+        except ImportError:
+            raise ImportError('Plotting requires matplotlib to be installed.')
 
     fig = plt.figure(figsize=( 16, 9 ))
 
-    bar_width = (breaks.max() - breaks.min()) / 50.
-    hist_patches = plt.bar(breaks[:-1], counts, width=bar_width)
+    bar_width = (fitting_results['breaks'].max() - fitting_results['breaks'].min()) / 50.
+    hist_patches = plt.bar(fitting_results['breaks'][:-1], fitting_results['counts'], width=bar_width)
 
-    fit_patches = plot_combined_signal_noise(breaks, counts, params)
+    fit_patches = plot_combined_signal_noise(fitting_results['breaks'],
+                                             fitting_results['counts'],
+                                             fitting_results['params'])
 
-    normal_patches = plot_lognormal(breaks, counts, params)
+    normal_patches = plot_lognormal(fitting_results['breaks'],
+                                    fitting_results['counts'],
+                                    fitting_results['params'])
 
-    binom_patches = plot_binom(breaks, counts, params)
+    binom_patches = plot_binom(fitting_results['breaks'],
+                               fitting_results['counts'],
+                               fitting_results['params'])
 
-    thresh_patch = plt.axvline(np.log10(read_threshold),color='black')
+    thresh_patch = plt.axvline(np.log10(fitting_results['read_threshold']),color='black')
 
     plot_legend(hist_patches,
                 fit_patches,
@@ -240,35 +259,36 @@ def plot_signal_and_noise_fitting(sample_name, fitting_folder,
 
     prettify_plot(sample_name, fig)
 
-    if fitting_folder is not None:
-        safe_sample_name = os.path.basename(sample_name)
-
-        plot_path = os.path.join(fitting_folder, '{0}_fit.png'.format(safe_sample_name))
-
-        if not os.path.isdir(fitting_folder):
-            os.makedirs(fitting_folder)
-
-        plt.savefig(plot_path)
-
-    plt.close()
 
 
-def signal_and_noise_fitting(coverage_data, sample_name, fitting_folder):
+def signal_and_noise_fitting(sample_coverage_data):
 
-    counts, breaks = np.histogram(np.log10(filter_data(coverage_data.loc[:,sample_name],99.99)),bins=50)
+    counts, breaks = np.histogram(np.log10(filter_data(sample_coverage_data,99.99)),bins=50)
 
     params = fit_histogram(breaks, counts)
 
     read_threshold = threshold_n_binom(params, 0.001)
 
-    if fitting_folder is not None:
-
-        plot_signal_and_noise_fitting(sample_name, fitting_folder, counts, breaks, params, read_threshold)
 
     return {'read_threshold': read_threshold,
             'counts': counts,
             'breaks': breaks,
             'params': params}
+
+def plot_fitting_and_save(sample_name, fitting_folder, sample_fitting_data):
+
+    safe_sample_name = os.path.basename(sample_name)
+
+    plot_signal_and_noise_fitting(sample_name, sample_fitting_data)
+
+    plot_path = os.path.join(fitting_folder, '{0}_fit.png'.format(safe_sample_name))
+
+    if not os.path.isdir(fitting_folder):
+        os.makedirs(fitting_folder)
+
+    plt.savefig(plot_path)
+
+    plt.close()
 
 def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
@@ -278,7 +298,13 @@ def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
     for i, sample_name in enumerate(coverage_data.columns):
 
-        sample_fitting_data = fitting_function(coverage_data, sample_name, fitting_folder)
+        sample_coverage_data = coverage_data.loc[:,sample_name]
+
+        sample_fitting_data = fitting_function(sample_coverage_data)
+
+        if fitting_folder is not None:
+
+            plot_fitting_and_save(sample_name, fitting_folder, sample_fitting_data)
 
         above_threshold = coverage_data.loc[:,sample_name] > sample_fitting_data['read_threshold']
 
