@@ -30,7 +30,11 @@ def chunk_bigbed(bigbed, interval, bins=500, chunk_size=20000000):
 
             new_interval = Interval(interval.chrom, start, end)
 
-            chunk_x, chunk_y = bigbed.local_coverage(new_interval, bins=chunk_bins)
+            try:
+                chunk_x, chunk_y = bigbed.local_coverage(new_interval, bins=chunk_bins)
+            except ValueError:
+                chunk_x = np.linspace(start, end, chunk_bins)
+                chunk_y = np.zeros_like(chunk_x)
 
             yield chunk_x, chunk_y
 
@@ -68,18 +72,20 @@ def plot_chrom_sig(signal_obj, ax, interval, color, bins=500):
     arr = chunk_bigbed(signal_obj, interval, bins=bins)
 
     top = np.ceil(np.percentile(arr[1], 98.))
+    if top < 2:
+        top = 2
+
     ax.fill_between(arr[0], arr[1], color=color)
     ax.set_ylim(1,top)
     ax.set_xlim(arr[0][0], arr[0][-1])
     ax.axis('off')
 
-def plot_chrom_seg(seg_obj, ax, interval, color, bins=500):
+def plot_chrom_seg(signal_obj, ax, interval, color, bins=500):
 
-    arr = chunk_bigbed(seg_obj, interval, bins=bins)
+    arr = chunk_bigbed(signal_obj, interval, bins=bins)
 
-    top = np.ceil(np.percentile(arr[1], 98.))
     ax.fill_between(arr[0], arr[1], color=color)
-    ax.set_ylim(1,top)
+    ax.set_ylim(0.2,1.2)
     ax.set_xlim(arr[0][0], arr[0][-1])
     ax.axis('off')
 
@@ -90,7 +96,7 @@ def plot_both(objects, axes, name, end, color, bins=500):
     sig_ax, seg_ax = axes
 
     plot_chrom_sig(sig_obj, sig_ax, i, color, bins)
-    plot_chrom_sig(seg_obj, seg_ax, i, color, bins)
+    plot_chrom_seg(seg_obj, seg_ax, i, color, bins)
 
 def plot_genome(axis_sizes, row_names, row_sizes, g, bb, out_file):
 
@@ -118,7 +124,7 @@ def plot_genome(axis_sizes, row_names, row_sizes, g, bb, out_file):
             else:
                 col = '#e34a33'
 
-            plot_both((g, bb), ax, row_names[p][q], row_sizes[p][q], color=col)
+            plot_both((g, bb), ax, row_names[p][q], row_sizes[p][q], color=col, bins=10000)
             i += 1
 
     max_ylim = max([ max([ ax[0].get_ylim()[1] for ax in row ]) for row in axes ])
@@ -137,14 +143,14 @@ def plot_np(bigwig_file, bigbed_file, sizes_file, output_file):
     axis_sizes = [ [ int(round(val * 30)) for val in row ] for row in row_pcts ]
 
     read_coverage = genomic_signal(bigwig_file, 'bigwig')
-    positive_windows = genomic_signal(bigbed_file, 'bigbed')
+    positive_windows = genomic_signal(bigbed_file, 'bed')
 
     plot_genome(axis_sizes, row_names, row_sizes, read_coverage, positive_windows, output_file)
 
 
 def plot_np_from_args(args):
 
-    plot_np(args.bigwig_file, args.bigbed_file,
+    plot_np(args.bigwig_file, args.bed_file,
             args.sizes_file, args.output_file)
 
 

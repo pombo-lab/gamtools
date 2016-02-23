@@ -201,8 +201,8 @@ plot_np_parser.add_argument(
     '-w', '--bigwig_file', required=True,
     help='A bigwig file containing coverage information for the NP')
 plot_np_parser.add_argument(
-    '-b', '--bigbed_file', required=True,
-    help='A bigbed file containing segmentation information for the NP')
+    '-b', '--bed_file', required=True,
+    help='A bed file containing positive windows for the NP')
 plot_np_parser.add_argument(
     '-s', '--sizes_file', required=True,
     help='A file containing chromosome sizes for this genome')
