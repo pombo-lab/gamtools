@@ -85,3 +85,11 @@ def map_sample_name_to_column(segmentation_data):
         name_mapping[os.path.basename(c).split('.')[0]] = c
 
     return name_mapping
+
+def sample_segmentation_to_bed(input_segmentation, sample, output_bed):
+
+    data = open_segmentation(input_segmentation)
+
+    subset = data[data[sample] > 0][sample]
+
+    subset.to_csv(output_bed, header=False, index=True, sep='\t')
