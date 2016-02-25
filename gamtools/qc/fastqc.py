@@ -1,26 +1,17 @@
-#!/usr/bin/python
-
 # Shamelessly stolen from https://code.google.com/p/bioinformatics-misc/source/browse/trunk/fastqc_to_pgtable.py?spec=svn93&r=93
 
-import argparse
 import numpy as np
-import re
+import os
+import pandas as pd
 
-parser = argparse.ArgumentParser(description= """
-    Convert the FastQC report (file: fastqc_data.txt) to a single line with columns
-    tab-separated. The input is the directory produced by fastqc which must
-    contain the file fastqc_data.txt with the actual stats.
-    """)
+def fastqc_data_file(input_fastq):
+    
+    base_folder = input_fastq.split('.')[0]
+    #base_folder = '.'.join(input_fastq.split('.')[:-1])
 
-parser.add_argument('--infiles', '-i',
-                   nargs='+',
-                   required= True,
-                   help='''Fastqc *directory* where to look for file fastqc_data.txt.
-                   ''')
+    fastqc_folder = base_folder + '_fastqc'
 
-args = parser.parse_args()
-
-# -----------------------------------------------------------------------------
+    return os.path.join(fastqc_folder, 'fastqc_data.txt')
 
 def parse_module(fastqc_module):
     """
@@ -111,10 +102,7 @@ def get_avg_qual(module):
 
 def get_sample(filename):
 
-    try:
-        return re.search('F[0-9]{1,2}[A-H][0-9]', filename).group(0)
-    except AttributeError:
-        return re.search('E[0-9]', filename).group(0)
+    return os.path.basename(os.path.dirname(filename))[:-7]
 
 def process_file(filename):
     fq= open(filename).readlines()
@@ -147,9 +135,26 @@ def process_file(filename):
             
             fastqc_dict.update(get_avg_qual(module))
 
-    print get_sample(filename), fastqc_dict['avg_quality'], fastqc_dict['mononucleotide_repeats'], fastqc_dict['dinucleotide_repeats']
+    fastqc_dict['Sample'] = get_sample(filename)
 
-print 'Sample   Avg_quality   mononucleotide_repeats   dinucleotide_repeats'
+    return fastqc_dict
 
-for filename in args.infiles:
-    process_file(filename)
+def get_quality_stats(input_fastqc_files):
+
+    sample_qualities = []
+    for filename in input_fastqc_files:
+        sample_qualities.append(process_file(filename))
+
+    return pd.DataFrame(sample_qualities)
+
+def write_quality_stats(input_files, output_file):
+
+    quality_df = get_quality_stats(input_files)
+
+    quality_df.to_csv(output_file, sep='\t', index=False)
+
+def quality_qc_from_doit(dependencies, targets):
+
+    assert len(targets) == 1
+    write_quality_stats(dependencies, targets[0])
+

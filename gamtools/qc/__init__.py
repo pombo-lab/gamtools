@@ -1,1 +1,1 @@
-from . import screen
+from . import screen, fastqc
