@@ -289,6 +289,8 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                                 'Getting mapping stats',
                                    ],
                             mapping_stats_script=get_script('mapping_stats.sh'),
+                            default_stats=['contamination_stats.txt', 'mapping_stats.txt',
+                                           'quality_stats.txt', 'segmentation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)
 
 

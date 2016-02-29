@@ -242,11 +242,22 @@ class input_file_mapping_tasks(object):
         input_segmentation = segmentation_path(self.args.output_dir, self.args.qc_window_size)
 
         return {
+                'basename': 'Getting segmentation stats',
                 'actions' : [qc.segmentation.get_segmentation_stats_doit],
                 'targets' : [os.path.join(self.args.output_dir, 'segmentation_stats.txt')],
                 'file_dep': [input_segmentation]
                }
 
+    def task_merge_stats(args):
+
+        files_to_merge = [os.path.join(args.output_dir, sf) for sf in args.default_stats] + args.additional_qc_files
+
+        return {
+                'basename': 'Merging stats files',
+                'actions' : [qc.merge.merge_stats_from_doit],
+                'targets' : [os.path.join(args.output_dir, 'merged_stats.txt')],
+                'file_dep' : files_to_merge
+               }
 
 def process_nps_from_args(args):
 
