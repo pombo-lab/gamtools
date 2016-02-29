@@ -6,11 +6,12 @@ for fq in $*;
  do 
     if [ ${fq: -10} == '.rmdup.bam' ]; then continue; fi;
     sample=$(basename $fq);
+    name_no_ext=$(echo -n $fq | tr "." "\n" | sed '/^gz$/ d' | sed '$ d' | perl -pe 'chomp if eof' | tr "\n" ".");
     nlines=$(zcat ${fq} | wc -l);
     nreads=$(echo "${nlines} / 4" | bc);
-    nmap=$(samtools view -c ${fq%.*}.bam);
+    nmap=$(samtools view -c ${name_no_ext}.bam);
     if [ -z $nmap ]; then $nmap=0; fi;
-    nnodup=$(samtools view -c ${fq%.*}.rmdup.bam);
+    nnodup=$(samtools view -c ${name_no_ext}.rmdup.bam);
     if [ -z $nnodup ]; then $nnodup=0; fi;
     echo -e "${sample%%.*}\t${nreads}\t${nmap}\t${nnodup}"; 
  done
