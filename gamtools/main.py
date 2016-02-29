@@ -1,6 +1,7 @@
-from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting
+from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline
 from wrapit.parser import add_doit_options
 import sys
+import os
 
 import argparse
 
@@ -215,7 +216,7 @@ plot_np_parser.set_defaults(func=plotting.plot_np_from_args)
 # Options for 'process' command
 
 process_parser = subparsers.add_parser(
-    'process',
+    'process_nps',
     help='Run a pipeline for mapping raw GAM sequencing data and '
     'calling positive windows')
 
@@ -227,10 +228,14 @@ process_parser.add_argument(
     help='File containing chromosome names and lengths')
 process_parser.add_argument(
     '-o', '--output_dir', metavar='OUPUT_DIRECTORY',
+    default=os.getcwd(),
     help='Write segmentation, matrix etc. to this directory')
 process_parser.add_argument(
-    '-f', '--fittings_dir', metavar='FITTINGS_DIR',
+    '-f', '--fittings_dir', metavar='FITTINGS_DIRECTORY',
     help='Write segmentation curve fitting plots to this directory')
+process_parser.add_argument(
+    '-d', '--details-file',
+    help='If specified, write a table of fitting parameters to this path')
 process_parser.add_argument(
     '-i', '--bigwigs', action='append_const',
     dest='to_run', const='Converting bedgraph to bigwig',
@@ -270,6 +275,22 @@ process_parser.add_argument(
 add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
                   'reporter', 'num_process', 'par_type'])
+
+def get_script(script_name):
+    return os.path.join(os.path.dirname(__file__),
+                        '../scripts',
+                        script_name)
+
+process_parser.set_defaults(func=pipeline.process_nps_from_args,
+                            to_run=[
+                                'Calling positive windows',
+                                'Getting quality stats',
+                                'Getting contamination stats',
+                                'Getting mapping stats',
+                                   ],
+                            mapping_stats_script=get_script('mapping_stats.sh'),
+                            fitting_function=call_windows.signal_and_noise_fitting)
+
 
 # Options for 'segmentation_stats' command
 
