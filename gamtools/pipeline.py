@@ -4,12 +4,16 @@ import itertools
 import inspect
 from . import call_windows, segmentation, qc
 
-def with_extension(input_fastq, extension): 
+def with_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
     basename, old_ext = os.path.splitext(os.path.basename(input_fastq))
     if old_ext == '.gz':
         basename, old_ext = os.path.splitext(basename)
     return os.path.join(output_dir, basename + extension)
+
+def segmentation_path(base_folder, window_size):
+
+    return os.path.join(base_folder, 'segmentation_at_{0}bp.multibam'.format(window_size))
 
 class input_file_mapping_tasks(object):
 
@@ -101,7 +105,7 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_make_output_dir(self):
-        
+
         yield {
                 "basename"     : 'Creating output directory',
                 "actions"  : ['mkdir -pv %(output_dir)s',],
@@ -125,7 +129,7 @@ class input_file_mapping_tasks(object):
         for window_size in self.args.window_sizes:
 
             input_coverage_file = os.path.join(self.args.output_dir, 'coverage_at_{0}bp.multibam'.format(window_size))
-            output_segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+            output_segmentation_file = segmentation_path(self.args.output_dir, window_size)
 
             task = {
                 'basename' : 'Calling positive windows',
@@ -154,7 +158,7 @@ class input_file_mapping_tasks(object):
 
         for window_size in self.args.window_sizes:
 
-            input_segmentation = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+            input_segmentation = segmentation_path(self.args.output_dir, window_size)
 
             for input_fastq in self.args.input_fastqs:
 
@@ -232,6 +236,17 @@ class input_file_mapping_tasks(object):
                 'targets' : [os.path.join(self.args.output_dir, 'mapping_stats.txt')],
                 'file_dep' : self.args.input_fastqs,
               }
+
+    def task_segmentation_stats(self):
+
+        input_segmentation = segmentation_path(self.args.output_dir, self.args.qc_window_size)
+
+        return {
+                'actions' : [qc.segmentation.get_segmentation_stats_doit],
+                'targets' : [os.path.join(self.args.output_dir, 'segmentation_stats.txt')],
+                'file_dep': [input_segmentation]
+               }
+
 
 def process_nps_from_args(args):
 

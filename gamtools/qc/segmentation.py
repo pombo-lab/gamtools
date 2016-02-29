@@ -1,12 +1,7 @@
-import argparse
 import pandas as pd
-from GamTools import segmentation
+from .. import segmentation
 import os
-import sys
 import itertools
-
-parser = argparse.ArgumentParser(description='Takes in a segmentation multibam file and returns coverage stats for each column')
-parser.add_argument('segmentation', metavar='SEGMENTATION_MULTIBAM', help='Path to a segmentation multibam')
 
 chroms = ['chr{0}'.format(c) for c in range(1,20)]
 
@@ -16,7 +11,7 @@ def proportion_with_neighbours(block_list):
         g = list(g)
         if k and len(g) > 1:
             no_with_neighbours += len(g)
-            
+
     try:
         return float(no_with_neighbours) / sum(block_list)
     except ZeroDivisionError:
@@ -43,16 +38,17 @@ def get_df_stats(segmentation_df):
     return stats_df[['Sample', 'Genome_coverage', 'Positive_chromosomes',
             'Proportion_with_neighbours']]
 
-def print_file_stats(multibam_handle):
+def get_segmentation_stats(input_segmentation, output_file):
 
     segmentation_df = segmentation.open_segmentation(multibam_handle)
 
     stats_df = get_df_stats(segmentation_df)
 
-    stats_df.to_csv(sys.stdout, sep='\t', index=False)
+    stats_df.to_csv(output_file, sep='\t', index=False)
 
-if __name__ == '__main__':
-    args = parser.parse_args()
+def get_segmentation_stats_doit(dependencies, targets):
 
-    with open(args.segmentation, 'r') as multibam_handle:
-        print_file_stats(multibam_handle)
+    assert len(dependencies) == 1
+    assert len(targets) == 1
+
+    get_segmentation_stats(dependencies[0], targets[0])
