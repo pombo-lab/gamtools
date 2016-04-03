@@ -1,4 +1,4 @@
-from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline
+from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline, select_samples
 from wrapit.parser import add_doit_options
 import sys
 import os
@@ -297,18 +297,6 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                                            'quality_stats.txt', 'segmentation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)
 
-
-# Options for 'segmentation_stats' command
-
-seg_stats_parser = subparsers.add_parser(
-    'segmentation_stats',
-    help='Calculate QC statistics from a segmentation file')
-
-seg_stats_parser.add_argument(
-    '-s', '--sizes_file', required=True,
-    help='A file containing chromosome sizes for this genome')
-
-
 # Options for 'select' command
 
 select_parser = subparsers.add_parser(
@@ -324,11 +312,17 @@ select_parser.add_argument(
 select_parser.add_argument(
     '-n', '--sample-names', metavar='SAMPLE_NAME',
     required=True, nargs='*', help='Names of the samples to remove')
+select_parser.add_argument(
+    '-o', '--output-file', required=True,
+    type=argparse.FileType('w'),
+    help='Output file path (or - to write to stdout)')
+
+select_parser.set_defaults(func=select_samples.select_samples_from_args)
 
 def main():
     args = parser.parse_args()
 
-    if 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):
+    if hasattr(args, 'to_run') and 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):
         sys.exit('If you want to calculate linkage matrices (-m/--calculate-matrices) '
                  'you must specify the desired resolution using -s/--matrix-sizes')
 

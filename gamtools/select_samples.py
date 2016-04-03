@@ -12,8 +12,6 @@ def select_samples(segmentation_path, sample_names, output_file, drop=False):
     else:
         subset = segmentation_data[column_names]
 
-    subset.columns = sample_names
-
     subset.to_csv(output_file, index=True, sep='\t')
 
 def select_samples_from_file(segmentation_path, sample_names_path, output_file, drop=False):
@@ -25,6 +23,10 @@ def select_samples_from_file(segmentation_path, sample_names_path, output_file, 
             names.append(line.strip())
 
     select_samples(segmentation_path, names, output_file, drop)
+
+def select_samples_from_args(args):
+
+    select_samples(args.segmentation_file, args.sample_names, args.output_file, args.drop_samples)
 
 def select_samples_from_doit(dependencies, targets):
 
