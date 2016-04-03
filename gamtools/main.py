@@ -319,8 +319,8 @@ select_parser.add_argument(
     '-s', '--segmentation-file', metavar='SEGMENTATION_FILE', required=True,
     help='A file containing the segmentation of all samples')
 select_parser.add_argument(
-    '-d', '--keep-good', action='store_true',
-    help='Keep only the listed samples (default: discard listed samples)')
+    '-d', '--drop-samples', action='store_true',
+    help='Discard the listed samples (default: discard samples not in the list)')
 select_parser.add_argument(
     '-n', '--sample-names', metavar='SAMPLE_NAME',
     required=True, nargs='*', help='Names of the samples to remove')

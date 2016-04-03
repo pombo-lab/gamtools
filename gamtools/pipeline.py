@@ -2,7 +2,7 @@ import os
 from wrapit.api import run
 import itertools
 import inspect
-from . import call_windows, segmentation, qc
+from . import call_windows, segmentation, qc, select_samples
 
 def swap_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
@@ -278,12 +278,29 @@ class input_file_mapping_tasks(object):
     def task_samples_passing_qc(self):
 
         return {
-                'basename': 'Filtering samples based on QC values',
+                'basename': 'Finding samples that pass QC',
                 'actions': [qc.pass_qc.samples_passing_qc_from_doit],
                 'targets': [os.path.join(self.args.output_dir, 'samples_passing_qc.txt')],
                 'file_dep' : [os.path.join(self.args.output_dir, 'qc_parameters.cfg'),
                               os.path.join(self.args.output_dir, 'merged_stats.txt')],
                }
+
+    def task_filter_segmentation(self):
+
+        passqc_file = os.path.join(self.args.output_dir, 'samples_passing_qc.txt')
+
+        for window_size in self.args.window_sizes:
+
+            segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+
+            yield {
+                'basename': 'Filtering samples based on QC values',
+                'name'     : '{0}bp'.format(window_size),
+                'targets'  : [swap_extension(segmentation_file, '.passed_qc.multibam')],
+                'file_dep' : [passqc_file, segmentation_file],
+                'actions'  : [select_samples.select_samples_from_doit]
+                }
+
 
 def process_nps_from_args(args):
 
