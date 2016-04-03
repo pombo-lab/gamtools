@@ -4,7 +4,7 @@ import itertools
 import inspect
 from . import call_windows, segmentation, qc
 
-def with_extension(input_fastq, extension):
+def swap_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
     basename, old_ext = os.path.splitext(os.path.basename(input_fastq))
     if old_ext == '.gz':
@@ -47,7 +47,7 @@ class input_file_mapping_tasks(object):
                     "name"     : input_fastq,
                     "basename" : 'Mapping fastq',
                     "actions"  : ['bowtie2 -x genome -U %(dependencies)s | sed \'/XS : /d\' | samtools view -q %(minimum_mapq)s -F 4 -bS - > %(targets)s'],
-                    "targets"  : [with_extension(input_fastq, ".bam")],
+                    "targets"  : [swap_extension(input_fastq, ".bam")],
                     "file_dep" : [input_fastq],
                   }
 
@@ -58,8 +58,8 @@ class input_file_mapping_tasks(object):
                     "basename" : 'Sorting bam',
                     "actions"  : ['samtools sort %(dependencies)s %(targets)s',
                                   'mv %(targets)s.bam %(targets)s'],
-                    "targets"  : [with_extension(input_fastq, ".sorted.bam")],
-                    "file_dep" : [with_extension(input_fastq, ".bam")],
+                    "targets"  : [swap_extension(input_fastq, ".sorted.bam")],
+                    "file_dep" : [swap_extension(input_fastq, ".bam")],
                   }
 
     def task_remove_duplicates(self):
@@ -68,8 +68,8 @@ class input_file_mapping_tasks(object):
                     "name"     : input_fastq,
                     "basename" : 'Removing duplications',
                     "actions"  : ['samtools rmdup -s %(dependencies)s %(targets)s',],
-                    "targets"  : [with_extension(input_fastq, ".rmdup.bam")],
-                    "file_dep" : [with_extension(input_fastq, ".sorted.bam")],
+                    "targets"  : [swap_extension(input_fastq, ".rmdup.bam")],
+                    "file_dep" : [swap_extension(input_fastq, ".sorted.bam")],
                   }
 
     def task_index_bam(self):
@@ -78,8 +78,8 @@ class input_file_mapping_tasks(object):
                     "name"     : input_fastq,
                     "basename" : 'Indexing bam',
                     "actions"  : ['samtools index %(dependencies)s',],
-                    "targets"  : [with_extension(input_fastq, ".rmdup.bam.bai")],
-                    "file_dep" : [with_extension(input_fastq, ".rmdup.bam")],
+                    "targets"  : [swap_extension(input_fastq, ".rmdup.bam.bai")],
+                    "file_dep" : [swap_extension(input_fastq, ".rmdup.bam")],
                   }
 
     def task_make_bedgraph(self):
@@ -90,8 +90,8 @@ class input_file_mapping_tasks(object):
                     "actions"  : ['genomeCoverageBed -bg -ibam %(dependencies)s -g %(genome_file)s > %(targets)s',
                                   'if [ -s "%(targets)s" ]; '
                                   'then create_empty_bedgraph %(genome_file)s %(targets)s; fi'],
-                    "targets"  : [with_extension(input_fastq, ".bedgraph")],
-                    "file_dep" : [with_extension(input_fastq, ".rmdup.bam")],
+                    "targets"  : [swap_extension(input_fastq, ".bedgraph")],
+                    "file_dep" : [swap_extension(input_fastq, ".rmdup.bam")],
                   }
 
     def task_make_bigwig(self):
@@ -100,8 +100,8 @@ class input_file_mapping_tasks(object):
                     "name"     : input_fastq,
                     "basename" : 'Converting bedgraph to bigwig',
                     "actions"  : ['bedGraphToBigWig %(dependencies)s %(genome_file)s %(targets)s'],
-                    "targets"  : [with_extension(input_fastq, ".bw")],
-                    "file_dep" : [with_extension(input_fastq, ".bedgraph")],
+                    "targets"  : [swap_extension(input_fastq, ".bw")],
+                    "file_dep" : [swap_extension(input_fastq, ".bedgraph")],
                   }
 
     def task_make_output_dir(self):
@@ -113,7 +113,7 @@ class input_file_mapping_tasks(object):
               }
 
     def task_get_coverage(self):
-        bamfiles = [ with_extension(input_fastq, ".rmdup.bam") for input_fastq in self.args.input_fastqs ]
+        bamfiles = [ swap_extension(input_fastq, ".rmdup.bam") for input_fastq in self.args.input_fastqs ]
         for window_size in self.args.window_sizes:
             yield {
                     'basename' : 'Getting coverage',
@@ -162,13 +162,13 @@ class input_file_mapping_tasks(object):
 
             for input_fastq in self.args.input_fastqs:
 
-                output_bed = with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))
+                output_bed = swap_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))
 
                 yield {
                     'basename' : 'Getting segmentation bed',
                     'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
                     'actions'  : [(segmentation.sample_segmentation_to_bed,
-                                   (input_segmentation, with_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
+                                   (input_segmentation, swap_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
                                  'sort -k1,1 -k2,2n %(targets)s.unsorted > %(targets)s',
                                  'rm %(targets)s.unsorted',],
                     'targets'  : [output_bed],
@@ -187,8 +187,8 @@ class input_file_mapping_tasks(object):
                     # error code, but we must touch the target first to ensure it gets created.
                     'actions'  : ['touch %(targets)s',
                                   'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || true',],
-                    'targets'  : [with_extension(input_fastq, ".segmentation_{0}bp.bb".format(window_size))],
-                    'file_dep' : [with_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
+                    'targets'  : [swap_extension(input_fastq, ".segmentation_{0}bp.bb".format(window_size))],
+                    'file_dep' : [swap_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
                       }
 
     def task_run_fastqc(self):
