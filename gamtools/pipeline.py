@@ -1,9 +1,8 @@
 import os
-import sys
 from wrapit.api import run
 import itertools
 import inspect
-from . import call_windows, segmentation, qc, select_samples, cosegregation
+from . import call_windows, segmentation, qc, select_samples, cosegregation, utils
 
 def swap_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
@@ -15,9 +14,14 @@ def swap_extension(input_fastq, extension):
 def get_middle_value(_list):
     return sorted(_list)[len(_list)/2]
 
-def segmentation_path(base_folder, window_size):
+def pretty_resolution(window_size):
+    return utils.format_genomic_distance(window_size, precision=0)
 
-    return os.path.join(base_folder, 'segmentation_at_{0}bp.multibam'.format(window_size))
+def coverage_path(base_folder, window_size):
+    return os.path.join(base_folder, 'coverage_at_{0}.multibam'.format(pretty_resolution(window_size)))
+
+def segmentation_path(base_folder, window_size):
+    return os.path.join(base_folder, 'segmentation_at_{0}.multibam'.format(pretty_resolution(window_size)))
 
 class input_file_mapping_tasks(object):
 
@@ -122,10 +126,10 @@ class input_file_mapping_tasks(object):
         for window_size in self.args.window_sizes:
             yield {
                     'basename' : 'Getting coverage',
-                    'name'     :  '{0}bp windows'.format(window_size),
+                    'name'     :  '{0} windows'.format(pretty_resolution(window_size)),
                     'actions'  : ['echo "chrom start stop %(dependencies)s" > %(targets)s',
                                   'bash -i -c "multiBamCov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window_size)],
-                    'targets'  : [os.path.join(self.args.output_dir, 'coverage_at_{0}bp.multibam'.format(window_size))],
+                    'targets'  : [coverage_path(self.args.output_dir, window_size)],
                     'file_dep' : bamfiles,
                     'task_dep' : [ 'Indexing bam', 'Creating output directory' ],
                    }
@@ -133,19 +137,19 @@ class input_file_mapping_tasks(object):
     def task_get_segmentation(self):
         for window_size in self.args.window_sizes:
 
-            input_coverage_file = os.path.join(self.args.output_dir, 'coverage_at_{0}bp.multibam'.format(window_size))
+            input_coverage_file = coverage_path(self.args.output_dir, window_size)
             output_segmentation_file = segmentation_path(self.args.output_dir, window_size)
 
             task = {
                 'basename' : 'Calling positive windows',
-                'name'     : '{0}bp'.format(window_size),
+                'name'     : pretty_resolution(window_size),
                 'targets'  : [output_segmentation_file],
                 'file_dep' : [input_coverage_file],
                 'actions'  : [],
                 }
 
             if self.args.fittings_dir:
-                full_fitting_dir = os.path.join(self.args.output_dir, self.args.fittings_dir, '{0}bp'.format(window_size))
+                full_fitting_dir = os.path.join(self.args.output_dir, self.args.fittings_dir, '{0}'.format(pretty_resolution(window_size)))
                 task['actions'].append('mkdir -pv {0}'.format(full_fitting_dir))
             else:
                 full_fitting_dir = None
@@ -167,17 +171,17 @@ class input_file_mapping_tasks(object):
 
             for input_fastq in self.args.input_fastqs:
 
-                output_bed = swap_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))
+                output_bed = swap_extension(input_fastq, ".segmentation_{0}.bed".format(pretty_resolution(window_size)))
 
                 yield {
                     'basename' : 'Getting segmentation bed',
-                    'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
+                    'name'     : '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
                     'actions'  : [(segmentation.sample_segmentation_to_bed,
                                    (input_segmentation, swap_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
                                  'sort -k1,1 -k2,2n %(targets)s.unsorted > %(targets)s',
                                  'rm %(targets)s.unsorted',],
                     'targets'  : [output_bed],
-                    'file_dep' : [os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))],
+                    'file_dep' : [segmentation_path(self.args.output_dir, window_size)],
                     }
 
     def task_get_segmentation_bigbed(self):
@@ -187,13 +191,13 @@ class input_file_mapping_tasks(object):
 
                 yield {
                     'basename' : 'Getting segmentation bigBed',
-                    'name'     : '{0}bp, {1}'.format(window_size, input_fastq),
+                    'name'     : '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
                     # If the input bed is empty, bedToBigBed will fail. We can force it not to return an
                     # error code, but we must touch the target first to ensure it gets created.
                     'actions'  : ['touch %(targets)s',
                                   'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || true',],
-                    'targets'  : [swap_extension(input_fastq, ".segmentation_{0}bp.bb".format(window_size))],
-                    'file_dep' : [swap_extension(input_fastq, ".segmentation_{0}bp.bed".format(window_size))],
+                    'targets'  : [swap_extension(input_fastq, ".segmentation_{0}.bb".format(pretty_resolution(window_size)))],
+                    'file_dep' : [swap_extension(input_fastq, ".segmentation_{0}.bed".format(pretty_resolution(window_size)))],
                       }
 
     def task_run_fastqc(self):
@@ -292,11 +296,11 @@ class input_file_mapping_tasks(object):
 
         for window_size in self.args.window_sizes:
 
-            segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+            segmentation_file = segmentation_path(self.args.output_dir, window_size)
 
             yield {
                 'basename': 'Filtering samples based on QC values',
-                'name'     : '{0}bp'.format(window_size),
+                'name'     : pretty_resolution(window_size),
                 'targets'  : [swap_extension(segmentation_file, '.passed_qc.multibam')],
                 'file_dep' : [passqc_file, segmentation_file],
                 'actions'  : [select_samples.select_samples_from_doit]
@@ -316,17 +320,17 @@ class input_file_mapping_tasks(object):
 
             for chrom in chroms:
 
+                segmentation_file = segmentation_path(self.args.output_dir, window_size)
                 if 'do_qc' in self.args.to_run:
-                    segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.passed_qc.multibam'.format(window_size))
-                else:
-                    segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+                    segmentation_file = swap_extension(segmentation_file, '.passed_qc.multibam')
 
-                matrix_out = '{seg_file}.dprime.{chrom}.txt.gz'.format(
-                                                  seg_file=segmentation_file,
+                matrix_base = '{seg_file}.dprime.{chrom}.txt.gz'.format(
+                                                  seg_file=os.path.basename(segmentation_file),
                                                   chrom=chrom)
+                matrix_out = os.path.join(self.args.output_dir, 'dprime_matrices', '{}'.format(pretty_resolution(window_size)), matrix_base)
 
                 yield {'basename' : 'Calculating linkage matrix',
-                       'name'     : '{0} at {1}bp'.format(chrom, window_size),
+                       'name'     : '{0} at {1}'.format(chrom, pretty_resolution(window_size)),
                        'targets'  : [matrix_out],
                        'file_dep' : [segmentation_file],
                        'actions' : ['mkdir -p $(dirname %(targets)s)',
