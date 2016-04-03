@@ -269,6 +269,7 @@ def task_mapping_stats(args):
                          done >> %(targets)s"""],
             'targets' : [os.path.join(args.output_dir, 'mapping_stats.txt')],
             'file_dep' : args.input_fastqs,
+            'task_dep' : ['Indexing bam'],
            }
 
 def task_segmentation_stats(args):
@@ -351,6 +352,7 @@ def main(args):
     run(globals(), args, args.to_run)
 
 if __name__ == "__main__":
+
 
     args = parser.parse_args()
     if args.qc_window_size is None:
