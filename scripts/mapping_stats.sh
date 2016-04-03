@@ -1,6 +1,6 @@
 #! /bin/bash
 
-echo -e "Sample\tReads_sequenced\tReads_mapped\tUnique_reads_mapped"
+echo -e "Sample\tReads_sequenced\tReads_mapped\tUnique_reads_mapped\tPercent_mapped_reads"
 
 for fq in $*; 
  do 
@@ -13,5 +13,6 @@ for fq in $*;
     if [ -z $nmap ]; then $nmap=0; fi;
     nnodup=$(samtools view -c ${name_no_ext}.rmdup.bam);
     if [ -z $nnodup ]; then $nnodup=0; fi;
-    echo -e "${sample%%.*}\t${nreads}\t${nmap}\t${nnodup}"; 
+    pct_mapped=$(echo "scale=2; 100*$nmap/$nreads" | bc);
+    echo -e "${sample%%.*}\t${nreads}\t${nmap}\t${nnodup}\t${pct_mapped}"; 
  done

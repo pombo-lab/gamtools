@@ -1,1 +1,1 @@
-from . import screen, fastqc, segmentation, merge
+from . import screen, fastqc, segmentation, merge, pass_qc

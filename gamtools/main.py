@@ -281,12 +281,18 @@ def get_script(script_name):
                         '../scripts',
                         script_name)
 
+def get_example(example_name):
+    return os.path.join(os.path.dirname(__file__),
+                        '../examples',
+                        example_name)
+
 process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             to_run=[
                                 'Calling positive windows',
-                                'Merging stats files',
+                                'Filtering samples based on QC values',
                                    ],
                             mapping_stats_script=get_script('mapping_stats.sh'),
+                            example_parameters_file=get_example('qc_parameters.example.cfg'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                            'quality_stats.txt', 'segmentation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)

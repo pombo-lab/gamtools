@@ -266,13 +266,29 @@ class input_file_mapping_tasks(object):
                 'file_dep' : files_to_merge
                }
 
+    def task_copy_qc_parameters(self):
+
+        return {
+                'basename': 'Creating QC parameters file with default values',
+                'actions': ['cp %(example_parameters_file)s %(targets)s'],
+                'targets': [os.path.join(self.args.output_dir, 'qc_parameters.cfg')],
+                'uptodate' : [True],
+               }
+
+    def task_samples_passing_qc(self):
+
+        return {
+                'basename': 'Filtering samples based on QC values',
+                'actions': [qc.pass_qc.samples_passing_qc_from_doit],
+                'targets': [os.path.join(self.args.output_dir, 'samples_passing_qc.txt')],
+                'file_dep' : [os.path.join(self.args.output_dir, 'qc_parameters.cfg'),
+                              os.path.join(self.args.output_dir, 'merged_stats.txt')],
+               }
+
 def process_nps_from_args(args):
 
-    #from doit.loader import load_tasks
-    #print load_tasks()
     task_dict = {
         'input_file_tasks': input_file_mapping_tasks(args)
     }
-    #run(task_dict, args, ['info', '--status', 'Merging stats files'])
     run(task_dict, args, args.to_run)
 

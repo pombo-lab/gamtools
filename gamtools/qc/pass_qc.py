@@ -17,9 +17,9 @@ def get_references(left_str, right_str, stats_df):
     
     if not (isinstance(left, pd.Series) or isinstance(right, pd.Series)):
         raise QcParamError(
-            """Neither {} nor {} matches a column in the stats file {}.
+            """Neither {} nor {} matches a column in the stats file.
             Current options are: \n\t'{}'""".format(
-                left_str, right_str, stats_df_path,
+                left_str, right_str, 
                 "'\n\t'".join(stats_df.columns)))
         
     return left, right
@@ -78,8 +78,8 @@ def parse_conditions_file(conditions_file, stats_df):
             this_comparison =  do_comparison(left_str, op, right_str, stats_df)
         except QcParamError, err_msg:
             raise QcParamError(
-                'Error in QC parameters file {}\nLine {}: {}'.format(
-                    conditions_file_path, line_no, err_msg))
+                'Error in QC parameters file line {}: {}'.format(
+                    line_no, err_msg))
         
         conditions.append(this_comparison)
     
@@ -100,6 +100,7 @@ def samples_passing_qc(conditions_file_path, stats_df_path):
 def create_passqc_file(conditions_file_path, stats_df_path, passqc_path):
 
     samples_passing = samples_passing_qc(conditions_file_path, stats_df_path)
+    samples_passing = samples_passing.sort_values()
     samples_passing.to_csv(passqc_path, sep='\t', index=False, header=False)
 
 def samples_passing_qc_from_doit(targets, dependencies):
