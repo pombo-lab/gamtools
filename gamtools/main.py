@@ -289,7 +289,7 @@ def get_example(example_name):
 process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             to_run=[
                                 'Calling positive windows',
-                                'Filtering samples based on QC values',
+                                #'Filtering samples based on QC values',
                                    ],
                             mapping_stats_script=get_script('mapping_stats.sh'),
                             example_parameters_file=get_example('qc_parameters.example.cfg'),
@@ -327,6 +327,11 @@ select_parser.add_argument(
 
 def main():
     args = parser.parse_args()
+
+    if 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):
+        sys.exit('If you want to calculate linkage matrices (-m/--calculate-matrices) '
+                 'you must specify the desired resolution using -s/--matrix-sizes')
+
     args.func(args)
 
 

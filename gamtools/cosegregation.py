@@ -174,6 +174,7 @@ def matrix_and_windows_from_segmentation_file(
     segmentation_file, location_strings, matrix_type='dprime'):
 
     segmentation_data = segmentation.open_segmentation(segmentation_file)
+    print segmentation_data.head()
 
     regions, windows = get_regions_and_windows(segmentation_data, location_strings)
     matrix_func = matrix_types[matrix_type]
@@ -238,3 +239,9 @@ def matrix_from_args(args):
     create_and_save_contact_matrix(args.segmentation_file, args.regions,
                                    args.output_file, args.output_format,
                                    args.matrix_type)
+
+def matrix_from_doit(output_file, segmentation_file, region):
+
+    create_and_save_contact_matrix(segmentation_file, region,
+                                   output_file, 'txt.gz', 'dprime')
+

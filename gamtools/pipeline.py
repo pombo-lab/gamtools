@@ -1,8 +1,9 @@
 import os
+import sys
 from wrapit.api import run
 import itertools
 import inspect
-from . import call_windows, segmentation, qc, select_samples
+from . import call_windows, segmentation, qc, select_samples, cosegregation
 
 def swap_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
@@ -300,6 +301,36 @@ class input_file_mapping_tasks(object):
                 'file_dep' : [passqc_file, segmentation_file],
                 'actions'  : [select_samples.select_samples_from_doit]
                 }
+
+    def task_do_qc(self):
+        return {'basename':'do_qc',
+                'actions': None,
+                'task_dep': ['Filtering samples based on QC values']}
+
+    def task_linkage_matrices(self):
+
+        #TODO: Allow specification of which chromosomes to generate matrices for
+        chroms = ['chr{0}'.format(c) for c in range(1,20)]
+
+        for window_size in self.args.matrix_sizes:
+
+            for chrom in chroms:
+
+                if 'do_qc' in self.args.to_run:
+                    segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.passed_qc.multibam'.format(window_size))
+                else:
+                    segmentation_file = os.path.join(self.args.output_dir, 'segmentation_at_{0}bp.multibam'.format(window_size))
+
+                matrix_out = '{seg_file}.dprime.{chrom}.txt.gz'.format(
+                                                  seg_file=segmentation_file,
+                                                  chrom=chrom)
+
+                yield {'basename' : 'Calculating linkage matrix',
+                       'name'     : '{0} at {1}bp'.format(chrom, window_size),
+                       'targets'  : [matrix_out],
+                       'file_dep' : [segmentation_file],
+                       'actions' : ['mkdir -p $(dirname %(targets)s)',
+                                    (cosegregation.matrix_from_doit, (matrix_out, segmentation_file, [chrom]))],}
 
 
 def process_nps_from_args(args):
