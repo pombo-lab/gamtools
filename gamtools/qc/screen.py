@@ -42,8 +42,8 @@ def process_fastqc_screen_line(line):
         row_results = {'Unmapped': float(fields[1])}
     else:
         row_results = {
-            fields[0] + '_single': int(fields[4]),
-            fields[0] + '_multiple': int(fields[6]),
+            fields[0] + '_single': int(fields[4]) + int(fields[8]),
+            fields[0] + '_multiple': int(fields[6]) + int(fields[10]),
             'num_reads': int(fields[1]),
         }
 
@@ -56,11 +56,10 @@ def fq_screen_mapped_other(results_dict):
     for k, reads in results_dict.items():
 
         parts = k.split('_')
-        if (len(parts) == 1) or (parts[0] in ['Human', 'Mouse']):
+        if (parts[-1] not in ['single', 'multiple']) or (parts[0] in ['Human', 'Mouse']):
             continue
-        
-        mapped_to_other += reads
 
+        mapped_to_other += reads
 
     return mapped_to_other
 

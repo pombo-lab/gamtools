@@ -284,9 +284,7 @@ def get_script(script_name):
 process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             to_run=[
                                 'Calling positive windows',
-                                'Getting quality stats',
-                                'Getting contamination stats',
-                                'Getting mapping stats',
+                                'Merging stats files',
                                    ],
                             mapping_stats_script=get_script('mapping_stats.sh'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',

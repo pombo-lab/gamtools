@@ -11,6 +11,9 @@ def swap_extension(input_fastq, extension):
         basename, old_ext = os.path.splitext(basename)
     return os.path.join(output_dir, basename + extension)
 
+def get_middle_value(_list):
+    return sorted(_list)[len(_list)/2]
+
 def segmentation_path(base_folder, window_size):
 
     return os.path.join(base_folder, 'segmentation_at_{0}bp.multibam'.format(window_size))
@@ -108,8 +111,9 @@ class input_file_mapping_tasks(object):
 
         yield {
                 "basename"     : 'Creating output directory',
-                "actions"  : ['mkdir -pv %(output_dir)s',],
-                "targets"  : ['%(output_dir)s'],
+                "actions"  : ['mkdir -p %(targets)s',],
+                "targets"  : [self.args.output_dir],
+                "uptodate" : [True],
               }
 
     def task_get_coverage(self):
@@ -239,23 +243,26 @@ class input_file_mapping_tasks(object):
 
     def task_segmentation_stats(self):
 
+        if self.args.qc_window_size is None:
+            self.args.qc_window_size = get_middle_value(self.args.window_sizes)
+
         input_segmentation = segmentation_path(self.args.output_dir, self.args.qc_window_size)
 
         return {
                 'basename': 'Getting segmentation stats',
                 'actions' : [qc.segmentation.get_segmentation_stats_doit],
                 'targets' : [os.path.join(self.args.output_dir, 'segmentation_stats.txt')],
-                'file_dep': [input_segmentation]
+                'file_dep': [input_segmentation],
                }
 
-    def task_merge_stats(args):
+    def task_merge_stats(self):
 
-        files_to_merge = [os.path.join(args.output_dir, sf) for sf in args.default_stats] + args.additional_qc_files
+        files_to_merge = [os.path.join(self.args.output_dir, sf) for sf in self.args.default_stats] + self.args.additional_qc_files
 
         return {
                 'basename': 'Merging stats files',
                 'actions' : [qc.merge.merge_stats_from_doit],
-                'targets' : [os.path.join(args.output_dir, 'merged_stats.txt')],
+                'targets' : [os.path.join(self.args.output_dir, 'merged_stats.txt')],
                 'file_dep' : files_to_merge
                }
 
@@ -266,6 +273,6 @@ def process_nps_from_args(args):
     task_dict = {
         'input_file_tasks': input_file_mapping_tasks(args)
     }
-    #run(task_dict, args, ['list'])
+    #run(task_dict, args, ['info', '--status', 'Merging stats files'])
     run(task_dict, args, args.to_run)
 

@@ -40,7 +40,7 @@ def get_df_stats(segmentation_df):
 
 def get_segmentation_stats(input_segmentation, output_file):
 
-    segmentation_df = segmentation.open_segmentation(multibam_handle)
+    segmentation_df = segmentation.open_segmentation(input_segmentation)
 
     stats_df = get_df_stats(segmentation_df)
 
@@ -51,4 +51,4 @@ def get_segmentation_stats_doit(dependencies, targets):
     assert len(dependencies) == 1
     assert len(targets) == 1
 
-    get_segmentation_stats(dependencies[0], targets[0])
+    get_segmentation_stats(list(dependencies)[0], list(targets)[0])
