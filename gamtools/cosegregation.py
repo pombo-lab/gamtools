@@ -9,13 +9,22 @@ import sys
 
 
 class InvalidDataError(Exception):
-    """Exception to raise if segmentation data contains anything other than 0s and 1s"""
+    """Exception raised if segmentation data contains \
+       anything other than 0s and 1s.
+    """
     pass
 
 
 def regions_are_valid(regions):
+    """Test whether any regions contain values other than the integers 0 and 1
 
-    invalid_regions = [(np.array(region) > 1).any() for region in regions]
+    :param list regions: List of :ref:`regions <regions>` to check.
+    :returns: Returns False if any regions contain invalid data, otherwise True.
+    """
+
+    allowed_values = set([0, 1])
+    region_unique_values = [set(np.unique(np.array(region).ravel())) for region in regions]
+    invalid_regions = [not region_values.issubset(allowed_values) for region_values in region_unique_values]
 
     if any(invalid_regions):
         return False
@@ -24,6 +33,16 @@ def regions_are_valid(regions):
 
 
 def prepare_regions(regions):
+    """Checks and formats a list of regions
+
+    Takes a list of :ref:`regions <regions>`, checks if they are valid (see :func:`regions_are_valid`)
+    and converts them to integer arrays. If there is only one region in the list, cosegregation
+    should be calculated for that region against itself, so returns a list containing the same
+    region twice
+
+    :param list regions: List of :ref:`regions <regions>` to check.
+    :returns: list of integer :class:`numpy arrays <numpy.ndarray>`.
+    """
 
     if not regions_are_valid(regions):
         raise InvalidDataError('Region contains integers greater than 1')
@@ -36,14 +55,27 @@ def prepare_regions(regions):
     return regions
 
 
-def _cosegregation_frequency(samples):
-    """Take a table of n columns and return the co-segregation frequencies"""
+def cosegregation_frequency_ndim(loci):
+    """Take a table of n columns and return the n-dimensional co-segregation frequencies.
+    
+    This function accepts an integer :class:`numpy array <numpy.ndarray>` of size n by x, where
+    n is the number of genomic windows (loci) and x is the number of samples. It calculates
+    the number of times from 0 to n of the windows are all found in the same tube.
+    
+    This is a pure python function, so it is relatively slow, but it can calculate 
+    the co-segregation of any number of windows.
+    
+    :param loci: Array giving the segregation of n loci across x samples.
+    :type loci: :class:`~numpy.ndarray`
+    :returns: An n-dimensional contingency table giving the cosegregation frequencies of all
+    possible combinations of the n loci.
+    """
 
-    counts_shape = (2,) * samples.shape[0]
+    counts_shape = (2,) * loci.shape[0]
 
     counts = np.zeros(counts_shape)
 
-    for s in samples.T:
+    for s in loci.T:
 
         counts[tuple(s)] += 1
 
@@ -51,6 +83,18 @@ def _cosegregation_frequency(samples):
 
 
 def get_index_combinations(regions):
+    """Returns all possible index combinations for a list of regions.
+
+    Takes a list of :ref:`regions <regions>` and returns a generator
+    that will iterate through indices for all combinations of columns
+    in the three regions. Column indices for each region are consecutive,
+    for example, if the first region has 20 columns, the last column of
+    region 1 will have the index 19 (since indices are 0-based) and the
+    first column of region 2 will have the index 20.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: generator that yields tuples of integer indices.
+    """
 
     indexes = []
     start = 0
@@ -66,6 +110,25 @@ def get_index_combinations(regions):
 
 
 def cosegregation_nd(*regions):
+    """Get the full co-segregation table for n regions.
+
+    Takes a list of :ref:`regions <regions>` and calculates the
+    full cosegregation frequency matrix for all possible combinations
+    of loci from the n regions. For example, if three regions are
+    given, position (x,y,z) of the output matrix is a three-dimensional
+    contingency table, giving the number of times locus x cosegregates
+    with loci y and z.
+
+    This function has a pure python inner and outer loop, so it is
+    very slow, but it has the advantage of being applicable in an
+    unlimited number of dimensions. Optimized functions for
+    obtaining the co-segregation of two or three regions can
+    be found in the cosegregation optimized module.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    of all possible combinations of windows within the different regions.
+    """
 
     combinations = get_index_combinations(regions)
 
@@ -73,7 +136,7 @@ def cosegregation_nd(*regions):
 
     def get_frequency(indices):
 
-        return _cosegregation_frequency(full_data[indices, :])
+        return cosegregation_frequency_ndim(full_data[indices, :])
 
     result = map(get_frequency, combinations)
 
@@ -85,6 +148,19 @@ def cosegregation_nd(*regions):
 
 
 def get_cosegregation_from_regions(*regions):
+    """Get the full co-segregation table for n regions, using optimized
+    functions where available.
+
+    This is a wrapper which determines the correct co-segregation
+    function to call based on the number of regions. Where there
+    are two or three regions, optimized C functions are used. Where
+    there are more than three regions, the non-optimized python
+    algorithm is used.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    of all possible combinations of windows within the different regions.
+    """
 
     regions = prepare_regions(regions)
 
@@ -99,6 +175,19 @@ def get_cosegregation_from_regions(*regions):
 
 
 def get_cosesgregation(segmentation_data, *location_strings):
+    """Calculate the co-segregation of n genomic regions. Where
+    only one region
+
+    This is a wrapper which determines the correct co-segregation
+    function to call based on the number of regions. Where there
+    are two or three regions, optimized C functions are used. Where
+    there are more than three regions, the non-optimized python
+    algorithm is used.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    of all possible combinations of windows within the different regions.
+    """
 
     regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
 
