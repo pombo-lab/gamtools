@@ -26,3 +26,4 @@ of a particular genomic window across x samples.
     :members:
     :undoc-members:
     :show-inheritance:
+    :exclude-members: matrix_from_args, matrix_from_doit
