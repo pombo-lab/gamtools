@@ -252,6 +252,7 @@ process_parser.add_argument(
     '-w', '--window-sizes', metavar='WINDOW_SIZE',
     default=[50000], type=int, nargs='+',
     help='One or more window sizes for calling positive windows')
+# TODO: Remove this option, and check window-sizes, matrix-sizes and qc-window-size are all consistent
 process_parser.add_argument(
     '-m', '--calculate-matrices', action='append_const',
     dest='to_run', const='Calculating linkage matrix',
