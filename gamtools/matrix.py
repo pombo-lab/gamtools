@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys, os
-from .segmentation import parse_location_string
+from .segregation import parse_location_string
 import itertools
 import argparse
 

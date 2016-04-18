@@ -4,6 +4,50 @@ import pandas as pd
 import itertools
 
 def get_overlap(features_df1, features_df2, doublets_df):
+    """Subset a table of interactions given two tables of possible interacting elements.
+
+    Takes a table of pairwise interactions (doublets_df) and returns
+    only those interactions which involve a window from
+    features_df1 interacting with a window from features_df2.
+
+    :param features_df1: Table of windows allowed on one side of the interaction \
+            (can be either left or right).
+    :type features_df1: :class:`pandas.DataFrame`
+    :param features_df2: Table of windows allowed on the other side of the interaction.
+    :type features_df2: :class:`pandas.DataFrame`
+    :param doublets_df: Table of pairwise interactions.
+    :type doublets_df: :class:`pandas.DataFrame`
+    :returns: A subset of the original doublets_df.
+
+    >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
+    >>>                                        ('chr2', 10, 20, 0.5),
+    >>>                                        ('chr1', 10, 30, 0.4)],
+    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    >>>                                               'interaction'])
+    >>> pairwise_interactions
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+    1  chr2     10     20         0.50
+    2  chr1     10     30         0.40
+    >>> enhancers = pd.DataFrame([('chr1', 10),
+    >>>                           ('chr2', 20)],
+    >>>                          columns=['chrom', 'i'])
+    >>> enhancers
+      chrom   i
+    0  chr1  10
+    1  chr2  20
+    >>> genes = pd.DataFrame([('chr1', 20),
+    >>>                       ('chr2', 30)],
+    >>>                      columns=['chrom', 'i'])
+    >>> genes
+      chrom   i
+    0  chr1  20
+    1  chr2  30
+    >>> enrichment.get_overlap(enhancers, genes, pairwise_interactions)
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+
+    """
 
     intermediate12 = pd.merge(features_df1, doublets_df,
                              left_on=['chrom', 'i'], right_on=['chrom', 'Pos_A'])
@@ -20,34 +64,75 @@ def get_overlap(features_df1, features_df2, doublets_df):
 
     return both_overlap
 
-def randomize_pos(pos, i, chrom_len):
-    new_pos = pos + i
-    if new_pos >= chrom_len:
-        new_pos -= chrom_len
-    return new_pos
 
 def randomize_doublets(doublets_orig, chrom_lengths):
+    """Randomize a table of pairwise interactions.
+
+    Randomize a table of pairwise interactions by shifting all interactions
+    on a given chromosome by the same amount. This preserves both
+    the span of each individual interaction and the distance distribution
+    between different interactions. Shifts are done by circular
+    permutation, so if either end of an interaction would be shifted
+    off the end of the chromosome, it will be replaced at the
+    beginning. This does mean that a small number of interactions
+    might be split in half by the randomization (i.e. the end is
+    moved to the beginning of the chromosome).
+
+    :params doublets_orig: Table of pairwise interactions.
+    :type doublets_orig: :class:`pandas.DataFrame`
+    :params dict chrom_lengths: Dictionary giving the number of windows \
+            in each chromosome.
+    :returns: Randomized version of doublets_orig.
+
+    >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
+    >>>                                        ('chr2', 10, 20, 0.5),
+    >>>                                        ('chr1', 10, 30, 0.4)],
+    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    >>>                                               'interaction'])
+    >>> pairwise_interactions
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+    1  chr2     10     20         0.50
+    2  chr1     10     30         0.40
+    >>> chromosome_lengths = {'chr1':50, 'chr2':35}
+    >>> enrichment.randomize_doublets(pairwise_interactions, chromosome_lengths)
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     38     48         0.75
+    1  chr2      3     13         0.50
+    2  chr1     38      8         0.40
+
+    """
+
+    # TODO: Handle split interactions where one half is permuted past the
+    # chromosome length
 
     doublets_df = doublets_orig.copy()
 
-    i = np.random.randint(1, max(chrom_lengths.values()))
+    shift = np.random.randint(1, max(chrom_lengths.values()))
 
-    def randomize_chrom(chrom, i):
+    def randomize_chrom(chrom, shift):
 
         chrom_len = chrom_lengths[chrom]
-        chrom_i = i % chrom_len
 
+        # If a shift is bigger than the length of the chromosome,
+        # the end result is the same as shifting by the remainder
+        # when shift is divided by the chromosome length
+        chrom_shift = shift % chrom_len
+
+        # Shift both positions by chrom_shift
         doublets_df.ix[doublets_df.chrom == chrom,
                         ['Pos_A', 'Pos_B']] = np.array(
                             doublets_df.ix[doublets_df.chrom == chrom,
-                                        ['Pos_A', 'Pos_B']]) + chrom_i
+                                        ['Pos_A', 'Pos_B']]) + chrom_shift
 
+        # Check left doesn't extend past chromosome end
         doublets_df.ix[(doublets_df.chrom == chrom) &
                        (doublets_df.Pos_A >= chrom_lengths[chrom]),
                         ['Pos_A']] = np.array(doublets_df.ix[(doublets_df.chrom == chrom) &
                                              (doublets_df.Pos_A >= chrom_lengths[chrom]),
                                              ['Pos_A']]) - chrom_lengths[chrom]
 
+        #Check right doesn't extend past chromosome end
         doublets_df.ix[(doublets_df.chrom == chrom) &
                        (doublets_df.Pos_B >= chrom_lengths[chrom]),
                         ['Pos_B']] = np.array(doublets_df.ix[(doublets_df.chrom == chrom) &
@@ -56,7 +141,7 @@ def randomize_doublets(doublets_orig, chrom_lengths):
 
     for chrom in chrom_lengths.keys():
 
-        randomize_chrom(chrom, i)
+        randomize_chrom(chrom, shift)
 
     return doublets_df
 
