@@ -146,6 +146,49 @@ def randomize_doublets(doublets_orig, chrom_lengths):
     return doublets_df
 
 def feature_pair_values(pairs_df, window_classes, feat1, feat2):
+    """Subset a table of interactions, to obtain only those where windows
+    from the first classification interact with those from the second classification.
+
+    Takes a table of pairwise interactions (doublets_df), a table of window
+    classifications and two specific window classifications. Returns only those
+    interactions which involve a window classified as feat1 interacting with a
+    window classified as feat2.
+
+    :param pairs_df: Table of pairwise interactions.
+    :type pairs_df: :class:`pandas.DataFrame`
+    :param str feat1: Classification of windows allowed on one side of the interaction \
+            (can be either left or right).
+    :param str feat2: Classification of windows allowed on the other side of the interaction.
+    :returns: A subset of the original doublets_df.
+
+    >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
+    >>>                                        ('chr2', 10, 20, 0.5),
+    >>>                                        ('chr1', 10, 30, 0.4)],
+    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    >>>                                               'interaction'])
+    >>> pairwise_interactions
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+    1  chr2     10     20         0.50
+    2  chr1     10     30         0.40
+    >>> window_classification = pd.DataFrame([('chr1', 10, True, False),
+    >>>                                       ('chr1', 20, False, True),
+    >>>                                       ('chr2', 20, True, False),
+    >>>                                       ('chr2', 30, False, True)],
+    >>>                                      columns=['chrom', 'i', 'Enhancer', 'Gene'])
+    >>> window_classification
+      chrom   i Enhancer   Gene
+    0  chr1  10     True  False
+    1  chr1  20    False   True
+    2  chr2  20     True  False
+    3  chr2  30    False   True
+    >>> enrichment.feature_pair_values(pairwise_interactions, window_classification,
+    >>>                                'Enhancer', 'Gene')
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+
+    """
+
 
     return get_overlap(window_classes[window_classes[feat1]],
                        window_classes[window_classes[feat2]],
