@@ -294,7 +294,7 @@ def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
     fitting_data = []
 
-    segmentation_matrix = coverage_data.copy()
+    segregation_matrix = coverage_data.copy()
 
     for i, sample_name in enumerate(coverage_data.columns):
 
@@ -308,7 +308,7 @@ def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
         above_threshold = coverage_data.loc[:,sample_name] > sample_fitting_data['read_threshold']
 
-        segmentation_matrix.loc[:,sample_name] = above_threshold.astype(int)
+        segregation_matrix.loc[:,sample_name] = above_threshold.astype(int)
 
         fitting_data.append([sample_name] + sample_fitting_data.values())
 
@@ -319,7 +319,7 @@ def _do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
             fitting_data, columns=['Sample']+sample_fitting_data.keys()
         )
 
-    return segmentation_matrix, fitting_data
+    return segregation_matrix, fitting_data
 
 
 
@@ -329,11 +329,11 @@ def threshold_file(input_file, output_file,
     coverage_data = pd.read_csv(input_file,
                        delim_whitespace=True, index_col=[0,1,2])
 
-    segmentation_matrix, fitting_data = _do_coverage_thresholding(coverage_data,
+    segregation_matrix, fitting_data = _do_coverage_thresholding(coverage_data,
                                                                   fitting_folder,
                                                                   fitting_function)
 
-    segmentation_matrix.to_csv(output_file, index=True, sep='\t')
+    segregation_matrix.to_csv(output_file, index=True, sep='\t')
 
     if fitting_details_file is not None:
         fitting_data.to_csv(fitting_details_file, sep='\t', index=False)

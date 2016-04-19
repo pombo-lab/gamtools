@@ -1,5 +1,28 @@
+"""
+.. _regions:
+
+Regions
+-------
+
+Regions are :class:`pandas.DataFrame` objects, where columns represent samples
+and rows represent windows. The values should be either 1 (signifying that the
+given window was detected as present in the given sample) or 0 (signifying that
+the window was not detected.)
+
+.. _samples:
+
+Samples
+-------
+
+Each column in a :ref:`region <regions>` is an integer
+:class:`numpy arrays <numpy.ndarray>` of length x, representing the segregation
+of a particular genomic window across x samples.
+
+
+"""
+
 from .cosegregation_internal import cosegregation_2d, cosegregation_3d, linkage_2d, linkage_3d, dprime_2d
-from . import segmentation, matrix
+from . import segregation, matrix
 from .utils import format_genomic_distance
 import numpy as np
 import itertools
@@ -9,7 +32,7 @@ import sys
 
 
 class InvalidDataError(Exception):
-    """Exception raised if segmentation data contains \
+    """Exception raised if segregation data contains \
        anything other than 0s and 1s.
     """
     pass
@@ -57,17 +80,17 @@ def prepare_regions(regions):
 
 def cosegregation_frequency_ndim(loci):
     """Take a table of n columns and return the n-dimensional co-segregation frequencies.
-    
+
     This function accepts an integer :class:`numpy array <numpy.ndarray>` of size n by x, where
     n is the number of genomic windows (loci) and x is the number of samples. It calculates
     the number of times from 0 to n of the windows are all found in the same tube.
-    
-    This is a pure python function, so it is relatively slow, but it can calculate 
+
+    This is a pure python function, so it is relatively slow, but it can calculate
     the co-segregation of any number of windows.
-    
+
     :param loci: Array giving the segregation of n loci across x samples.
     :type loci: :class:`~numpy.ndarray`
-    :returns: An n-dimensional contingency table giving the cosegregation frequencies of all
+    :returns: An n-dimensional contingency table giving the cosegregation frequencies of all \
     possible combinations of the n loci.
     """
 
@@ -126,7 +149,7 @@ def cosegregation_nd(*regions):
     be found in the cosegregation optimized module.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    :returns: :class:`numpy array <numpy.ndarray>` giving the co-segregation
     of all possible combinations of windows within the different regions.
     """
 
@@ -158,7 +181,7 @@ def get_cosegregation_from_regions(*regions):
     algorithm is used.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    :returns: :class:`numpy array <numpy.ndarray>` giving the co-segregation
     of all possible combinations of windows within the different regions.
     """
 
@@ -174,34 +197,42 @@ def get_cosegregation_from_regions(*regions):
     return coseg_func(*regions)
 
 
-def get_cosesgregation(segmentation_data, *location_strings):
-    """Calculate the co-segregation of n genomic regions. Where
-    only one region
+def get_cosesgregation(segregation_data, *location_strings):
+    """Calculate co-segregation frequencies for a given genomic
+    location or locations. Where only one location is given,
+    co-segregation is calculated for that region against itself.
 
-    This is a wrapper which determines the correct co-segregation
-    function to call based on the number of regions. Where there
-    are two or three regions, optimized C functions are used. Where
-    there are more than three regions, the non-optimized python
-    algorithm is used.
-
-    :param list regions: List of :ref:`regions <regions>`.
-    :returns: :class:`numpy array <numpy.ndarray> giving the co-segregation
+    :param segregation_data: Input segregation table
+    :param str location_strings: One or more genomic locations,
+    formatted as for the UCSC genome browser (e.g. "chr12",
+    "chrX:100000-250000" etc.
+    :returns: :class:`numpy array <numpy.ndarray>` giving the co-segregation
     of all possible combinations of windows within the different regions.
     """
 
-    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
+    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
 
     return get_cosegregation_from_regions(*regions)
 
 
-def map_freqs(func, fqs):
-    old_shape = fqs.shape
-    half_point = len(old_shape) / 2
-    flat_shape = tuple([ np.prod(old_shape[:half_point]) ]) + old_shape[half_point:]
-    return np.array(map(func, fqs.reshape(flat_shape))).reshape(old_shape[:half_point])
-
-
 def get_linkage_from_regions(*regions):
+    """Get the full linkage disequilibrium matrix for n regions, using optimized
+    functions where available.
+
+    This is a wrapper which determines the correct linkage
+    function to call based on the number of regions. Where there
+    are two regions, an optimized C function is used. Where
+    there are three regions, linkage is calculated following the
+    method given in
+    `Hastings (1984) <http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1202243/>`_.
+    This usage will raise a warning, since three-dimensional linkage is non-
+    trivial and not necessarily obvious. Linkage matrices for more than three
+    regions are not currently supported.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :class:`numpy array <numpy.ndarray>` giving the linkage disequilibrium
+    of all possible combinations of windows within the different regions.
+    """
 
     regions = prepare_regions(regions)
 
@@ -216,14 +247,38 @@ def get_linkage_from_regions(*regions):
     return linkage_func(*regions)
 
 
-def get_linkage(segmentation_data, *location_strings):
+def get_linkage(segregation_data, *location_strings):
+    """Calculate the linkage disequilibrium matrix for a given genomic
+    location or locations. Where only one location is given,
+    linkage is calculated for that region against itself.
 
-    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
+    :param segregation_data: Input segregation table
+    :param str location_strings: One or more genomic locations,
+    formatted as for the UCSC genome browser (e.g. "chr12",
+    "chrX:100000-250000" etc.
+    :returns: :class:`numpy array <numpy.ndarray>` giving the linkage disequilibrium
+    of all possible combinations of windows within the different regions.
+    """
+
+    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
 
     return get_linkage_from_regions(*regions)
 
 
 def get_dprime_from_regions(*regions):
+    """Get the full normalized linkage disequilibrium (D') matrix for n
+    regions.
+
+    This is a wrapper which determines the correct normalized linkage
+    function to call based on the number of regions. Only two-dimensional
+    normalized linkage matrices are currently supported. Where only one
+    region is given, normalized linkage is calculated for that region against
+    itself.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :class:`numpy array <numpy.ndarray>` giving the normalized linkage
+    disequilibrium of all possible combinations of windows within the different regions.
+    """
 
     regions = prepare_regions(regions)
 
@@ -235,9 +290,22 @@ def get_dprime_from_regions(*regions):
     return dprime_func(*regions)
 
 
-def get_dprime(segmentation_data, *location_strings):
+def get_dprime(segregation_data, *location_strings):
+    """Calculate the normalized linkage disequilibrium (D') matrix for a given
+    genomic location or locations. Where only one location is given, normalized
+    linkage is calculated for that region against itself.  Where two regions
+    are given, linkage is calculated for region one against region two.
 
-    regions = [segmentation.region_from_location_string(segmentation_data, l) for l in location_strings]
+    :param segregation_data: Input segregation table
+    :param str location_strings: One or more genomic locations,
+    formatted as for the UCSC genome browser (e.g. "chr12",
+    "chrX:100000-250000" etc.
+    :returns: :class:`numpy array <numpy.ndarray>` giving the normalized linkage
+    disequilibrium of all possible combinations of windows within the different regions.
+    """
+
+
+    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
 
     return get_dprime_from_regions(*regions)
 
@@ -247,40 +315,116 @@ matrix_types = {
     'cosegregation': get_cosegregation_from_regions,
 }
 
-def get_regions_and_windows(segmentation_data, location_strings):
+def get_regions_and_windows(segregation_data, location_strings):
+    """Get the windows which fall into a given genomic location, and the
+    segregation of those windows across samples.
+
+    For each location string, find the rows of the segregation table that
+    overlap the given genomic location. Return the resulting segregation table
+    subsets (i.e. :ref:`regions`), and a list of the locations of the
+    windows within each region.
+
+    :param segregation_data: Input segregation table
+    :param list location_strings: One or more genomic locations,
+    formatted as for the UCSC genome browser (e.g. "chr12",
+    "chrX:100000-250000" etc.
+    :returns: A list of :ref:`regions` and a list of tuples giving
+    window locations in the form (chromosome, start, stop).
+    """
+
 
     if len(location_strings) == 1:
         location_strings = location_strings * 2
 
-    regions = [segmentation.region_from_location_string(segmentation_data, location_str)
+    regions = [segregation.region_from_location_string(segregation_data, location_str)
                for location_str in location_strings]
 
     windows = [np.array(list(region.index)) for region in regions]
 
     return regions, windows
 
-def matrix_and_windows_from_segmentation_file(
-    segmentation_file, location_strings, matrix_type='dprime'):
+def matrix_and_windows_from_segregation_file(
+    segregation_file, location_strings, matrix_type='dprime'):
+    """Get the proximity matrix between the given genomic locations, and the
+    locations of the genomic windows corresponding to each axis of the
+    proximity matrix.
 
-    segmentation_data = segmentation.open_segmentation(segmentation_file)
-    print segmentation_data.head()
+    Calculate the proximity matrix between the windows in different genomic
+    locations. If only one location string is given, calculate the matrix
+    for that location against itself. For example, if location_strings is
+    ['chr1'], the matrix will give the proximity between all windows on
+    chromosome 1 (x-axis) against all windows on chromosome 1 (y-axis).
+    Alternatively, if location_strings is ['chr1', 'chr2'], the matrix
+    will give the proximity between windows on chromosome 1 (x-axis) and
+    windows on chromosome 2 (y-axis).
 
-    regions, windows = get_regions_and_windows(segmentation_data, location_strings)
+    Three types of proximity matrix are supported, 'cosegregation' (see
+    :func:`get_cosegregation_from_regions`), 'linkage' (see
+    :func:`get_linkage_from_regions`) and 'dprime' (see
+    :func:`get_dprime_from_regions`).
+
+    The function also returns a list of the windows that correspond to
+    the axes of the proximity matrix.
+
+    :param segregation_file: Path to input segregation table
+    :param list location_strings: One or more genomic locations,
+    formatted as for the UCSC genome browser (e.g. "chr12",
+    "chrX:100000-250000" etc.
+    :returns: A :class:`numpy array <numpy.ndarray>` giving the proximity
+    matrix for the given genomic locations, and a list of tuples giving
+    window locations in the form (chromosome, start, stop).
+    """
+
+    segregation_data = segregation.open_segregation(segregation_file)
+    print segregation_data.head()
+
+    regions, windows = get_regions_and_windows(segregation_data, location_strings)
     matrix_func = matrix_types[matrix_type]
     contact_matrix = matrix_func(*regions)
 
     return contact_matrix, windows
 
 
-def create_and_save_contact_matrix(segmentation_file, location_strings,
+def create_and_save_contact_matrix(segregation_file, location_strings,
                                    output_file, output_format,
                                    matrix_type='dprime'):
+    """Calculate the proximity matrix for the given genomic locations and save it
+    to disk.
+
+    Calculate the proximity matrix between the windows in different genomic
+    locations. If only one location string is given, calculate the matrix
+    for that location against itself. For example, if location_strings is
+    ['chr1'], the matrix will give the proximity between all windows on
+    chromosome 1 (x-axis) against all windows on chromosome 1 (y-axis).
+    Alternatively, if location_strings is ['chr1', 'chr2'], the matrix
+    will give the proximity between windows on chromosome 1 (x-axis) and
+    windows on chromosome 2 (y-axis).
+
+    Three types of proximity matrix are supported, 'cosegregation' (see
+    :func:`get_cosegregation_from_regions`), 'linkage' (see
+    :func:`get_linkage_from_regions`) and 'dprime' (see
+    :func:`get_dprime_from_regions`).
+
+    Three output formats are supported: 'npz', 'txt' and 'csv'. 'txt' and
+    'csv' outputs also support gzip compression ('txt.gz' and 'csv.gz'
+    formats). See :ref:`matrix output formats` for more details.
+
+    :param str segregation_file: Path to input segregation table.
+    :param list location_strings: One or more genomic locations, \
+    formatted as for the UCSC genome browser (e.g. "chr12", \
+    "chrX:100000-250000" etc.
+    :param str output_file: Path to use for saving output file.
+    :param str output_format: Format to use when saving matrix. \
+            (see :ref:`matrix output formats` for more details)
+    :param str matrix_type: Type of proximity matrix to calculate \
+            (see :ref:`proximity matrices` for more details).
+    """
 
     print 'starting calculation for {}'.format(' x '.join(location_strings))
     start_time = time.clock()
 
-    contact_matrix, windows = matrix_and_windows_from_segmentation_file(
-        segmentation_file, location_strings, matrix_type)
+    contact_matrix, windows = matrix_and_windows_from_segregation_file(
+        segregation_file, location_strings, matrix_type)
 
     size_string = ' x '.join([str(s) for s in contact_matrix.shape])
     print 'region size is: {}'.format(size_string),
@@ -293,19 +437,49 @@ def create_and_save_contact_matrix(segmentation_file, location_strings,
 
     print 'Done!'
 
-def get_output_file(segmentation_file, location_strings, matrix_type, output_format):
+def get_output_file(segregation_file, location_strings, matrix_type, output_format):
+    """Automatically generate an output file path for a proximity matrix given
+    the input segregation file.
 
-    segmentation_base = '.'.join(segmentation_file.split('.')[:-1])
-    locations = [segmentation.parse_location_string(loc_string)
+    This function generates an output path in the format:
+
+    <input_segregation_path>.<region1>_x_<region2>_<matrix_type>.<extension>
+
+    :param str segregation_file: Path to input segregation table.
+    :param list location_strings: One or more genomic locations, \
+    formatted as for the UCSC genome browser (e.g. "chr12", \
+    "chrX:100000-250000" etc.
+    :param str matrix_type: Type of proximity matrix to calculate \
+            (see :ref:`proximity matrices` for more details).
+    :param str output_format: Format to use when saving matrix. \
+            (see :ref:`matrix output formats` for more details)
+    :returns: Path to save matrix file.
+
+    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1'], 'dprime', 'txt.gz')
+    '/path/to/segregation_file.chr1_dprime.txt.gz'
+    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1', 'chr2'], 'linkage', 'npz')
+    '/path/to/segregation_file.chr1_x_chr2_linkage.npz'
+    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1:10000000-20000000'],
+    ...                 'cosegregation', 'csv')
+    '/path/to/segregation_file.chr1_10.0Mb-20.0Mb_cosegregation.csv'
+
+    """
+
+    #TODO: If only "chr1" given, output only "chr1"
+    segregation_base = '.'.join(segregation_file.split('.')[:-1])
+    locations = [segregation.parse_location_string(loc_string)
                  for loc_string in location_strings]
     formatted_locations = [(chrom, format_genomic_distance(start), format_genomic_distance(stop))
                            for chrom, start, stop in locations]
     formatted_locations = ['{}_{}-{}'.format(*loc) for loc in formatted_locations]
     region_string = '_x_'.join(formatted_locations)
 
-    return '{}.{}_{}.{}'.format(segmentation_base, region_string, matrix_type, output_format)
+    return '{}.{}_{}.{}'.format(segregation_base, region_string, matrix_type, output_format)
 
 def matrix_from_args(args):
+    """Extract parameters from an argparse namespace object and pass them to
+    create_and_save_contact_matrix.
+    """
 
     if args.output_format is None:
         if len(args.regions) > 2:
@@ -319,18 +493,21 @@ def matrix_from_args(args):
 
     if args.output_file is None:
         args.output_file = get_output_file(
-            args.segmentation_file, args.regions,
+            args.segregation_file, args.regions,
             args.matrix_type, args.output_format)
 
     elif args.output_file == '-':
         args.output_file = sys.stdout
 
-    create_and_save_contact_matrix(args.segmentation_file, args.regions,
+    create_and_save_contact_matrix(args.segregation_file, args.regions,
                                    args.output_file, args.output_format,
                                    args.matrix_type)
 
-def matrix_from_doit(output_file, segmentation_file, region):
+def matrix_from_doit(output_file, segregation_file, region):
+    """Partial function that passes parameters from doit to
+    create_and_save_contact_matrix
+    """
 
-    create_and_save_contact_matrix(segmentation_file, region,
+    create_and_save_contact_matrix(segregation_file, region,
                                    output_file, 'txt.gz', 'dprime')
 
