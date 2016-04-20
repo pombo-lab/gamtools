@@ -30,7 +30,7 @@ call_windows_parser.add_argument(
 call_windows_parser.add_argument(
     '-o', '--output-file', type=argparse.FileType('w'),
     default=sys.stdout,
-    help='Output segmentation file to create '
+    help='Output segregation file to create '
     '(or "-" to write to stdout)')
 
 # If --macs is specified, we don't need to plot the fits
@@ -125,7 +125,7 @@ enrichment_parser.set_defaults(func=enrichment.enrichment_from_args)
 
 matrix_parser = subparsers.add_parser(
     'matrix',
-    help='Generate a GAM matrix from a segmentation file')
+    help='Generate a GAM matrix from a segregation file')
 
 matrix_parser.add_argument(
     '-r', '--regions', metavar='REGION', required=True, nargs='+',
@@ -137,8 +137,8 @@ matrix_parser.add_argument(
     '4 or "chr4:100000-200000" for a sub-region of the chromosome.')
 
 matrix_parser.add_argument(
-    '-s', '--segmentation_file', required=True,
-    help='A segmentation file to use as input')
+    '-s', '--segregation_file', required=True,
+    help='A segregation file to use as input')
 
 matrix_parser.add_argument(
     '-f', '--output-format',
@@ -155,7 +155,7 @@ matrix_parser.add_argument(
 matrix_parser.add_argument(
     '-o', '--output-file', metavar='OUTPUT_FILE',
     help='Output matrix file. If not specified, new file will have the '
-    'same name as the segmentation file and an extension indicating the '
+    'same name as the segregation file and an extension indicating the '
     'genomic region(s) and the matrix method')
 
 matrix_parser.set_defaults(func=cosegregation.matrix_from_args)
@@ -172,16 +172,16 @@ permute_matrix_parser = subparsers.add_parser(
 """
 
 
-# Options for 'permute_segmentation' command
+# Options for 'permute_segregation' command
 
 permute_seg_parser = subparsers.add_parser(
-    'permute_segmentation',
-    help='Circularly permute the columns of a GAM segmentation file')
+    'permute_segregation',
+    help='Circularly permute the columns of a GAM segregation file')
 
 permute_seg_parser.add_argument(
-    '-s', '--segmentation_file', required=True,
+    '-s', '--segregation_file', required=True,
     type=argparse.FileType('r'),
-    help='A segmentation file to circularly permute '
+    help='A segregation file to circularly permute '
     '(or - to read from stdin)')
 
 permute_seg_parser.add_argument(
@@ -189,14 +189,14 @@ permute_seg_parser.add_argument(
     type=argparse.FileType('w'),
     help='Output file path (or - to write to stdout)')
 
-permute_seg_parser.set_defaults(func=permutation.permute_segmentation_from_args)
+permute_seg_parser.set_defaults(func=permutation.permute_segregation_from_args)
 
 
 # Options for 'plot_np' command
 
 plot_np_parser = subparsers.add_parser(
     'plot_np',
-    help='Plot the segmentation results for a particular NP')
+    help='Plot the segregation results for a particular NP')
 
 plot_np_parser.add_argument(
     '-w', '--bigwig_file', required=True,
@@ -229,10 +229,10 @@ process_parser.add_argument(
 process_parser.add_argument(
     '-o', '--output_dir', metavar='OUPUT_DIRECTORY',
     default=os.getcwd(),
-    help='Write segmentation, matrix etc. to this directory')
+    help='Write segregation, matrix etc. to this directory')
 process_parser.add_argument(
     '-f', '--fittings_dir', metavar='FITTINGS_DIRECTORY',
-    help='Write segmentation curve fitting plots to this directory')
+    help='Write segregation curve fitting plots to this directory')
 process_parser.add_argument(
     '-d', '--details-file',
     help='If specified, write a table of fitting parameters to this path')
@@ -242,7 +242,7 @@ process_parser.add_argument(
     help='Make bigWig files.')
 process_parser.add_argument(
     '-b', '--bigbeds', action='append_const',
-    dest='to_run', const='Getting segmentation bigBed',
+    dest='to_run', const='Getting segregation bigBed',
     help='Make bed files of positive windows')
 process_parser.add_argument(
     '-c', '--do-qc', action='append_const',
@@ -278,11 +278,23 @@ add_doit_options(process_parser,
                   'reporter', 'num_process', 'par_type'])
 
 def get_script(script_name):
+    """Get the absolute path to a script in the gamtools 'scripts' folder
+
+    :param str script_name: Name of the script file.
+    :returns: Absolute path to the script file
+    """
+
     return os.path.join(os.path.dirname(__file__),
                         '../scripts',
                         script_name)
 
 def get_example(example_name):
+    """Get the absolute path to a file in the gamtools 'examples' folder
+
+    :param str example_name: Name of the file.
+    :returns: Absolute path to the file
+    """
+
     return os.path.join(os.path.dirname(__file__),
                         '../examples',
                         example_name)
@@ -295,18 +307,18 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             mapping_stats_script=get_script('mapping_stats.sh'),
                             example_parameters_file=get_example('qc_parameters.example.cfg'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
-                                           'quality_stats.txt', 'segmentation_stats.txt'],
+                                           'quality_stats.txt', 'segregation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)
 
 # Options for 'select' command
 
 select_parser = subparsers.add_parser(
     'select',
-    help='Select only certain samples from a segmentation file')
+    help='Select only certain samples from a segregation file')
 
 select_parser.add_argument(
-    '-s', '--segmentation-file', metavar='SEGMENTATION_FILE', required=True,
-    help='A file containing the segmentation of all samples')
+    '-s', '--segregation-file', metavar='SEGMENTATION_FILE', required=True,
+    help='A file containing the segregation of all samples')
 select_parser.add_argument(
     '-d', '--drop-samples', action='store_true',
     help='Discard the listed samples (default: discard samples not in the list)')
@@ -321,6 +333,8 @@ select_parser.add_argument(
 select_parser.set_defaults(func=select_samples.select_samples_from_args)
 
 def main():
+    """Main gamtools function that is called by the gamtools command line script."""
+
     args = parser.parse_args()
 
     if hasattr(args, 'to_run') and 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):

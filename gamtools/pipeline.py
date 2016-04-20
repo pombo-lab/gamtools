@@ -2,7 +2,7 @@ import os
 from wrapit.api import run
 import itertools
 import inspect
-from . import call_windows, segmentation, qc, select_samples, cosegregation, utils
+from . import call_windows, segregation, qc, select_samples, cosegregation, utils
 
 def swap_extension(input_fastq, extension):
     output_dir = os.path.dirname(input_fastq)
@@ -20,8 +20,8 @@ def pretty_resolution(window_size):
 def coverage_path(base_folder, window_size):
     return os.path.join(base_folder, 'coverage_at_{0}.multibam'.format(pretty_resolution(window_size)))
 
-def segmentation_path(base_folder, window_size):
-    return os.path.join(base_folder, 'segmentation_at_{0}.multibam'.format(pretty_resolution(window_size)))
+def segregation_path(base_folder, window_size):
+    return os.path.join(base_folder, 'segregation_at_{0}.multibam'.format(pretty_resolution(window_size)))
 
 class input_file_mapping_tasks(object):
 
@@ -135,16 +135,16 @@ class input_file_mapping_tasks(object):
                     'task_dep' : [ 'Indexing bam', 'Creating output directory' ],
                    }
 
-    def task_get_segmentation(self):
+    def task_get_segregation(self):
         for window_size in self.args.window_sizes:
 
             input_coverage_file = coverage_path(self.args.output_dir, window_size)
-            output_segmentation_file = segmentation_path(self.args.output_dir, window_size)
+            output_segregation_file = segregation_path(self.args.output_dir, window_size)
 
             task = {
                 'basename' : 'Calling positive windows',
                 'name'     : pretty_resolution(window_size),
-                'targets'  : [output_segmentation_file],
+                'targets'  : [output_segregation_file],
                 'file_dep' : [input_coverage_file],
                 'actions'  : [],
                 }
@@ -157,48 +157,48 @@ class input_file_mapping_tasks(object):
 
             task['actions'].append((call_windows.threshold_file, (
                                       input_coverage_file,
-                                      output_segmentation_file,
+                                      output_segregation_file,
                                       full_fitting_dir,
                                       self.args.details_file,
                                       self.args.fitting_function)))
 
             yield task
 
-    def task_get_segmentation_bed(self):
+    def task_get_segregation_bed(self):
 
         for window_size in self.args.window_sizes:
 
-            input_segmentation = segmentation_path(self.args.output_dir, window_size)
+            input_segregation = segregation_path(self.args.output_dir, window_size)
 
             for input_fastq in self.args.input_fastqs:
 
-                output_bed = swap_extension(input_fastq, ".segmentation_{0}.bed".format(pretty_resolution(window_size)))
+                output_bed = swap_extension(input_fastq, ".segregation_{0}.bed".format(pretty_resolution(window_size)))
 
                 yield {
-                    'basename' : 'Getting segmentation bed',
+                    'basename' : 'Getting segregation bed',
                     'name'     : '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
-                    'actions'  : [(segmentation.sample_segmentation_to_bed,
-                                   (input_segmentation, swap_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
+                    'actions'  : [(segregation.sample_segregation_to_bed,
+                                   (input_segregation, swap_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
                                  'sort -k1,1 -k2,2n %(targets)s.unsorted > %(targets)s',
                                  'rm %(targets)s.unsorted',],
                     'targets'  : [output_bed],
-                    'file_dep' : [segmentation_path(self.args.output_dir, window_size)],
+                    'file_dep' : [segregation_path(self.args.output_dir, window_size)],
                     }
 
-    def task_get_segmentation_bigbed(self):
+    def task_get_segregation_bigbed(self):
 
         for window_size in self.args.window_sizes:
             for input_fastq in self.args.input_fastqs:
 
                 yield {
-                    'basename' : 'Getting segmentation bigBed',
+                    'basename' : 'Getting segregation bigBed',
                     'name'     : '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
                     # If the input bed is empty, bedToBigBed will fail. We can force it not to return an
                     # error code, but we must touch the target first to ensure it gets created.
                     'actions'  : ['touch %(targets)s',
                                   'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || true',],
-                    'targets'  : [swap_extension(input_fastq, ".segmentation_{0}.bb".format(pretty_resolution(window_size)))],
-                    'file_dep' : [swap_extension(input_fastq, ".segmentation_{0}.bed".format(pretty_resolution(window_size)))],
+                    'targets'  : [swap_extension(input_fastq, ".segregation_{0}.bb".format(pretty_resolution(window_size)))],
+                    'file_dep' : [swap_extension(input_fastq, ".segregation_{0}.bed".format(pretty_resolution(window_size)))],
                       }
 
     def task_run_fastqc(self):
@@ -247,18 +247,18 @@ class input_file_mapping_tasks(object):
                 'file_dep' : self.args.input_fastqs,
               }
 
-    def task_segmentation_stats(self):
+    def task_segregation_stats(self):
 
         if self.args.qc_window_size is None:
             self.args.qc_window_size = get_middle_value(self.args.window_sizes)
 
-        input_segmentation = segmentation_path(self.args.output_dir, self.args.qc_window_size)
+        input_segregation = segregation_path(self.args.output_dir, self.args.qc_window_size)
 
         return {
-                'basename': 'Getting segmentation stats',
-                'actions' : [qc.segmentation.get_segmentation_stats_doit],
-                'targets' : [os.path.join(self.args.output_dir, 'segmentation_stats.txt')],
-                'file_dep': [input_segmentation],
+                'basename': 'Getting segregation stats',
+                'actions' : [qc.segregation.get_segregation_stats_doit],
+                'targets' : [os.path.join(self.args.output_dir, 'segregation_stats.txt')],
+                'file_dep': [input_segregation],
                }
 
     def task_merge_stats(self):
@@ -291,19 +291,19 @@ class input_file_mapping_tasks(object):
                               os.path.join(self.args.output_dir, 'merged_stats.txt')],
                }
 
-    def task_filter_segmentation(self):
+    def task_filter_segregation(self):
 
         passqc_file = os.path.join(self.args.output_dir, 'samples_passing_qc.txt')
 
         for window_size in self.args.window_sizes:
 
-            segmentation_file = segmentation_path(self.args.output_dir, window_size)
+            segregation_file = segregation_path(self.args.output_dir, window_size)
 
             yield {
                 'basename': 'Filtering samples based on QC values',
                 'name'     : pretty_resolution(window_size),
-                'targets'  : [swap_extension(segmentation_file, '.passed_qc.multibam')],
-                'file_dep' : [passqc_file, segmentation_file],
+                'targets'  : [swap_extension(segregation_file, '.passed_qc.multibam')],
+                'file_dep' : [passqc_file, segregation_file],
                 'actions'  : [select_samples.select_samples_from_doit]
                 }
 
@@ -321,21 +321,21 @@ class input_file_mapping_tasks(object):
 
             for chrom in chroms:
 
-                segmentation_file = segmentation_path(self.args.output_dir, window_size)
+                segregation_file = segregation_path(self.args.output_dir, window_size)
                 if 'do_qc' in self.args.to_run:
-                    segmentation_file = swap_extension(segmentation_file, '.passed_qc.multibam')
+                    segregation_file = swap_extension(segregation_file, '.passed_qc.multibam')
 
                 matrix_base = '{seg_file}.dprime.{chrom}.txt.gz'.format(
-                                                  seg_file=os.path.basename(segmentation_file),
+                                                  seg_file=os.path.basename(segregation_file),
                                                   chrom=chrom)
                 matrix_out = os.path.join(self.args.output_dir, 'dprime_matrices', '{}'.format(pretty_resolution(window_size)), matrix_base)
 
                 yield {'basename' : 'Calculating linkage matrix',
                        'name'     : '{0} at {1}'.format(chrom, pretty_resolution(window_size)),
                        'targets'  : [matrix_out],
-                       'file_dep' : [segmentation_file],
+                       'file_dep' : [segregation_file],
                        'actions' : ['mkdir -p $(dirname %(targets)s)',
-                                    (cosegregation.matrix_from_doit, (matrix_out, segmentation_file, [chrom]))],}
+                                    (cosegregation.matrix_from_doit, (matrix_out, segregation_file, [chrom]))],}
 
 
 def process_nps_from_args(args):
