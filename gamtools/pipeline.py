@@ -96,8 +96,9 @@ class input_file_mapping_tasks(object):
                     "name"     : input_fastq,
                     "basename" : 'Converting bam to bedgraph',
                     "actions"  : ['genomeCoverageBed -bg -ibam %(dependencies)s -g %(genome_file)s > %(targets)s',
-                                  'if [ -s "%(targets)s" ]; '
-                                  'then create_empty_bedgraph %(genome_file)s %(targets)s; fi'],
+                                  'if [ ! -s "%(targets)s" ]; '
+                                  'then echo "Creating empty bedgraph %(targets)s";'
+                                  'create_empty_bedgraph %(genome_file)s %(targets)s; fi'],
                     "targets"  : [swap_extension(input_fastq, ".bedgraph")],
                     "file_dep" : [swap_extension(input_fastq, ".rmdup.bam")],
                   }
