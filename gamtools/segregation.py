@@ -1,3 +1,12 @@
+"""
+.. _segregation_table:
+
+Segregation Tables
+------------------
+
+Regions are :class:`pandas.DataFrame` objects, where columns represent samples
+
+"""
 import numpy as np
 import pandas as pd
 import os
@@ -7,14 +16,14 @@ class InvalidChromError(Exception):
     pass
 
 
-def open_segmentation(path_or_buffer):
+def open_segregation(path_or_buffer):
 
     return pd.read_csv(path_or_buffer,
                        index_col=[0,1,2],
                        delim_whitespace=True)
 
 
-def index_from_interval(segmentation_data, interval):
+def index_from_interval(segregation_data, interval):
 
     chrom, start, stop = interval
 
@@ -23,14 +32,14 @@ def index_from_interval(segmentation_data, interval):
 
     window_in_region = np.logical_and(
                             np.logical_and(
-                                segmentation_data.index.get_level_values('stop') > start,
-                                segmentation_data.index.get_level_values('start') < stop),
-                                segmentation_data.index.get_level_values('chrom') == chrom)
+                                segregation_data.index.get_level_values('stop') > start,
+                                segregation_data.index.get_level_values('start') < stop),
+                                segregation_data.index.get_level_values('chrom') == chrom)
 
     covered_windows = np.nonzero(window_in_region)[0]
 
     if not len(covered_windows):
-        if not chrom in segmentation_data.index.levels[0]:
+        if not chrom in segregation_data.index.levels[0]:
             raise InvalidChromError('{0} not found in the list of windows'.format(chrom))
 
     start_index = covered_windows[0]
@@ -58,37 +67,37 @@ def parse_location_string(loc_string):
     return chrom, start, stop
 
 
-def index_from_location_string(segmentation_data, loc_string):
+def index_from_location_string(segregation_data, loc_string):
 
     interval = parse_location_string(loc_string)
 
-    return index_from_interval(segmentation_data, interval)
+    return index_from_interval(segregation_data, interval)
 
 
-def region_from_location_string(segmentation_data, loc_string):
+def region_from_location_string(segregation_data, loc_string):
 
-    ix_start, ix_stop = index_from_location_string(segmentation_data, loc_string)
+    ix_start, ix_stop = index_from_location_string(segregation_data, loc_string)
 
-    return segmentation_data.iloc[ix_start:ix_stop,]
+    return segregation_data.iloc[ix_start:ix_stop,]
 
 
 def detection_frequencies(region):
     return region.sum(axis=1).astype(float) / region.count(axis=1).astype(float)
 
 
-def map_sample_name_to_column(segmentation_data):
+def map_sample_name_to_column(segregation_data):
 
     name_mapping = { }
 
-    for c in segmentation_data.columns:
+    for c in segregation_data.columns:
 
         name_mapping[os.path.basename(c).split('.')[0]] = c
 
     return name_mapping
 
-def sample_segmentation_to_bed(input_segmentation, sample, output_bed):
+def sample_segregation_to_bed(input_segregation, sample, output_bed):
 
-    data = open_segmentation(input_segmentation)
+    data = open_segregation(input_segregation)
 
     subset = data[data[sample] > 0][sample]
 

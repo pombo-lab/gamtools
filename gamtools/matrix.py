@@ -1,19 +1,36 @@
 import numpy as np
 import pandas as pd
 import sys, os
-from .segmentation import parse_location_string
+from .segregation import parse_location_string
 import itertools
 import argparse
 
 def get_name_strings(windows):
+    """Format a tuple representing a genomic window (chrom, start, stop)
+    as a UCSC-like location string "chrom:start-stop"
+
+    :param tuple windows: Tuple in the format (chromosome, start_coord, stop_coord)
+    :returns: UCSC formatted location string
+    """
 
     return ['{}:{}-{}'.format(*i) for i in windows]
 
 def windows_from_name_strings(name_strings):
+    """Convert a list of UCSC-like location strings to a list of window tuples
+
+    :param list name_strings: List of UCSC-like location strings
+    :returns: List of window tuples
+    """
 
     return [parse_location_string(name) for name in name_strings]
 
 def read_npz(filepath):
+    """Open an npz file containing a proximity matrix
+
+    :param str filepath: Path to the npz file
+    :returns: List of lists giving genomic locations for each bin on each axis, and a\
+            :class:`numpy array <numpy.ndarray>` proximity matrix.
+    """
 
     handle = np.load(filepath)
     contact_matrix = handle['scores']
