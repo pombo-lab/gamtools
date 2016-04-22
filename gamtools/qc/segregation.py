@@ -1,5 +1,5 @@
 import pandas as pd
-from .. import segmentation
+from .. import segregation
 import os
 import itertools
 
@@ -20,15 +20,15 @@ def proportion_with_neighbours(block_list):
 def extract_sample_name(path):
     return os.path.basename(path).split('.')[0]
 
-def get_df_stats(segmentation_df):
+def get_df_stats(segregation_df):
 
-    prop_neighb = segmentation_df.apply(proportion_with_neighbours, axis=0)
+    prop_neighb = segregation_df.apply(proportion_with_neighbours, axis=0)
     prop_neighb.name = 'Proportion_with_neighbours'
 
-    genome_cover = segmentation_df.mean()
+    genome_cover = segregation_df.mean()
     genome_cover.name = 'Genome_coverage'
 
-    positive_chroms = (segmentation_df.groupby(level=0).mean() > segmentation_df.groupby(level=0).mean().mean()).sum()
+    positive_chroms = (segregation_df.groupby(level=0).mean() > segregation_df.groupby(level=0).mean().mean()).sum()
     positive_chroms.name = 'Positive_chromosomes'
 
     stats_df = pd.concat([genome_cover, positive_chroms, prop_neighb], axis=1).reset_index()
@@ -38,17 +38,17 @@ def get_df_stats(segmentation_df):
     return stats_df[['Sample', 'Genome_coverage', 'Positive_chromosomes',
             'Proportion_with_neighbours']]
 
-def get_segmentation_stats(input_segmentation, output_file):
+def get_segregation_stats(input_segregation, output_file):
 
-    segmentation_df = segmentation.open_segmentation(input_segmentation)
+    segregation_df = segregation.open_segregation(input_segregation)
 
-    stats_df = get_df_stats(segmentation_df)
+    stats_df = get_df_stats(segregation_df)
 
     stats_df.to_csv(output_file, sep='\t', index=False)
 
-def get_segmentation_stats_doit(dependencies, targets):
+def get_segregation_stats_doit(dependencies, targets):
 
     assert len(dependencies) == 1
     assert len(targets) == 1
 
-    get_segmentation_stats(list(dependencies)[0], list(targets)[0])
+    get_segregation_stats(list(dependencies)[0], list(targets)[0])
