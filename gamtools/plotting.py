@@ -1,19 +1,17 @@
 import numpy as np
 import pandas as pd
 
-try:
-    from metaseq import genomic_signal
-except ImportError:
-    raise ImportError(
-        "The 'plot_np' command requires metaseq to be installed "
-        "(try installing it using 'pip install metaseq').")
+class FakeInterval(object):
+    def __init__(self):
+        raise ImportError(
+            "The 'plot_np' command requires pybedtools to be installed "
+            "(try installing it using 'pip install pybedtools').")
 
 try:
     from pybedtools import Interval
 except ImportError:
-    raise ImportError(
-        "The 'plot_np' command requires pybedtools to be installed "
-        "(try installing it using 'pip install pybedtools').")
+    Interval = FakeInterval
+
 
 from matplotlib import pyplot as plt
 
@@ -137,6 +135,13 @@ def plot_genome(axis_sizes, row_names, row_sizes, g, bb, out_file):
 
 
 def plot_np(bigwig_file, bigbed_file, sizes_file, output_file):
+
+    try:
+        from metaseq import genomic_signal
+    except ImportError:
+        raise ImportError(
+            "The 'plot_np' command requires metaseq to be installed "
+            "(try installing it using 'pip install metaseq').")
 
     row_names, row_sizes = parse_sizes_file(sizes_file)
     row_pcts = get_row_pct(row_sizes)
