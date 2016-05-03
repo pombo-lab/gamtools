@@ -43,3 +43,7 @@ dist
 # Documentation #
 #################
 docs/_build
+
+# py.test #
+###########
+.cache/
