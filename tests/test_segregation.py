@@ -1,6 +1,6 @@
-from GamTools import segmentation
+from gamtools import segregation
 import StringIO
-from nose.tools import assert_raises
+import pytest
 
 fixture_two_samples = StringIO.StringIO("""chrom   start   stop    Sample_A    Sample_B
 chr1    0   50000   0   0
@@ -14,17 +14,17 @@ chr1    350000  400000  0   0
 chr1    400000  450000  0   0
 """)
 
-data_two_samples = segmentation.open_segmentation(fixture_two_samples)
+data_two_samples = segregation.open_segregation(fixture_two_samples)
 
 #########################################
 #
-# segmentation.index_from_interval tests
+# segregation.index_from_interval tests
 #
 #########################################
 
 def test_interval_within_bin():
     interval = 'chr1', 50100, 50300
-    start_index, stop_index = segmentation.index_from_interval(data_two_samples,
+    start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     assert len(found_windows) == 1
@@ -36,7 +36,7 @@ def test_interval_within_bin():
 
 def test_interval_is_bin():
     interval = 'chr1', 50000, 100000
-    start_index, stop_index = segmentation.index_from_interval(data_two_samples,
+    start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     assert len(found_windows) == 1
@@ -48,7 +48,7 @@ def test_interval_is_bin():
 
 def test_interval_overlaps_two_bins():
     interval = 'chr1', 50500, 100500
-    start_index, stop_index = segmentation.index_from_interval(data_two_samples,
+    start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     print found_windows
@@ -58,7 +58,7 @@ def test_interval_overlaps_two_bins():
 
 def test_interval_overlaps_many_bins():
     interval = 'chr1', 50500, 300500
-    start_index, stop_index = segmentation.index_from_interval(data_two_samples,
+    start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     print found_windows
@@ -68,15 +68,11 @@ def test_interval_overlaps_many_bins():
 
 def test_interval_end_before_start():
     interval = 'chr1', 300500, 50500 
-    assert_raises(ValueError,
-                  segmentation.index_from_interval,
-                  data_two_samples,
-                  interval)
+    with pytest.raises(ValueError):
+        segregation.index_from_interval(data_two_samples, interval)
 
 def test_invalid_chromosome():
     interval = 'chr3', 50000, 100000
-    assert_raises(segmentation.InvalidChromError,
-                  segmentation.index_from_interval,
-                  data_two_samples,
-                  interval)
+    with pytest.raises(segregation.InvalidChromError):
+        segregation.index_from_interval(data_two_samples, interval)
 
