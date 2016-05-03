@@ -1,6 +1,7 @@
-from GamTools import segmentation, cosegregation
+from gamtools import segregation, cosegregation
 import StringIO
-from numpy.testing import assert_array_equal, assert_raises, assert_array_almost_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+import pytest
 import numpy as np
 from mock import patch
 
@@ -10,7 +11,7 @@ chr1    0       50000   0 0 0 1 1 1 1 1 1 1
 chr1    50000   100000  0 0 0 0 0 0 0 0 0 0
 """)
 
-data_window1_only = segmentation.open_segmentation(fixture_window1_only)
+data_window1_only = segregation.open_segregation(fixture_window1_only)
 
 fixture_window2_only = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J
@@ -18,7 +19,7 @@ chr1    0       50000   0 0 0 0 0 0 0 0 0 0
 chr1    50000   100000  0 1 1 0 0 0 1 1 1 1
 """)
 
-data_window2_only = segmentation.open_segmentation(fixture_window2_only)
+data_window2_only = segregation.open_segregation(fixture_window2_only)
 
 fixture_region_a = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K
@@ -27,7 +28,7 @@ chr1    50000   100000  0 0 0 1 1 1 1 1 0 0 0
 chr1    100000  150000  0 0 0 0 0 1 1 0 1 1 0
 """)
 
-data_region_a = segmentation.open_segmentation(fixture_region_a)
+data_region_a = segregation.open_segregation(fixture_region_a)
 
 fixture_region_b = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K
@@ -36,7 +37,7 @@ chr2    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 chr2    100000  150000  0 0 0 0 0 0 0 1 1 0 1
 """)
 
-data_region_b = segmentation.open_segmentation(fixture_region_b)
+data_region_b = segregation.open_segregation(fixture_region_b)
 
 fixture_region_c = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K
@@ -44,7 +45,7 @@ chr3    0       50000   0 0 0 0 1 1 1 0 0 0 0
 chr3    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 """)
 
-data_region_c = segmentation.open_segmentation(fixture_region_c)
+data_region_c = segregation.open_segregation(fixture_region_c)
 
 fixture_invalid_data = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K
@@ -52,11 +53,11 @@ chr3    0       50000   0 0 0 0 1 2 1 0 0 0 0
 chr3    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 """)
 
-data_invalid_data = segmentation.open_segmentation(fixture_invalid_data)
+data_invalid_data = segregation.open_segregation(fixture_invalid_data)
 
 #########################################
 #
-# segmentation.cosegregation_frequency tests
+# segregation.cosegregation_frequency tests
 #
 #########################################
 
@@ -98,9 +99,8 @@ def test_cosegregation_missing_windows():
 
 def test_cosegregation_invalid_data():
 
-    assert_raises(cosegregation.InvalidDataError,
-                  cosegregation.get_cosegregation_from_regions,
-                  data_invalid_data)
+    with pytest.raises(cosegregation.InvalidDataError):
+        cosegregation.get_cosegregation_from_regions(data_invalid_data)
 
 def test_cosegregation_min():
 
@@ -111,7 +111,7 @@ def test_cosegregation_min():
 
 #########################################
 #
-# segmentation.linkage tests
+# segregation.linkage tests
 #
 #########################################
 
@@ -120,56 +120,56 @@ fixture_region_d = StringIO.StringIO(
 chr3    0       50000   1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 0 0 0 0 0
 """)
 
-data_region_d = segmentation.open_segmentation(fixture_region_d)
+data_region_d = segregation.open_segregation(fixture_region_d)
 
 fixture_region_e = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 0 0 0 0
 """)
 
-data_region_e = segmentation.open_segmentation(fixture_region_e)
+data_region_e = segregation.open_segregation(fixture_region_e)
 
 fixture_region_f = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
 """)
 
-data_region_f = segmentation.open_segmentation(fixture_region_f)
+data_region_f = segregation.open_segregation(fixture_region_f)
 
 fixture_region_g = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 0 0 0 0 0 1 1 1 1 1 0 0 0 0 0 1 1 1 1
 """)
 
-data_region_g = segmentation.open_segmentation(fixture_region_g)
+data_region_g = segregation.open_segregation(fixture_region_g)
 
 fixture_region_h = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 """)
 
-data_region_h = segmentation.open_segmentation(fixture_region_h)
+data_region_h = segregation.open_segregation(fixture_region_h)
 
 fixture_region_i = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1
 """)
 
-data_region_i = segmentation.open_segmentation(fixture_region_i)
+data_region_i = segregation.open_segregation(fixture_region_i)
 
 fixture_region_j = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0
 """)
 
-data_region_j = segmentation.open_segmentation(fixture_region_j)
+data_region_j = segregation.open_segregation(fixture_region_j)
 
 fixture_region_k = StringIO.StringIO(
 """chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0
 """)
 
-data_region_k = segmentation.open_segmentation(fixture_region_k)
+data_region_k = segregation.open_segregation(fixture_region_k)
 
 def test_linkage_positive():
 
@@ -196,7 +196,7 @@ def test_linkage_min():
     assert_array_almost_equal(linkage_res, np.array([[ -0.25 ]]))
 
 # Make sure we don't fail the test because of the warning message
-@patch('GamTools.cosegregation.warnings.warn')
+@patch('gamtools.cosegregation.warnings.warn')
 def test_3d_linkage_positive(mock_warnings):
 
     linkage_res = cosegregation.get_linkage_from_regions(data_region_d,
@@ -206,7 +206,7 @@ def test_3d_linkage_positive(mock_warnings):
     assert_array_almost_equal(linkage_res, np.array([[[ 0.125 ]]]))
 
 # Make sure we don't fail the test because of the warning message
-@patch('GamTools.cosegregation.warnings.warn')
+@patch('gamtools.cosegregation.warnings.warn')
 def test_3d_linkage_zero(mock_warnings):
 
     linkage_res = cosegregation.get_linkage_from_regions(data_region_d,
@@ -216,7 +216,7 @@ def test_3d_linkage_zero(mock_warnings):
     assert_array_almost_equal(linkage_res, np.array([[[ 0.0 ]]]))
 
 # Make sure we don't fail the test because of the warning message
-@patch('GamTools.cosegregation.warnings.warn')
+@patch('gamtools.cosegregation.warnings.warn')
 def test_3d_linkage_negative(mock_warnings):
 
     linkage_res = cosegregation.get_linkage_from_regions(data_region_f,
@@ -225,7 +225,7 @@ def test_3d_linkage_negative(mock_warnings):
 
     assert_array_almost_equal(linkage_res, np.array([[[ -0.1 ]]]))
 
-@patch('GamTools.cosegregation.warnings.warn')
+@patch('gamtools.cosegregation.warnings.warn')
 def test_3d_linkage_warning(mock_warnings):
 
     linkage_res = cosegregation.get_linkage_from_regions(data_region_f,
@@ -249,15 +249,14 @@ def test_linkage_multiple_windows():
 
 def test_linkage_invalid_data():
 
-    assert_raises(cosegregation.InvalidDataError,
-                  cosegregation.get_linkage_from_regions,
-                  data_invalid_data)
+    with pytest.raises(cosegregation.InvalidDataError):
+        cosegregation.get_linkage_from_regions(data_invalid_data)
 
 
 
 #########################################
 #
-# segmentation.linkage tests
+# segregation.linkage tests
 #
 #########################################
 
@@ -306,6 +305,5 @@ def test_dprime_multiple_windows():
 
 def test_dprime_invalid_data():
 
-    assert_raises(cosegregation.InvalidDataError,
-                  cosegregation.get_dprime_from_regions,
-                  data_invalid_data)
+   with pytest.raises(cosegregation.InvalidDataError):
+       cosegregation.get_dprime_from_regions(data_invalid_data)
