@@ -64,8 +64,7 @@ class input_file_mapping_tasks(object):
             yield {
                     "name"     : input_fastq,
                     "basename" : 'Sorting bam',
-                    "actions"  : ['samtools sort %(dependencies)s %(targets)s',
-                                  'mv %(targets)s.bam %(targets)s'],
+                    "actions"  : ['samtools sort %(dependencies)s -o %(targets)s'],
                     "targets"  : [swap_extension(input_fastq, ".sorted.bam")],
                     "file_dep" : [swap_extension(input_fastq, ".bam")],
                   }
@@ -129,7 +128,7 @@ class input_file_mapping_tasks(object):
                     'basename' : 'Getting coverage',
                     'name'     :  '{0} windows'.format(pretty_resolution(window_size)),
                     'actions'  : ['echo "chrom start stop %(dependencies)s" > %(targets)s',
-                                  'bash -i -c "multiBamCov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window_size)],
+                                  'bash -i -c "bedtools multicov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window_size)],
                     'targets'  : [coverage_path(self.args.output_dir, window_size)],
                     'file_dep' : bamfiles,
                     'task_dep' : [ 'Indexing bam', 'Creating output directory' ],
