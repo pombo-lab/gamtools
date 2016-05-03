@@ -376,7 +376,6 @@ def matrix_and_windows_from_segregation_file(
     """
 
     segregation_data = segregation.open_segregation(segregation_file)
-    print segregation_data.head()
 
     regions, windows = get_regions_and_windows(segregation_data, location_strings)
     matrix_func = matrix_types[matrix_type]
