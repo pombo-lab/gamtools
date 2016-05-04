@@ -6,3 +6,4 @@ gamtools.enrichment module
     :members:
     :undoc-members:
     :show-inheritance:
+    :exclude-members: enrichment_from_args

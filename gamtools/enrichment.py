@@ -20,25 +20,25 @@ def get_overlap(features_df1, features_df2, doublets_df):
     :returns: A subset of the original doublets_df.
 
     >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
-    >>>                                        ('chr2', 10, 20, 0.5),
-    >>>                                        ('chr1', 10, 30, 0.4)],
-    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
-    >>>                                               'interaction'])
+    ...                                        ('chr2', 10, 20, 0.5),
+    ...                                        ('chr1', 10, 30, 0.4)],
+    ...                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    ...                                               'interaction'])
     >>> pairwise_interactions
       chrom  Pos_A  Pos_B  interaction
     0  chr1     10     20         0.75
     1  chr2     10     20         0.50
     2  chr1     10     30         0.40
     >>> enhancers = pd.DataFrame([('chr1', 10),
-    >>>                           ('chr2', 20)],
-    >>>                          columns=['chrom', 'i'])
+    ...                           ('chr2', 20)],
+    ...                          columns=['chrom', 'i'])
     >>> enhancers
       chrom   i
     0  chr1  10
     1  chr2  20
     >>> genes = pd.DataFrame([('chr1', 20),
-    >>>                       ('chr2', 30)],
-    >>>                      columns=['chrom', 'i'])
+    ...                       ('chr2', 30)],
+    ...                      columns=['chrom', 'i'])
     >>> genes
       chrom   i
     0  chr1  20
@@ -78,17 +78,17 @@ def randomize_doublets(doublets_orig, chrom_lengths):
     might be split in half by the randomization (i.e. the end is
     moved to the beginning of the chromosome).
 
-    :params doublets_orig: Table of pairwise interactions.
+    :param doublets_orig: Table of pairwise interactions.
     :type doublets_orig: :class:`pandas.DataFrame`
-    :params dict chrom_lengths: Dictionary giving the number of windows \
+    :param dict chrom_lengths: Dictionary giving the number of windows \
             in each chromosome.
     :returns: Randomized version of doublets_orig.
 
     >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
-    >>>                                        ('chr2', 10, 20, 0.5),
-    >>>                                        ('chr1', 10, 30, 0.4)],
-    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
-    >>>                                               'interaction'])
+    ...                                        ('chr2', 10, 20, 0.5),
+    ...                                        ('chr1', 10, 30, 0.4)],
+    ...                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    ...                                               'interaction'])
     >>> pairwise_interactions
       chrom  Pos_A  Pos_B  interaction
     0  chr1     10     20         0.75
@@ -145,7 +145,7 @@ def randomize_doublets(doublets_orig, chrom_lengths):
 
     return doublets_df
 
-def feature_pair_values(pairs_df, window_classes, feat1, feat2):
+def feature_pair_values(pairwise_interactions, window_classes, feat1, feat2):
     """Subset a table of interactions, to obtain only those where windows
     from the first classification interact with those from the second classification.
 
@@ -154,28 +154,28 @@ def feature_pair_values(pairs_df, window_classes, feat1, feat2):
     interactions which involve a window classified as feat1 interacting with a
     window classified as feat2.
 
-    :param pairs_df: Table of pairwise interactions.
-    :type pairs_df: :class:`pandas.DataFrame`
+    :param pairwise_interactions: Table of pairwise interactions.
+    :type pairwise_interactions: :class:`pandas.DataFrame`
     :param str feat1: Classification of windows allowed on one side of the interaction \
             (can be either left or right).
     :param str feat2: Classification of windows allowed on the other side of the interaction.
     :returns: A subset of the original doublets_df.
 
     >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
-    >>>                                        ('chr2', 10, 20, 0.5),
-    >>>                                        ('chr1', 10, 30, 0.4)],
-    >>>                                      columns=['chrom', 'Pos_A', 'Pos_B',
-    >>>                                               'interaction'])
+    ...                                        ('chr2', 10, 20, 0.5),
+    ...                                        ('chr1', 10, 30, 0.4)],
+    ...                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    ...                                               'interaction'])
     >>> pairwise_interactions
       chrom  Pos_A  Pos_B  interaction
     0  chr1     10     20         0.75
     1  chr2     10     20         0.50
     2  chr1     10     30         0.40
     >>> window_classification = pd.DataFrame([('chr1', 10, True, False),
-    >>>                                       ('chr1', 20, False, True),
-    >>>                                       ('chr2', 20, True, False),
-    >>>                                       ('chr2', 30, False, True)],
-    >>>                                      columns=['chrom', 'i', 'Enhancer', 'Gene'])
+    ...                                       ('chr1', 20, False, True),
+    ...                                       ('chr2', 20, True, False),
+    ...                                       ('chr2', 30, False, True)],
+    ...                                      columns=['chrom', 'i', 'Enhancer', 'Gene'])
     >>> window_classification
       chrom   i Enhancer   Gene
     0  chr1  10     True  False
@@ -183,7 +183,7 @@ def feature_pair_values(pairs_df, window_classes, feat1, feat2):
     2  chr2  20     True  False
     3  chr2  30    False   True
     >>> enrichment.feature_pair_values(pairwise_interactions, window_classification,
-    >>>                                'Enhancer', 'Gene')
+    ...                                'Enhancer', 'Gene')
       chrom  Pos_A  Pos_B  interaction
     0  chr1     10     20         0.75
 
@@ -192,33 +192,120 @@ def feature_pair_values(pairs_df, window_classes, feat1, feat2):
 
     return get_overlap(window_classes[window_classes[feat1]],
                        window_classes[window_classes[feat2]],
-                                   pairs_df)
+                                   pairwise_interactions)
 
-def get_feature_summary(pairs_df, window_classes):
+def get_feature_summary(pairwise_interactions, window_classes):
+    """
+    Count the number of pairwise interactions between different window classes.
+
+    :param pairwise_interactions: Table of pairwise interactions.
+    :type pairwise_interactions: :class:`pandas.DataFrame`
+    :param window_classes: Table of windows and their classifications
+    :type window_classes: :class:`pandas.DataFrame`
+    :returns: A list of tuples of the form (first class, second class, count).
+
+    >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
+    ...                                        ('chr2', 10, 20, 0.5),
+    ...                                        ('chr1', 10, 30, 0.4)],
+    ...                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    ...                                               'interaction'])
+    >>> pairwise_interactions
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+    1  chr2     10     20         0.50
+    2  chr1     10     30         0.40
+    >>> window_classification = pd.DataFrame([('chr1', 10, True, False),
+    ...                                       ('chr1', 20, False, True),
+    ...                                       ('chr2', 20, True, False),
+    ...                                       ('chr2', 30, False, True)],
+    ...                                      columns=['chrom', 'i', 'Enhancer', 'Gene'])
+    >>> window_classification
+      chrom   i Enhancer   Gene
+    0  chr1  10     True  False
+    1  chr1  20    False   True
+    2  chr2  20     True  False
+    3  chr2  30    False   True
+    >>> enrichment.get_feature_summary(pairwise_interactions, window_classification)
+    [('Enhancer', 'Enhancer', 0), ('Enhancer', 'Gene', 1), ('Gene', 'Gene', 0)]
+    """
 
     results = []
+    feature_classes = [col for col in window_classes.columns
+                       if not col in ['chrom', 'start', 'stop', 'i']]
 
-    for feat1, feat2 in itertools.combinations_with_replacement(list(window_classes.columns[3:-1]), 2):
+    for feat1, feat2 in itertools.combinations_with_replacement(feature_classes, 2):
 
-        feat_values = feature_pair_values(pairs_df, window_classes, feat1, feat2)
+        feat_values = feature_pair_values(pairwise_interactions, window_classes, feat1, feat2)
 
         results.append((feat1, feat2, len(feat_values)))
 
     return results
 
-def randomized_summary(pairs_df, window_classes, chrom_lengths, randomization_count):
+def randomized_summary(pairwise_interactions, window_classes, chrom_lengths, randomization_count):
+    """
+    Randomly shuffle a table of pairwise interactions and count the number of
+    randomized interactions involving each feature class.
+
+    :param pairwise_interactions: Table of pairwise interactions.
+    :type pairwise_interactions: :class:`pandas.DataFrame`
+    :param window_classes: Table of windows and their classifications
+    :type window_classes: :class:`pandas.DataFrame`
+    :param dict chrom_lengths: Dictionary giving the number of windows \
+            in each chromosome.
+    :param int randomization_count: Number of times to randomize.
+    :returns: A list of tuples of the form (first class, second class, count).
+
+    >>> pairwise_interactions = pd.DataFrame([('chr1', 10, 20, 0.75),
+    ...                                        ('chr2', 10, 20, 0.5),
+    ...                                        ('chr1', 10, 30, 0.4)],
+    ...                                      columns=['chrom', 'Pos_A', 'Pos_B',
+    ...                                               'interaction'])
+    >>> pairwise_interactions
+      chrom  Pos_A  Pos_B  interaction
+    0  chr1     10     20         0.75
+    1  chr2     10     20         0.50
+    2  chr1     10     30         0.40
+    >>> window_classification = pd.DataFrame([('chr1', 10, True, False),
+    ...                                       ('chr1', 20, False, True),
+    ...                                       ('chr2', 20, True, False),
+    ...                                       ('chr2', 30, False, True)],
+    ...                                      columns=['chrom', 'i', 'Enhancer', 'Gene'])
+    >>> window_classification
+      chrom   i Enhancer   Gene
+    0  chr1  10     True  False
+    1  chr1  20    False   True
+    2  chr2  20     True  False
+    3  chr2  30    False   True
+    >>> chromosome_lengths = {'chr1':50, 'chr2':35}
+    >>> enrichment.randomized_summary(pairwise_interactions, window_classification,
+    ...                               chromosome_lengths, 2)
+    [('Enhancer', 'Enhancer', 0),
+     ('Enhancer', 'Gene', 0),
+     ('Gene', 'Gene', 0),
+     ('Enhancer', 'Enhancer', 0),
+     ('Enhancer', 'Gene', 0),
+     ('Gene', 'Gene', 0)]
+    """
 
     results = []
 
     for _r in range(randomization_count):
 
-        rand_pairs = randomize_doublets(pairs_df, chrom_lengths)
+        rand_pairs = randomize_doublets(pairwise_interactions, chrom_lengths)
 
         results.extend(get_feature_summary(rand_pairs, window_classes))
 
     return results
 
 def get_p_val(obs, rand):
+    """Calculate a two-tailed p-value from an observed value and a
+    list of permuted (bootstrapped) values.
+
+    :param float obs: Observed value.
+    :param list rand: List of values obtained by permutation.
+    :returns: The probability of observing a value as large (or as \
+            small) as obs given the background distribution rand.
+    """
 
     randoms = np.array(rand)
 
@@ -228,6 +315,20 @@ def get_p_val(obs, rand):
     return min((p_high, p_low))
 
 def get_full_output_path(output_prefix, num_permutations):
+    """Generate the path for an output csv file.
+
+    The path contains a random string so that permutations can
+    be easily parallelized without overwriting each other.
+
+    :param str output_prefix: Beginning part of the csv file path.
+    :param int num_permutations: Number of times the data was permuted.
+    :returns: Output path in the format <prefix>_<num_permutations>.<random_string>.csv
+
+    >>> enrichment.get_full_output_path('gam_gene_enrichments', 50)
+    'gam_gene_enrichments_50_permutations.8d73b9dd-2.csv'
+    >>> enrichment.get_full_output_path('gam_gene_enrichments', 0)
+    'gam_gene_enrichments_unpermuted.d059ad6c-2.csv'
+    """
 
     if num_permutations == 0:
         permute_string = 'unpermuted'
@@ -236,11 +337,24 @@ def get_full_output_path(output_prefix, num_permutations):
 
     small_hash = str(uuid.uuid4())[:10]
 
+    #TODO: Check that this file doesn't exist
     full_outpath = '{0}_{1}.{2}.csv'.format(output_prefix, permute_string, small_hash)
 
     return full_outpath
 
-def do_enrichment(interactions, window_classes, num_permutations, output_prefix, chroms=None):
+def do_enrichment(pairwise_interactions, window_classes, num_permutations, output_prefix, chroms=None):
+    """Calculate the number of pairwise pairwise_interactions connecting each class of windows
+    (either in real or permuted data) and save the results to a file
+
+    :param pairwise_interactions: Table of pairwise interactions.
+    :type pairwise_interactions: :class:`pandas.DataFrame`
+    :param window_classes: Table of windows and their classifications
+    :type window_classes: :class:`pandas.DataFrame`
+    :param int num_permutations: Number of times to randomize the data.
+    :param str output_prefix: Beginning part of the csv file path.
+    :param list chroms: List of chromosomes to consider (default is \
+            the mouse autosomes, i.e. chr1 to chr19).
+    """
 
     if chroms is None:
         chroms = ['chr{0}'.format(c) for c in range(1,20)]
@@ -248,9 +362,9 @@ def do_enrichment(interactions, window_classes, num_permutations, output_prefix,
     chrom_lengths = {chrom:len(window_classes[window_classes.chrom == chrom]) for chrom in chroms}
 
     if num_permutations == 0:
-        results = get_feature_summary(interactions, window_classes)
+        results = get_feature_summary(pairwise_interactions, window_classes)
     else:
-        results = randomized_summary(interactions, window_classes, chrom_lengths, num_permutations)
+        results = randomized_summary(pairwise_interactions, window_classes, chrom_lengths, num_permutations)
 
     results_df = pd.DataFrame.from_records(results, columns=['class1', 'class2', 'count'])
 
