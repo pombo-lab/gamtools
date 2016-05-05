@@ -1,7 +1,5 @@
 import os
 from setuptools import setup
-from Cython.Build import cythonize
-import numpy
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -19,8 +17,7 @@ setup(
     license = "BSD",
     packages=['gamtools'],
     install_requires=['numpy', 'scipy', 'doit', 'pandas'],
-    ext_modules = cythonize("gamtools/cosegregation_internal.pyx"),
-    include_dirs=[numpy.get_include()],
+    ext_modules = "gamtools/cosegregation_internal.c",
     entry_points = {
                     # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
                     #'EIYBrowse.filetypes': [
