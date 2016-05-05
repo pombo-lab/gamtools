@@ -156,6 +156,6 @@ def plot_np(bigwig_file, bigbed_file, sizes_file, output_file):
 def plot_np_from_args(args):
 
     plot_np(args.bigwig_file, args.bed_file,
-            args.sizes_file, args.output_file)
+            args.genome_file, args.output_file)
 
 

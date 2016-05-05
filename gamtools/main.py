@@ -199,16 +199,16 @@ plot_np_parser = subparsers.add_parser(
     help='Plot the segregation results for a particular NP')
 
 plot_np_parser.add_argument(
-    '-w', '--bigwig_file', required=True,
+    '-w', '--bigwig-file', required=True,
     help='A bigwig file containing coverage information for the NP')
 plot_np_parser.add_argument(
-    '-b', '--bed_file', required=True,
+    '-b', '--bed-file', required=True,
     help='A bed file containing positive windows for the NP')
 plot_np_parser.add_argument(
-    '-s', '--sizes_file', required=True,
+    '-g', '--genome-file', required=True,
     help='A file containing chromosome sizes for this genome')
 plot_np_parser.add_argument(
-    '-o', '--output_file', required=True, help='Output image file to create')
+    '-o', '--output-file', required=True, help='Output image file to create')
 
 plot_np_parser.set_defaults(func=plotting.plot_np_from_args)
 
@@ -317,7 +317,7 @@ select_parser = subparsers.add_parser(
     help='Select only certain samples from a segregation file')
 
 select_parser.add_argument(
-    '-s', '--segregation-file', metavar='SEGMENTATION_FILE', required=True,
+    '-s', '--segregation-file', required=True,
     help='A file containing the segregation of all samples')
 select_parser.add_argument(
     '-d', '--drop-samples', action='store_true',
