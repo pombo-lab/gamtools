@@ -175,12 +175,23 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_csv(windows, proximity_matrix, zipped_output)
 
+
+def write_png(windows, proximity_matrix, output_file):
+
+    from matplotlib import pyplot as plt
+
+    plt.figure(figsize=(7,7))
+    plt.imshow(proximity_matrix, interpolation='none')
+    plt.axis('off')
+    plt.savefig(output_file)
+
 output_formats = {
         'npz': write_npz,
         'txt': write_txt,
         'txt.gz': write_zipped_txt,
         'csv': write_csv,
         'csv.gz': write_zipped_csv,
+        'png': write_png,
 }
 
 def detect_file_type(file_name):
