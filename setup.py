@@ -1,4 +1,5 @@
 import os
+from distutils.extension import Extension
 from setuptools import setup
 
 # Utility function to read the README file.
@@ -17,7 +18,7 @@ setup(
     license = "BSD",
     packages=['gamtools'],
     install_requires=['numpy', 'scipy', 'doit', 'pandas'],
-    ext_modules = "gamtools/cosegregation_internal.c",
+    ext_modules = Extension('gamtools.cosegregation_internal', ["gamtools/cosegregation_internal.c"])
     entry_points = {
                     # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
                     #'EIYBrowse.filetypes': [
