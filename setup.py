@@ -35,7 +35,7 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     packages=['gamtools'],
-    install_requires=['numpy', 'scipy', 'doit', 'pandas'],
+    install_requires=['numpy', 'scipy', 'doit', 'pandas', 'wrapit'],
     ext_modules = cythonize("gamtools/cosegregation_internal.pyx"),
     include_dirs=[numpy.get_include()],
     entry_points = {
