@@ -1,7 +1,24 @@
 import os
 from setuptools import setup
-from Cython.Build import cythonize
-import numpy
+
+failed_imports = []
+
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    failed_imports.append('cython')
+
+try:
+    import numpy
+except ImportError:
+    failed_imports.append('numpy')
+
+if len(failed_imports) > 0:
+    raise ImportError('{} need to be installed before GAMtools can be '
+                      'compiled. Try installing them with "pip '
+                      'install {}" before installing GAMtools.'.format(
+                          ' and '.join(failed_imports),
+                          ' '.join(failed_imports)))
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level

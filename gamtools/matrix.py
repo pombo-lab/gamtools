@@ -2,8 +2,16 @@ import numpy as np
 import pandas as pd
 import sys, os
 from .segregation import parse_location_string
+from .utils import DelayedImportError
 import itertools
 import argparse
+
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    plt = DelayedImportError(
+    'Saving a matrix as an image requires matplotlib to be installed. '
+    'Try to install it by running "pip install matplotlib"')
 
 def get_name_strings(windows):
     """Format a tuple representing a genomic window (chrom, start, stop)
@@ -177,8 +185,6 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
 
 
 def write_png(windows, proximity_matrix, output_file):
-
-    from matplotlib import pyplot as plt
 
     plt.figure(figsize=(7,7))
     plt.imshow(proximity_matrix, interpolation='none')
