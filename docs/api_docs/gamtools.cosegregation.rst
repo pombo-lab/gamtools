@@ -1,7 +1,6 @@
 gamtools.cosegregation module
 ==============================
 
-
 .. automodule:: gamtools.cosegregation
     :members:
     :undoc-members:
