@@ -1,19 +1,45 @@
 import numpy as np
 import pandas as pd
+from .utils import DelayedImportError
 
-class FakeInterval(object):
-    def __init__(self):
-        raise ImportError(
-            "The 'plot_np' command requires pybedtools to be installed "
-            "(try installing it using 'pip install pybedtools').")
+failed_import = DelayedImportError(message=None)
+failed_packages = []
 
 try:
     from pybedtools import Interval
 except ImportError:
-    Interval = FakeInterval
+    Interval = failed_import
+    failed_packages.append('pybedtools')
 
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    plt = failed_import
+    failed_packages.append('matplotlib')
 
-from matplotlib import pyplot as plt
+try:
+    from metaseq import genomic_signal
+except ImportError:
+    genomic_signal = failed_import
+    failed_packages.append('metaseq')
+
+if len(failed_packages) > 0:
+
+    if len(failed_packages) > 1:
+        package_list = ', '.join(failed_packages[:-1])
+        package_list += ' and '
+        package_list += failed_packages[-1]
+    else:
+        package_list = failed_packages[0]
+
+    pip_call = ' '.join(failed_packages)
+
+    base_message = ('GAMtools plotting commands require {package_list} to'
+                    ' be installed. Try to install them by running '
+                    '"pip install {pip_call}"')
+
+    failed_import.message = base_message.format(package_list=package_list,
+                                                pip_call=pip_call)
 
 def chunk_bigbed(bigbed, interval, bins=500, chunk_size=20000000):
     def _internal_chunker():
@@ -98,6 +124,7 @@ def plot_both(objects, axes, name, end, color, bins=500):
 
 def plot_genome(axis_sizes, row_names, row_sizes, g, bb, out_file):
 
+
     fig = plt.figure(figsize=(28,5))
 
     axes = []
@@ -136,12 +163,6 @@ def plot_genome(axis_sizes, row_names, row_sizes, g, bb, out_file):
 
 def plot_np(bigwig_file, bigbed_file, sizes_file, output_file):
 
-    try:
-        from metaseq import genomic_signal
-    except ImportError:
-        raise ImportError(
-            "The 'plot_np' command requires metaseq to be installed "
-            "(try installing it using 'pip install metaseq').")
 
     row_names, row_sizes = parse_sizes_file(sizes_file)
     row_pcts = get_row_pct(row_sizes)
