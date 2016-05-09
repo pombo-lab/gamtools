@@ -224,7 +224,7 @@ process_parser.add_argument(
     'input_fastqs', metavar='INPUT_FASTQ', nargs='+',
     help='One or more input fastq files.')
 process_parser.add_argument(
-    '-g', '--genome_file', metavar='GENOME_FILE', required=True,
+    '-g', '--genome-file', metavar='GENOME_FILE', required=True,
     help='File containing chromosome names and lengths')
 process_parser.add_argument(
     '-o', '--output_dir', metavar='OUPUT_DIRECTORY',
