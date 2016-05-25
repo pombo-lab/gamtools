@@ -21,7 +21,6 @@ you through re-mapping and re-processing of some example GAM data.
 
    content/overview
    content/installation
-   content/quick-start
    content/tutorial
    API documentation <api_docs/index>
 
