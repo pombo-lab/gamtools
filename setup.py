@@ -1,4 +1,5 @@
 import os
+from distutils.extension import Extension
 from setuptools import setup
 
 failed_imports = []
@@ -36,8 +37,9 @@ setup(
     license = "BSD",
     packages=['gamtools'],
     install_requires=['numpy', 'scipy', 'doit', 'pandas', 'wrapit'],
-    ext_modules = cythonize("gamtools/cosegregation_internal.pyx"),
     include_dirs=[numpy.get_include()],
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                            ["gamtools/cosegregation_internal.c"])],
     entry_points = {
                     # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
                     #'EIYBrowse.filetypes': [
