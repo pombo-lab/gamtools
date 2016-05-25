@@ -1,6 +1,7 @@
 from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline, select_samples
 from wrapit.parser import add_doit_options
 import sys
+import pytest
 import os
 
 import argparse
@@ -224,7 +225,7 @@ process_parser.add_argument(
     'input_fastqs', metavar='INPUT_FASTQ', nargs='+',
     help='One or more input fastq files.')
 process_parser.add_argument(
-    '-g', '--genome_file', metavar='GENOME_FILE', required=True,
+    '-g', '--genome-file', metavar='GENOME_FILE', required=True,
     help='File containing chromosome names and lengths')
 process_parser.add_argument(
     '-o', '--output_dir', metavar='OUPUT_DIRECTORY',
@@ -331,6 +332,20 @@ select_parser.add_argument(
     help='Output file path (or - to write to stdout)')
 
 select_parser.set_defaults(func=select_samples.select_samples_from_args)
+
+# Options for 'test' command
+
+test_parser = subparsers.add_parser(
+    'test',
+    help='Test that GAMtools is installed and configured correctly.')
+
+def test_function(args):
+    #TODO: Fix passing additional arguments to py.test
+    test_args = sys.argv[2:]
+    test_dir = os.path.join(os.path.dirname(__file__), '..', 'tests')
+    sys.exit(pytest.main([test_dir] + test_args))
+
+test_parser.set_defaults(func=test_function)
 
 def main():
     """Main gamtools function that is called by the gamtools command line script."""
