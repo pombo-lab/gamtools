@@ -397,4 +397,3 @@ proximity matrices (see `Producing proximity matrices`_).
 .. _bowtie2: http://bowtie-bio.sourceforge.net/bowtie2
 .. _fastqc: http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 .. _fastq_screen: http://www.bioinformatics.bbsrc.ac.uk/projects/fastq_screen/
-
