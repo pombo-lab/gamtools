@@ -22,7 +22,7 @@ get the following ouput:
 
 If this command gives you an error message, it is likely that **GAMtools** has
 not been installed correctly. Please ensure you have followed the steps
-outlined in the installation guide.
+outlined in the :doc:`installation`_ guide.
 
 Downloading the tutorial data
 -----------------------------

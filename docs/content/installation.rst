@@ -139,6 +139,16 @@ Mapping and processing programs
 | fastq_screen_     | Performing dataset quality control (``--do-qc`` flag) |
 +-------------------+-------------------------------------------------------+
 
+=========================
+Testing your installation
+=========================
+
+To test that you have installed gamtools and all its dependencies correctly you
+can run the command ``gamtools test``. If you have skipped installing any
+optional dependencies, you may get a warning message saying something like "x
+could not be found, and is required for y". You can safely ignore these
+messages unless you need the particular gamtools functionality in the message.
+
 
 .. _cygwin: https://cygwin.com
 .. _GAMtools repository: https://github.com/pombo-lab/GAMtools
