@@ -102,3 +102,16 @@ def sample_segregation_to_bed(input_segregation, sample, output_bed):
     subset = data[data[sample] > 0][sample]
 
     subset.to_csv(output_bed, header=False, index=True, sep='\t')
+
+def is_autosome(chrom):
+    if chrom[-7:] == '_random':
+        return False
+    try:
+        int(chrom[3:])
+    except ValueError:
+        return False
+    return True
+
+def get_segregation_autosomes(segregation_table):
+    return [c for c in segregation_table.index.get_level_values(0).unique()
+            if is_autosome(c)]
