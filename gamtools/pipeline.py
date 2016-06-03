@@ -64,7 +64,8 @@ class input_file_mapping_tasks(object):
             yield {
                     "name"     : input_fastq,
                     "basename" : 'Sorting bam',
-                    "actions"  : ['samtools sort %(dependencies)s -o %(targets)s'],
+                    #TODO: Handle new samtools version that specifies output files differently
+                    "actions"  : ['samtools sort -f %(dependencies)s %(targets)s'],
                     "targets"  : [swap_extension(input_fastq, ".sorted.bam")],
                     "file_dep" : [swap_extension(input_fastq, ".bam")],
                   }
