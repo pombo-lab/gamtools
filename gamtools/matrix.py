@@ -69,7 +69,7 @@ def read_txt(filepath, compression='infer'):
     windows_0 = windows_from_name_strings(proximity_matrix.index)
     windows_1 = windows_from_name_strings(proximity_matrix.columns)
 
-    return (windows_0, windows_1), proximity_matrix
+    return (windows_0, windows_1), proximity_matrix.values
 
 def read_zipped_txt(filepath):
     """Open a gzipped txt file containing a proximity matrix
@@ -221,6 +221,10 @@ def detect_file_type(file_name):
 
     raise TypeError('Extension "{}" not recognized'.format(file_ext))
 
+def read_file(file_name):
+    file_type = detect_file_type(file_name)
+    read_func = input_formats[file_type]
+    return read_func(file_name)
 
 def check_windows(proximity_matrix, windows):
 

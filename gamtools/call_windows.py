@@ -175,7 +175,7 @@ def plot_lognormal(breaks, counts, params):
 
     fit_x = get_fit_x(breaks, counts)
 
-    return plt.plot(fit_x, gauss_y)
+    return plt.plot(fit_x, gauss_y, color='yellow')
 
 def plot_binom(breaks, counts, params):
 
@@ -189,7 +189,7 @@ def plot_binom(breaks, counts, params):
 
     fit_x = get_fit_x(breaks, counts)
 
-    return plt.plot(fit_x, binom_y)
+    return plt.plot(fit_x, binom_y, color='green')
 
 def plot_legend(hist_patches,
                 fit_patches,
