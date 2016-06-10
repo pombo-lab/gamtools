@@ -142,9 +142,9 @@ def write_txt(windows, proximity_matrix, output_file):
     """Write a proximity matrix to a txt file.
 
     :param tuple windows: (list of x-axis windows, list of y-axis windows)
-    :param str proximity_matrix: Path to the SLICE output file
-    :param str filepath: Path to the SLICE output file
-    :returns: (None, SLICE Pi matrix)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save matrix file.
     """
 
     if proximity_matrix.ndim != 2:
@@ -155,12 +155,31 @@ def write_txt(windows, proximity_matrix, output_file):
     pd.DataFrame(proximity_matrix, index=names_0, columns=names_1).to_csv(output_file, sep='\t', na_rep="NaN")
 
 def write_zipped_txt(windows, proximity_matrix, output_file):
+    """Write a proximity matrix to a zipped txt file.
+
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save matrix file.
+    """
 
     import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_txt(windows, proximity_matrix, zipped_output)
 
 def write_npz(windows, proximity_matrix, output_file):
+    """Write a proximity matrix to an npz file.
+
+    npz files are a compressed numpy-specific format, meaning
+    they take up less disk space, but cannot be easily opened
+    by other programming languages (e.g. R). For more information
+    see :func:`numpy.savez_compressed`.
+
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save matrix file.
+    """
 
     window_dict = {'windows_{}'.format(i):win for i,win in enumerate(windows)}
     np.savez_compressed(output_file, scores=proximity_matrix, **window_dict)
