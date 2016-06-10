@@ -145,6 +145,17 @@ def write_txt(windows, proximity_matrix, output_file):
     :param proximity_matrix: Input proximity matrix.
     :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
     :param str filepath: Path to save matrix file.
+
+    >>> my_matrix = np.array([[10, 0, 5],
+    ...                       [0, 10, 3],
+    ...                       [5, 3, 10]])
+    >>> windows = [('chr1', 0, 10), ('chr1', 10, 20), ('chr1', 20, 30)]
+    >>> matrix.write_txt([windows, windows], my_matrix, sys.stdout)
+        chr1:0-10       chr1:10-20      chr1:20-30
+        chr1:0-10       10      0       5
+        chr1:10-20      0       10      3
+        chr1:20-30      5       3       10
+    
     """
 
     if proximity_matrix.ndim != 2:
@@ -185,18 +196,55 @@ def write_npz(windows, proximity_matrix, output_file):
     np.savez_compressed(output_file, scores=proximity_matrix, **window_dict)
 
 def write_csv(windows, proximity_matrix, output_file):
+    """Write a proximity matrix to a csv file.
 
-        interactions_df = pd.DataFrame(proximity_matrix).unstack()
-        interactions_df = interactions_df[interactions_df > 0]
-        interactions_df =interactions_df.reset_index()
-        interactions_df.columns = ['Pos_A', 'Pos_B', 'interaction']
-        interactions_df = interactions_df[interactions_df.Pos_B > interactions_df.Pos_A]
-        interactions_df['dist'] = interactions_df.Pos_B - interactions_df.Pos_A
-        interactions_df['chrom'] = windows[0][0][0]
-        output_cols = ['chrom', 'Pos_A', 'Pos_B', 'dist', 'interaction']
-        interactions_df[output_cols].to_csv(output_file, sep='\t', index=False)
+    csv file outputs a table giving the index of the windows on the x- and
+    y-axis, the interaction score (if the score is greater than 0), the
+    chromosome, and the distance between the two windows. It is only
+    appropriate for intra-chromosomal proximity matrices because the
+    matrix is assumed to be symmetrical, and duplicated information
+    is discarded.
+
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save csv file.
+
+    >>> my_matrix = np.array([[10, 0, 5],
+    ...                       [0, 10, 3],
+    ...                       [5, 3, 10]])
+    >>> windows = [('chr1', 0, 10), ('chr1', 10, 20), ('chr1', 20, 30)]
+    >>> matrix.write_csv([windows, windows], my_matrix, sys.stdout)
+    chrom   Pos_A   Pos_B   dist    interaction
+    chr1    0       2       2       5
+    chr1    1       2       1       3
+    """
+
+    interactions_df = pd.DataFrame(proximity_matrix).unstack()
+    interactions_df = interactions_df[interactions_df > 0]
+    interactions_df =interactions_df.reset_index()
+    interactions_df.columns = ['Pos_A', 'Pos_B', 'interaction']
+    interactions_df = interactions_df[interactions_df.Pos_B > interactions_df.Pos_A]
+    interactions_df['dist'] = interactions_df.Pos_B - interactions_df.Pos_A
+    interactions_df['chrom'] = windows[0][0][0]
+    output_cols = ['chrom', 'Pos_A', 'Pos_B', 'dist', 'interaction']
+    interactions_df[output_cols].to_csv(output_file, sep='\t', index=False)
 
 def write_zipped_csv(windows, proximity_matrix, output_file):
+    """Write a proximity matrix to a zipped csv file.
+
+    csv file outputs a table giving the index of the windows on the x- and
+    y-axis, the interaction score (if the score is greater than 0), the
+    chromosome, and the distance between the two windows. It is only
+    appropriate for intra-chromosomal proximity matrices because the
+    matrix is assumed to be symmetrical, and duplicated information
+    is discarded.
+
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save zipped csv file.
+    """
 
     import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
@@ -204,6 +252,13 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
 
 
 def write_png(windows, proximity_matrix, output_file):
+    """Write a proximity matrix to a .png image file.
+
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param str filepath: Path to save image file.
+    """
 
     plt.figure(figsize=(7,7))
     plt.imshow(proximity_matrix, interpolation='none')
@@ -219,7 +274,24 @@ output_formats = {
         'png': write_png,
 }
 
+supported_formats = list(set(input_formats.keys() + output_formats.keys()))
+
 def detect_file_type(file_name):
+    """Given the path to a matrix file, determine the file type
+    based on the extension.
+
+    :param str file_name: Path to the matrix file
+    :returns: File type string
+    :raises TypeError: If file type does not match one of the keys \
+            in either the output_formats or input_formats dictionaries.
+
+    >>> matrix.detect_file_type('my_file.txt')
+    'txt'
+    >>> matrix.detect_file_type('my_file.png')
+    'png'
+    >>> matrix.detect_file_type('my_file.data')
+    TypeError: Extension "doc" not recognized
+    """
 
     if file_name == '-':
         return 'txt'
@@ -235,17 +307,32 @@ def detect_file_type(file_name):
     if file_ext == 'gz':
         file_ext = '.'.join(file_parts[-2:])
 
-    if file_ext in output_formats.keys():
+    if file_ext in supported_formats:
         return file_ext
 
     raise TypeError('Extension "{}" not recognized'.format(file_ext))
 
 def read_file(file_name):
+    """Open a matrix file, guessing the format based on file extension.
+
+    :param str file_name: Path to matrix file.
+    :returns: (list of genomic locations for x-axis, list of \
+    genomic locations for y-axis), \
+            :class:`numpy array <numpy.ndarray>` proximity matrix.
+    """
+
     file_type = detect_file_type(file_name)
     read_func = input_formats[file_type]
     return read_func(file_name)
 
 def check_windows(proximity_matrix, windows):
+    """Check that a list of axis windows matches the dimensions of a proximity matrix.
+
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param tuple windows: (list of x-axis windows, list of y-axis windows)
+    :raises ValueError: If the number of windows doesn't match the proximity matrix dimensions.
+    """
 
     windows_sizes = [len(win) for win in windows]
     for i in range(proximity_matrix.ndim):
@@ -259,21 +346,61 @@ def check_windows(proximity_matrix, windows):
 
 
 def read_thresholds(thresholds_file):
+    """Read a file containing interaction thresholds"""
+
     return pd.read_csv(thresholds_file,
                        delim_whitespace=True, header=6).set_index('distance')
 
 
 def kth_diag_indices(a, k):
-        rows, cols = np.diag_indices_from(a)
-        if k < 0:
-            return rows[:k], cols[-k:]
-        elif k > 0:
-            return rows[k:], cols[:-k]
-        else:
-            return rows, cols
+    """Return a tuple of indices for retrieving the k'th diagonal
+    of matrix a.
+
+    :param a: Input matrix.
+    :type a: :class:`numpy array <numpy.ndarray>`
+    :param int k: Diagonal to index. 0 is the centre, 1 is the first \
+            diagonal below the centre, -1 is the first diagonal above \
+            the centre.
+
+    >>> my_matrix = np.array([[ 0, -1, -2, -3],
+    ...                       [ 1,  0, -1, -2],
+    ...                       [ 2,  1,  0, -1],
+    ...                       [ 3,  2,  1,  0]])
+    >>> matrix.kth_diag_indices(my_matrix, 1)
+    (array([1, 2, 3]), array([0, 1, 2]))
+    >>> my_matrix[
+    ...    matrix.kth_diag_indices(my_matrix, 1)
+    ...  ]
+    array([1, 1, 1])
+    >>> my_matrix[
+    ...    matrix.kth_diag_indices(my_matrix, -2)
+    ...  ]
+    array([-2, -2])
+    """
+
+    rows, cols = np.diag_indices_from(a)
+    if k < 0:
+        return rows[:k], cols[-k:]
+    elif k > 0:
+        return rows[k:], cols[:-k]
+    else:
+        return rows, cols
 
 
 def apply_threshold(proximity_matrix, thresholds):
+    """Discard values in a proximity matrix which are below a
+    threshold.
+
+    Thresholds are applied separately to each diagonal (i.e.
+    each distance between windows). Thus, the first threshold
+    in the list is applied to the first diagonal (i.e. to all
+    adjacent windows). If the number of thresholds is less
+    than the number of diagonals, the last threshold is repeated.
+
+    :param proximity_matrix: Input proximity matrix.
+    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
+    :param list thresholds: Values to use as minimum thresholds.
+    """
 
     out_matr = np.zeros_like(proximity_matrix)
 
