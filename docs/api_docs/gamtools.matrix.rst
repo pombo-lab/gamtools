@@ -5,3 +5,5 @@ gamtools.matrix module
     :members:
     :undoc-members:
     :show-inheritance:
+    :exclude-members: convert_from_args
+

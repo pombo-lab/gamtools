@@ -14,11 +14,11 @@ except ImportError:
     'Try to install it by running "pip install matplotlib"')
 
 def get_name_strings(windows):
-    """Format a tuple representing a genomic window (chrom, start, stop)
-    as a UCSC-like location string "chrom:start-stop"
+    """Format a list of tuples representing genomic windows (chrom, start, stop)
+    as a list of UCSC-like location strings "chrom:start-stop"
 
-    :param tuple windows: Tuple in the format (chromosome, start_coord, stop_coord)
-    :returns: UCSC formatted location string
+    :param list windows: List of tuples in the format (chromosome, start_coord, stop_coord)
+    :returns: List of UCSC formatted location strings
     """
 
     return ['{}:{}-{}'.format(*i) for i in windows]
@@ -399,7 +399,8 @@ def apply_threshold(proximity_matrix, thresholds):
 
     :param proximity_matrix: Input proximity matrix.
     :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
-    :param list thresholds: Values to use as minimum thresholds.
+    :param thresholds: Values to use as minimum thresholds.
+    :type thresholds: :class:`pandas.DataFrame`
     """
 
     out_matr = np.zeros_like(proximity_matrix)
@@ -423,6 +424,19 @@ def apply_threshold(proximity_matrix, thresholds):
 def convert(input_file, input_format,
             output_file, output_format,
             windows=None, thresholds=None):
+    """Convert a proximity matrix to a different file format.
+
+    :param str input_file: Path to input proximity matrix
+    :param str input_format: File format of input matrix
+    :param str output_file: Path to output proximity matrix
+    :param str output_format: File format to convert matrix to
+    :param list windows: List of genomic windows (only required \
+            when converting from SLICE output matrices)
+    :param thresholds: Table of interaction thresholds (index \
+            column is the distance to apply the threshold \
+            given in number of bins)
+    :type thresholds: :class:`pandas.DataFrame`
+    """
 
     _windows, proximity_matrix = input_formats[input_format](input_file)
 
@@ -443,6 +457,7 @@ def convert(input_file, input_format,
     output_formats[output_format](_windows, proximity_matrix, output_file)
 
 def convert_from_args(args):
+    """Wrapper function to call convert from argparse"""
 
     if args.input_format is None:
         args.input_format = detect_file_type(args.input_file)
