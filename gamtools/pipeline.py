@@ -1,4 +1,7 @@
 import os
+import subprocess
+from distutils.version import LooseVersion
+import re
 from wrapit.api import run
 import itertools
 import inspect
@@ -53,6 +56,43 @@ def segregation_path(base_folder, window_size):
     """
 
     return os.path.join(base_folder, 'segregation_at_{0}.multibam'.format(pretty_resolution(window_size)))
+
+def get_samtools_version():
+    """Get the version number for the installed version of samtools"""
+
+    try:
+        p = subprocess.Popen('samtools',
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError:
+        sys.exit('samtools is either not installed or not present in $PATH. '
+                 'Please install samtools to continue.')
+
+    output, err = p.communicate()
+    status = p.wait()
+
+    vnum_regexp = '^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
+
+    regexp_matches = re.search(vnum_regexp, err, re.MULTILINE)
+
+    return regexp_matches.group('version')
+    
+def get_samtools_sort_actions():
+    """Return the appropriate doit function for using the installed version of samtools sort"""
+
+    samtools_vnum = get_samtools_version()
+    samtools_vnum = LooseVersion(samtools_vnum)
+
+    if samtools_vnum < LooseVersion('0.1.19'):
+        samtools_actions = ['samtools sort %(dependencies)s %(targets)s.tmp',
+                           'mv %(targets)s.tmp.bam %(targets)s']
+
+    elif samtools_vnum < LooseVersion('1.0'):
+        samtools_vnum = ['samtools sort -f %(dependencies)s %(targets)s']
+
+    else:
+        samtools_actions = ['samtools sort -o %(targets)s -T %(targets)s.tmp %(dependencies)s']
+
+    return samtools_actions
 
 class input_file_mapping_tasks(object):
     """Class for generating doit tasks from command-line arguments.
@@ -117,12 +157,13 @@ class input_file_mapping_tasks(object):
     def task_sort_bam(self):
         """Task to sort bam files"""
 
+        sort_actions = get_samtools_sort_actions()
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
                     "basename" : 'Sorting bam',
-                    #TODO: Handle new samtools version that specifies output files differently
-                    "actions"  : ['samtools sort -f %(dependencies)s %(targets)s'],
+                    "actions"  : sort_actions,
                     "targets"  : [swap_extension(input_fastq, ".sorted.bam")],
                     "file_dep" : [swap_extension(input_fastq, ".bam")],
                   }
