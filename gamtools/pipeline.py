@@ -4,52 +4,107 @@ import itertools
 import inspect
 from . import call_windows, segregation, qc, select_samples, cosegregation, utils
 
-def swap_extension(input_fastq, extension):
-    output_dir = os.path.dirname(input_fastq)
-    basename, old_ext = os.path.splitext(os.path.basename(input_fastq))
+def swap_extension(input_path, extension):
+    """Replace the file extension of a file path.
+
+    :param str input_path: Input file path
+    :param str extension: New extension to use
+    :returns: Input file path with the extension replaced.
+    :rtype: str
+    """
+
+    output_dir = os.path.dirname(input_path)
+    basename, old_ext = os.path.splitext(os.path.basename(input_path))
     if old_ext == '.gz':
         basename, old_ext = os.path.splitext(basename)
     return os.path.join(output_dir, basename + extension)
 
-def get_middle_value(_list):
-    return sorted(_list)[len(_list)/2]
+def get_middle_value(my_list):
+    """Return the middle value from a list after sorting.
+
+    :param list my_list: List of sortable values"""
+
+    return sorted(my_list)[len(my_list)/2]
 
 def pretty_resolution(window_size):
+    """Convert an integer resolution in base-pairs to a nicely formatted string.
+
+    :param int window_size: Integer resolution in base pairs.
+    :returns: Formatted resolution."""
+
     return utils.format_genomic_distance(window_size, precision=0)
 
 def coverage_path(base_folder, window_size):
+    """Get the path to a coverage table given a base folder and resolution.
+
+    :param str base_folder: Path to the folder containing the coverage table.
+    :param int window_size: Resolution in base pairs
+    :returns: Path to coverage table
+    """
+
     return os.path.join(base_folder, 'coverage_at_{0}.multibam'.format(pretty_resolution(window_size)))
 
 def segregation_path(base_folder, window_size):
+    """Get the path to a segregation table given a base folder and resolution.
+
+    :param str base_folder: Path to the folder containing the segregation table.
+    :param int window_size: Resolution in base pairs
+    :returns: Path to segregation table
+    """
+
     return os.path.join(base_folder, 'segregation_at_{0}.multibam'.format(pretty_resolution(window_size)))
 
 class input_file_mapping_tasks(object):
+    """Class for generating doit tasks from command-line arguments.
+
+    GAMtools "process_nps" command generates a set of doit tasks at
+    runtime based on a set of parameters passed via the command-line.
+    These parameters are handled by argparse (see main.py for the
+    parser definitions), yielding an object called args. Tasks
+    need access to args at runtime, so they must be generated
+    via a class, such that args is always accessible via self.args.
+
+    :param args: An argparse Namespace object containing parameters \
+            passed via the command line
+    """
 
     def __init__(self, args):
         self.args = args
 
     def create_doit_tasks(self):
+        """Generator function that yields doit tasks."""
 
         tasks = []
         task_generators = []
 
         for possible_task in dir(self):
+
+            # Only attributes starting with task_ are task generators
             if possible_task.startswith('task_'):
 
+                # Call each function starting with task_
                 task_obj = getattr(self, possible_task)()
+
+                # We cannot mix generators and task dictionaries
+                # in the same iterable
                 if inspect.isgenerator(task_obj):
                     task_generators.append(task_obj)
                 else:
                     tasks.append(task_obj)
 
+        # Aggregate task dictionaries into a generator and add them
+        # to task_generators
         task_generators.append((t for t in tasks))
 
+        # Turn the list of generators into a single iterable
         all_tasks = itertools.chain.from_iterable(task_generators)
 
         for task in all_tasks:
             yield task
 
     def task_map_fastq(self):
+        """Task to map fastq files using bowtie."""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -60,16 +115,21 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_sort_bam(self):
+        """Task to sort bam files"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
                     "basename" : 'Sorting bam',
-                    "actions"  : ['samtools sort %(dependencies)s -o %(targets)s'],
+                    #TODO: Handle new samtools version that specifies output files differently
+                    "actions"  : ['samtools sort -f %(dependencies)s %(targets)s'],
                     "targets"  : [swap_extension(input_fastq, ".sorted.bam")],
                     "file_dep" : [swap_extension(input_fastq, ".bam")],
                   }
 
     def task_remove_duplicates(self):
+        """Task to remove PCR duplicates from sorted bam files"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -80,6 +140,8 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_index_bam(self):
+        """Task to generate indexes for sorted bam files"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -90,6 +152,8 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_make_bedgraph(self):
+        """Task to create bedgraphs from indexed and sorted bam files"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -103,6 +167,8 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_make_bigwig(self):
+        """Task to create bigwigs from bedgraphs"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -113,6 +179,7 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_make_output_dir(self):
+        """Task to create a directory"""
 
         yield {
                 "basename"     : 'Creating output directory',
@@ -122,6 +189,8 @@ class input_file_mapping_tasks(object):
               }
 
     def task_get_coverage(self):
+        """Task to get read coverage per window for a range of resolutions"""
+
         bamfiles = [ swap_extension(input_fastq, ".rmdup.bam") for input_fastq in self.args.input_fastqs ]
         for window_size in self.args.window_sizes:
             yield {
@@ -135,6 +204,8 @@ class input_file_mapping_tasks(object):
                    }
 
     def task_get_segregation(self):
+        """Task to call positive windows from coverage tables for a range of resolutions"""
+
         for window_size in self.args.window_sizes:
 
             input_coverage_file = coverage_path(self.args.output_dir, window_size)
@@ -164,6 +235,7 @@ class input_file_mapping_tasks(object):
             yield task
 
     def task_get_segregation_bed(self):
+        """Task to get bed files of positive windows for each NP at each resolution"""
 
         for window_size in self.args.window_sizes:
 
@@ -185,6 +257,7 @@ class input_file_mapping_tasks(object):
                     }
 
     def task_get_segregation_bigbed(self):
+        """Task to get bigbed files of positive windows for each NP at each resolution"""
 
         for window_size in self.args.window_sizes:
             for input_fastq in self.args.input_fastqs:
@@ -201,6 +274,8 @@ class input_file_mapping_tasks(object):
                       }
 
     def task_run_fastqc(self):
+        """Task to run fastqc for each input fastq"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -211,6 +286,8 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_run_fastq_screen(self):
+        """Task to run fastq_screen for each input fastq"""
+
         for input_fastq in self.args.input_fastqs:
             yield {
                     "name"     : input_fastq,
@@ -221,6 +298,8 @@ class input_file_mapping_tasks(object):
                   }
 
     def task_extract_contamination(self):
+        """Task to summarize results of fastq_screen runs"""
+
         fastq_screen_files = [ qc.screen.screen_out_path(input_fastq) for input_fastq in self.args.input_fastqs ]
         return {
                 'basename': 'Getting contamination stats',
@@ -230,6 +309,8 @@ class input_file_mapping_tasks(object):
                }
 
     def task_extract_quality(self):
+        """Task to summarize results of fastqc runs"""
+
         fastqc_files = [qc.fastqc.fastqc_data_file(input_fastq) for input_fastq in self.args.input_fastqs ]
         return {
                 'basename': 'Getting quality stats',
@@ -239,6 +320,8 @@ class input_file_mapping_tasks(object):
                }
 
     def task_mapping_stats(self):
+        """Task to count numbers of sequenced/mapped/duplicated reads"""
+
         return {
                 'basename': 'Getting mapping stats',
                 'actions' : ['%(mapping_stats_script)s %(dependencies)s > %(targets)s'],
@@ -247,6 +330,7 @@ class input_file_mapping_tasks(object):
               }
 
     def task_segregation_stats(self):
+        """Task to calculate summary statistics for positive window calling"""
 
         if self.args.qc_window_size is None:
             self.args.qc_window_size = get_middle_value(self.args.window_sizes)
@@ -261,6 +345,7 @@ class input_file_mapping_tasks(object):
                }
 
     def task_merge_stats(self):
+        """Task to make a single QC statistics table with one row per NP"""
 
         files_to_merge = [os.path.join(self.args.output_dir, sf) for sf in self.args.default_stats] + self.args.additional_qc_files
 
@@ -272,6 +357,7 @@ class input_file_mapping_tasks(object):
                }
 
     def task_copy_qc_parameters(self):
+        """Task to make a qc_parameters.cfg file if it doesn't exist"""
 
         return {
                 'basename': 'Creating QC parameters file with default values',
@@ -281,6 +367,7 @@ class input_file_mapping_tasks(object):
                }
 
     def task_samples_passing_qc(self):
+        """Task to identify NPs passing/failing QC"""
 
         return {
                 'basename': 'Finding samples that pass QC',
@@ -291,6 +378,7 @@ class input_file_mapping_tasks(object):
                }
 
     def task_filter_segregation(self):
+        """Task to exclude NPs failing QC from segregation tables"""
 
         passqc_file = os.path.join(self.args.output_dir, 'samples_passing_qc.txt')
 
@@ -307,11 +395,14 @@ class input_file_mapping_tasks(object):
                 }
 
     def task_do_qc(self):
+        """Empty target to force all QC tasks to run"""
+
         return {'basename':'do_qc',
                 'actions': None,
                 'task_dep': ['Filtering samples based on QC values']}
 
     def task_linkage_matrices(self):
+        """Task to calculate linkage matrices at specified resolutions"""
 
         #TODO: Allow specification of which chromosomes to generate matrices for
         chroms = ['chr{0}'.format(c) for c in range(1,20)]
@@ -338,6 +429,7 @@ class input_file_mapping_tasks(object):
 
 
 def process_nps_from_args(args):
+    """Wrapper function to call doit from argparse"""
 
     task_dict = {
         'input_file_tasks': input_file_mapping_tasks(args)
