@@ -103,7 +103,7 @@ truncated index:
   clean.sh fastqs/ genome/
   $ export BOWTIE2_INDEXES=$(pwd)/genome/
   $ ls $BOWTIE2_INDEXES
-  genome.1.bt2  genome.3.bt2  genome.rev.1.bt2  mm9.chrom.sizes
+  genome.1.bt2  genome.3.bt2  genome.rev.1.bt2  chr19.size
   genome.2.bt2  genome.4.bt2  genome.rev.2.bt2
 
 ========================================================
@@ -151,7 +151,7 @@ should see an output like this:
 
 .. code-block:: bash
 
-  $ gamtools process_nps -g genome/mm9.chrom.sizes fastqs/*.fq.gz
+  $ gamtools process_nps -g genome/chr19.size fastqs/*.fq.gz
   -- Creating output directory
   .  Mapping fastq:fastqs/NP_025.fq.gz
   .  Mapping fastq:fastqs/NP_017.fq.gz
@@ -252,7 +252,8 @@ in png format:
 
 You should see an image file that looks like this:
 
-
+.. image:: /img/chr19_50kb_matrix.png
+   :width: 50%
 
 Note that the example data for this tutorial only covers this specific
 region of chromosome 19, so if you specify a larger or different region
@@ -267,6 +268,9 @@ you will get some strange looking results:
   Saving matrix to file larger_matrix.png
   Done!
   $ open larger_matrix.png
+
+.. image:: /img/chr19_large_50kb_matrix.png
+   :width: 50%
 
 By default, **GAMtools** produces proximity matrices using the
 normalized linkage disequilibrium (or **D'**). In this case, it first
@@ -287,6 +291,9 @@ raw, un-normalized co-segregation matrices by specifying the
   Done!
   $ open cosegregation_matrix.png
 
+.. image:: /img/chr19_50kb_coseg_matrix.png
+   :width: 50%
+
 ================================
 Working at different resolutions
 ================================
@@ -299,7 +306,7 @@ resolution. We can generate another segregation table using the
 
 .. code-block:: bash
 
-  $ gamtools process_nps -w 30000 -g genome/mm9.chrom.sizes fastqs/*.fq.gz
+  $ gamtools process_nps -w 30000 -g genome/chr19.size fastqs/*.fq.gz
   -- Creating output directory
   -- Mapping fastq:fastqs/NP_025.fq.gz
   -- Mapping fastq:fastqs/NP_017.fq.gz
@@ -321,6 +328,25 @@ resolution, we don't need to remap all the individual fastq files, we only
 need to re-compute the read depth over all 30kb windows, and then decide
 which 30kb windows were positive in each NP.
 
+To create proximity matrices at the new resolution, we need to specify
+the new segregation table: ``segregation_at_30kb.multibam``.
+
+.. code-block:: bash
+
+  $ gamtools matrix -s segregation_at_30kb.multibam \
+  > -r chr19:10,000,000-15,000,000 -o 30kb_matrix.png
+  starting calculation for chr19:10,000,000-15,000,000
+  region size is: 167 x 167 Calculation took 0.047s
+  Saving matrix to file 30kb_matrix.png
+  Done!
+  $ open 30kb_matrix.png
+
+
+
+.. image:: /img/chr19_30kb_matrix.png
+   :width: 50%
+
+
 =================================
 Performing quality control checks
 =================================
@@ -338,7 +364,7 @@ output should look something like this:
 
 .. code-block:: bash
 
-  $ gamtools process_nps --do-qc -g genome/mm9.chrom.sizes fastqs/*.fq.gz
+  $ gamtools process_nps --do-qc -g genome/chr19.size fastqs/*.fq.gz
   -- Creating output directory
   -- Mapping fastq:fastqs/NP_025.fq.gz
   -- Mapping fastq:fastqs/NP_017.fq.gz
