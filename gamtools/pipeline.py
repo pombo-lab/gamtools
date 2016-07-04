@@ -87,7 +87,7 @@ def get_samtools_sort_actions():
                            'mv %(targets)s.tmp.bam %(targets)s']
 
     elif samtools_vnum < LooseVersion('1.0'):
-        samtools_vnum = ['samtools sort -f %(dependencies)s %(targets)s']
+        samtools_actions = ['samtools sort -f %(dependencies)s %(targets)s']
 
     else:
         samtools_actions = ['samtools sort -o %(targets)s -T %(targets)s.tmp %(dependencies)s']
