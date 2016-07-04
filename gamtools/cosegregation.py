@@ -464,14 +464,22 @@ def get_output_file(segregation_file, location_strings, matrix_type, output_form
 
     """
 
-    #TODO: If only "chr1" given, output only "chr1"
     segregation_base = '.'.join(segregation_file.split('.')[:-1])
-    locations = [segregation.parse_location_string(loc_string)
-                 for loc_string in location_strings]
-    formatted_locations = [(chrom, format_genomic_distance(start), format_genomic_distance(stop))
-                           for chrom, start, stop in locations]
-    formatted_locations = ['{}_{}-{}'.format(*loc) for loc in formatted_locations]
-    region_string = '_x_'.join(formatted_locations)
+    locations = []
+    for loc_string in location_strings:
+
+        # If there is no colon, we are asked for a whole chromosome
+        if not ':' in loc_string:
+            locations.append(loc_string)
+            continue
+
+        chrom, start, stop = segregation.parse_location_string(loc_string)
+        start, stop = format_genomic_distance(start), format_genomic_distance(stop)
+        formatted_location = '{chrom}_{start}-{stop}'.format(chrom=chrom,
+                                                             start=start,
+                                                             stop=stop)
+        locations.append(formatted_location)
+    region_string = '_x_'.join(locations)
 
     return '{}.{}_{}.{}'.format(segregation_base, region_string, matrix_type, output_format)
 
