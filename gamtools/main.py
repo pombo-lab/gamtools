@@ -1,4 +1,4 @@
-from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline, select_samples
+from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline, select_samples, compaction
 from wrapit.parser import add_doit_options
 import sys
 import pytest
@@ -45,6 +45,27 @@ seg_method.add_argument(
 
 call_windows_parser.set_defaults(func=call_windows.parser_function,
                                  fitting_function=call_windows.signal_and_noise_fitting)
+
+# Options for the 'compaction' command
+
+compaction_parser = subparsers.add_parser(
+    'compaction',
+    help='Get the compaction of each genomic window from a segmentation file')
+
+
+compaction_parser.add_argument(
+    '-s', '--segregation-file', required=True,
+    type=argparse.FileType('r'),
+    help='A segregation file to use for calculating compaction'
+    '(or - to read from stdin)')
+
+compaction_parser.add_argument(
+    '-o', '--output-file', required=True,
+    type=argparse.FileType('w'),
+    help='Output bedgraph file path (or - to write to stdout)')
+
+compaction_parser.set_defaults(func=compaction.compaction_from_args)
+
 
 
 # Options for the 'convert' command
