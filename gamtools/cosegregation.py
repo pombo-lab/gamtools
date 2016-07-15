@@ -21,7 +21,7 @@ of a particular genomic window across x samples.
 
 """
 
-from .cosegregation_internal import cosegregation_2d, cosegregation_3d, linkage_2d, linkage_3d, dprime_2d
+from .cosegregation_internal import cosegregation_2d, cosegregation_3d, linkage_2d, linkage_3d, dprime_2d, dprime_3d
 from . import segregation, matrix
 from .utils import format_genomic_distance
 import numpy as np
@@ -265,7 +265,7 @@ def get_linkage(segregation_data, *location_strings):
     return get_linkage_from_regions(*regions)
 
 
-def get_dprime_from_regions(*regions):
+def get_dprime_from_regions(*regions, **kwargs):
     """Get the full normalized linkage disequilibrium (D') matrix for n
     regions.
 
@@ -280,17 +280,23 @@ def get_dprime_from_regions(*regions):
     disequilibrium of all possible combinations of windows within the different regions.
     """
 
+    # User needs to pass a variable called force3d to use 3d dprime
+    force3d = kwargs.pop('force3d', False)
+
     regions = prepare_regions(regions)
 
     if len(regions) == 2:
         dprime_func = dprime_2d
+    elif ((len(regions) == 3) and force3d):
+        warnings.warn('There is no accepted definition for normalized linkage in three dimensions, so this function probably doesn\'t do what you want.')
+        dprime_func = dprime_3d
     else:
-        raise NotImplementedError('There is currently no implementation of normalized linkage disequilibrium for more than 2 dimensions')
+        raise NotImplementedError('There is currently no implementation of normalized linkage disequilibrium for more than 3 dimensions')
 
     return dprime_func(*regions)
 
 
-def get_dprime(segregation_data, *location_strings):
+def get_dprime(segregation_data, *location_strings, **kwargs):
     """Calculate the normalized linkage disequilibrium (D') matrix for a given
     genomic location or locations. Where only one location is given, normalized
     linkage is calculated for that region against itself.  Where two regions
@@ -307,7 +313,7 @@ def get_dprime(segregation_data, *location_strings):
 
     regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
 
-    return get_dprime_from_regions(*regions)
+    return get_dprime_from_regions(*regions, **kwargs)
 
 matrix_types = {
     'dprime': get_dprime_from_regions,
