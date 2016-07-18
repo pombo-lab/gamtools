@@ -3,16 +3,26 @@ import numpy as np
 ########################################################
 #
 # Non-cythonized (i.e. slow) functions for counts tables
+# (otherwise known as contingency tables).
 #
 ########################################################
 
 def get_transpositions(array):
+    """
+    Generator that iterates through all possible transpositions of
+    an n-dimensional array.
+    """
+
     axes = range(len(array.shape))
     for i in axes:
         yield tuple(axes[i:] + axes[:i])
 
 
 def frequency_to_probability(counts_table):
+    """
+    Convert a contingency table expressed in frequencies to one
+    expressed in probabilities.
+    """
 
     total = counts_table.sum()
     probs_table = counts_table / float(total)
@@ -21,6 +31,10 @@ def frequency_to_probability(counts_table):
 
 
 def get_marginal_probabilities(probs_table):
+    """
+    Get the marginal probability of each event given a
+    contingency table.
+    """
 
     ind = []
     for t in get_transpositions(probs_table):
@@ -31,6 +45,10 @@ def get_marginal_probabilities(probs_table):
 
 
 def either_locus_not_detected(probs):
+    """
+    Returns True if the probability of any event in a contingency
+    table is 0.
+    """
 
     if probs.min() == 0.0:
         return True
@@ -39,6 +57,10 @@ def either_locus_not_detected(probs):
 
 
 def cosegregation(counts_table):
+    """
+    Return the co-segregation frequency of n loci given their
+    contingency table.
+    """
 
     probs_table = frequency_to_probability(counts_table)
 
@@ -48,6 +70,11 @@ def cosegregation(counts_table):
     return probs_table.flat[-1]
 
 def expected(counts_table):
+    """
+    Return the expected co-segregation probability of an arbitrary number
+    of loci given their contingency table.
+    """
+
     probs_table = frequency_to_probability(counts_table)
     marginal_probs = get_marginal_probabilities(probs_table)
 
@@ -59,6 +86,11 @@ def expected(counts_table):
 
 
 def D(counts_table):
+    """
+    Return the linkage disequilibrium (D) for an arbitrary number of
+    loci given their contingency table.
+    """
+
     probs_table = frequency_to_probability(counts_table)
     marginal_probs = get_marginal_probabilities(probs_table)
 

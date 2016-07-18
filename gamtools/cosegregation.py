@@ -158,6 +158,10 @@ def cosegregation_nd(*regions):
     full_data = np.concatenate(regions, axis=0).astype(int)
 
     def get_frequency(indices):
+        """
+        Internal function to get the cosegregation_frequency for
+        a given combination of columns from full_data.
+        """
 
         return cosegregation_frequency_ndim(full_data[indices, :])
 
