@@ -43,7 +43,7 @@ seg_method.add_argument(
     '-m', '--macs', action='store_true',
     help='If specified, use MACS to call positive windows')
 
-call_windows_parser.set_defaults(func=call_windows.parser_function,
+call_windows_parser.set_defaults(func=call_windows.threshold_from_args,
                                  fitting_function=call_windows.signal_and_noise_fitting)
 
 
