@@ -111,6 +111,10 @@ def randomize_doublets(doublets_orig, chrom_lengths):
     shift = np.random.randint(1, max(chrom_lengths.values()))
 
     def randomize_chrom(chrom, shift):
+        """
+        Internal function that shifts all interactions on a given
+        chromosome `chrom` by an amount `shift`.
+        """
 
         chrom_len = chrom_lengths[chrom]
 
@@ -379,6 +383,9 @@ def do_enrichment(pairwise_interactions, window_classes, num_permutations, outpu
 
 
 def enrichment_from_args(args):
+    """
+    Wrapper function to call do_enrichment from argparse.
+    """
 
     interactions = pd.read_csv(args.interactions_file, delim_whitespace=True)
     if 'interaction' not in interactions.columns:
