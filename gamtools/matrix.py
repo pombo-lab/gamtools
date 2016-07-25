@@ -1,3 +1,20 @@
+"""
+.. _matrix_output_formats:
+
+Matrix output formats
+---------------------
+
+Here are the output formats:
+
+.. _matrix_input_formats:
+
+Matrix input formats:
+---------------------
+
+Available matrix input formats are:
+
+"""
+
 import numpy as np
 import pandas as pd
 import sys, os

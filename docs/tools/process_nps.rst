@@ -4,7 +4,7 @@ process_nps
 
 The ``gamtools process_nps`` tool is used to map raw sequencing data
 from a collection of NPs and call positive windows from those NPs
-to generate a `segregation table`_. It can optionally also calculate
+to generate a :ref:`segregation table <segregation_table>`. It can optionally also calculate
 various QC metrics for each NP, generate bigwig/bed files for
 visualising the raw data and calculate proximity matrices.
 

@@ -3,7 +3,7 @@ select
 ############
 
 The ``gamtools select`` tool is used to select or exclude samples
-from a `segregation table`_.
+from a :ref:`segregation table <segregation_table>`.
 
 ===============================
 Usage and option summary

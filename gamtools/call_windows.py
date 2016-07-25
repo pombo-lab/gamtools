@@ -1,3 +1,9 @@
+"""
+Something here
+
+
+"""
+
 from __future__ import print_function
 import sys
 import pandas as pd
@@ -209,7 +215,7 @@ def mask_x_by_z(x, z):
 
 def erode(coverage_data, prob):
     """
-    Probabilistically erode a read coverage table, to generate a new table with
+    Probabilistically erode a :ref:`read coverage table <read_coverage_table>`, to generate a new table with
     less total read coverage. Each entry in the table, representing a number of
     reads mapping to a given window, is replaced by a random value drawn from a
     binomial distribution where each of the original reads has a certain
@@ -219,7 +225,7 @@ def erode(coverage_data, prob):
     :param float prob: Amount by which to erode the original table (e.g. if \
             the original table had 1000 reads and prob is 0.7, the new table \
             will have approximately 700 reads.
-    :returns: New read coverage table with eroded values
+    :returns: New :ref:`read coverage table <read_coverage_table>` with eroded values
     """
 
     return coverage_data.astype(np.int32).apply(lambda x: np.random.binomial(x, prob))
@@ -561,20 +567,20 @@ def plot_fitting_and_save(sample_name, fitting_folder, sample_fitting_data):
 
 def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
     """
-    Given a :ref:`~read coverage table`, fit a composite negative binomial and
+    Given a :ref:`read coverage table <read_coverage_table>`, fit a composite negative binomial and
     lognormal distribution to the read coverage histogram for each individual
     NP. Using this distribution, determine a read coverage threshold to
     distinguish positive (signal) windows from negative (noise) windows.
     Finally, use the determined thresholds to convert the
-    :ref:`~read coverage table` to a :ref:`~segregation table` giving the
+    :ref:`read coverage table <read_coverage_table>` to a :ref:`segregation table <segregation_table>` giving the
     locations of positive windows for each NP.
 
-    :param coverage_data: :ref:`~read coverage table`
+    :param coverage_data: :ref:`read coverage table <read_coverage_table>`
     :param str fitting_folder: Path to the folder in which to save \
             images of each individual fit.
     :param func fitting_function: Function to use to determine a read \
             threshold for each NP.
-    :returns: segregation_table (a :ref:`~segregation table`) and \
+    :returns: segregation_table (a :ref:`segregation table <segregation_table>`) and \
             fitting_data (a :class:`~pandas.DataFrame` of fitting \
             parameters for each NP).
     """
@@ -613,11 +619,11 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 def threshold_file(input_file, output_file,
                    fitting_folder, fitting_details_file, fitting_function):
     """
-    Read a :ref:`~read coverage table` file and threshold each NP, to generate
-    a :ref:`~segregation table`.
+    Read a :ref:`read coverage table <read_coverage_table>` file and threshold each NP, to generate
+    a :ref:`segregation table <segregation_table>`.
 
-    :param str input_file: Path to :ref:`~read coverage table`.
-    :param str output_file: Path to save :ref:`~segregation table`.
+    :param str input_file: Path to :ref:`read coverage table <read_coverage_table>`.
+    :param str output_file: Path to save :ref:`segregation table <segregation_table>`.
     :param fitting_folder: Path to save plots of each individual fit \
             (or None to skip saving fitting images).
     :type fitting_folder: str or None

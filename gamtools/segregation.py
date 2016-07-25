@@ -6,6 +6,13 @@ Segregation Tables
 
 Regions are :class:`pandas.DataFrame` objects, where columns represent samples
 
+.. _read_coverage_table:
+
+Read Coverage Tables
+--------------------
+
+Read coverage tables are something else.
+
 """
 import numpy as np
 import pandas as pd

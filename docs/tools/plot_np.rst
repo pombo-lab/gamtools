@@ -10,7 +10,7 @@ whole chromosomes) displaying very low coverage.
 
 Plotting the coverage for an NP requires three files, a bigwig file made from
 the raw sequencing data, a bed file containing the positive windows and a
-`genome file`_.
+file containing a list of chromosomes and their lengths in bp (a genome file).
 
 ===============================
 Usage and option summary
