@@ -43,8 +43,9 @@ seg_method.add_argument(
     '-m', '--macs', action='store_true',
     help='If specified, use MACS to call positive windows')
 
-call_windows_parser.set_defaults(func=call_windows.threshold_from_args,
-                                 fitting_function=call_windows.signal_and_noise_fitting)
+call_windows_parser.set_defaults(
+    func=call_windows.threshold_from_args,
+    fitting_function=call_windows.signal_and_noise_fitting)
 
 
 # Options for the 'convert' command
@@ -116,7 +117,11 @@ perm_type.add_argument(
     '-p', '--permutations', default=10, type=int, dest='num_permutations',
     help='Number of times to randomly permute the input file')
 perm_type.add_argument(
-    '-n', '--no-permute', action='store_const', const=0, dest='num_permutations',
+    '-n',
+    '--no-permute',
+    action='store_const',
+    const=0,
+    dest='num_permutations',
     help='Do not permute the input file, instead calculate observed counts')
 
 enrichment_parser.set_defaults(func=enrichment.enrichment_from_args)
@@ -148,10 +153,14 @@ matrix_parser.add_argument(
         ', '.join(matrix.output_formats.keys())))
 
 matrix_parser.add_argument(
-    '-t', '--matrix-type', default='dprime',
+    '-t',
+    '--matrix-type',
+    default='dprime',
     choices=cosegregation.matrix_types,
     help='Method used to calculate the interaction matrix (choose from: '
-    '{}, default is dprime)'.format(', '.join(cosegregation.matrix_types.keys())))
+    '{}, default is dprime)'.format(
+        ', '.join(
+            cosegregation.matrix_types.keys())))
 
 matrix_parser.add_argument(
     '-o', '--output-file', metavar='OUTPUT_FILE',
@@ -253,7 +262,8 @@ process_parser.add_argument(
     '-w', '--window-sizes', metavar='WINDOW_SIZE',
     default=[50000], type=int, nargs='+',
     help='One or more window sizes for calling positive windows')
-# TODO: Remove this option, and check window-sizes, matrix-sizes and qc-window-size are all consistent
+# TODO: Remove this option, and check window-sizes, matrix-sizes and
+# qc-window-size are all consistent
 process_parser.add_argument(
     '-m', '--calculate-matrices', action='append_const',
     dest='to_run', const='Calculating linkage matrix',
@@ -278,6 +288,7 @@ add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
                   'reporter', 'num_process', 'par_type'])
 
+
 def get_script(script_name):
     """Get the absolute path to a script in the gamtools 'scripts' folder
 
@@ -288,6 +299,7 @@ def get_script(script_name):
     return os.path.join(os.path.dirname(__file__),
                         '../scripts',
                         script_name)
+
 
 def get_example(example_name):
     """Get the absolute path to a file in the gamtools 'examples' folder
@@ -304,9 +316,11 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             to_run=[
                                 'Calling positive windows',
                                 #'Filtering samples based on QC values',
-                                   ],
-                            mapping_stats_script=get_script('mapping_stats.sh'),
-                            example_parameters_file=get_example('qc_parameters.example.cfg'),
+                            ],
+                            mapping_stats_script=get_script(
+                                'mapping_stats.sh'),
+                            example_parameters_file=get_example(
+                                'qc_parameters.example.cfg'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                            'quality_stats.txt', 'segregation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)
@@ -339,24 +353,30 @@ test_parser = subparsers.add_parser(
     'test',
     help='Test that GAMtools is installed and configured correctly.')
 
+
 def test_function(args):
     """Wrapper function to call py.test from arparse"""
 
-    #TODO: Fix passing additional arguments to py.test
+    # TODO: Fix passing additional arguments to py.test
     test_args = sys.argv[2:]
     test_dir = os.path.join(os.path.dirname(__file__), '..', 'tests')
     sys.exit(pytest.main([test_dir] + test_args))
 
 test_parser.set_defaults(func=test_function)
 
+
 def main():
     """Main gamtools function that is called by the gamtools command line script."""
 
     args = parser.parse_args()
 
-    if hasattr(args, 'to_run') and 'Calculating linkage matrix' in args.to_run and not len(args.matrix_sizes):
-        sys.exit('If you want to calculate linkage matrices (-m/--calculate-matrices) '
-                 'you must specify the desired resolution using -s/--matrix-sizes')
+    if hasattr(
+            args,
+            'to_run') and 'Calculating linkage matrix' in args.to_run and not len(
+            args.matrix_sizes):
+        sys.exit(
+            'If you want to calculate linkage matrices (-m/--calculate-matrices) '
+            'you must specify the desired resolution using -s/--matrix-sizes')
 
     args.func(args)
 

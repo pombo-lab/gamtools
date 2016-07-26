@@ -60,8 +60,10 @@ def regions_are_valid(regions):
     """
 
     allowed_values = set([0, 1])
-    region_unique_values = [set(np.unique(np.array(region).ravel())) for region in regions]
-    invalid_regions = [not region_values.issubset(allowed_values) for region_values in region_unique_values]
+    region_unique_values = [
+        set(np.unique(np.array(region).ravel())) for region in regions]
+    invalid_regions = [not region_values.issubset(
+        allowed_values) for region_values in region_unique_values]
 
     if any(invalid_regions):
         return False
@@ -181,7 +183,8 @@ def cosegregation_nd(*regions):
 
     result = map(get_frequency, combinations)
 
-    result_shape = tuple([ len(region) for region in regions ]) + (2, ) * len(regions)
+    result_shape = tuple([len(region)
+                          for region in regions]) + (2, ) * len(regions)
 
     freqs = np.array(result).reshape(result_shape)
 
@@ -226,7 +229,8 @@ def get_cosesgregation(segregation_data, *location_strings):
     of all possible combinations of windows within the different regions.
     """
 
-    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
+    regions = [segregation.region_from_location_string(
+        segregation_data, l) for l in location_strings]
 
     return get_cosegregation_from_regions(*regions)
 
@@ -255,10 +259,13 @@ def get_linkage_from_regions(*regions):
     if len(regions) == 2:
         linkage_func = linkage_2d
     elif len(regions) == 3:
-        warnings.warn('3D linkage is calculated following Hastings - Genetics (1984) 106:153-164. Please check and make sure this is what you want.')
+        warnings.warn(
+            '3D linkage is calculated following Hastings - Genetics (1984) 106:153-164. Please check and make sure this is what you want.')
         linkage_func = linkage_3d
     else:
-        raise NotImplementedError('No linkage function is defined for {} regions'.format(len(regions)))
+        raise NotImplementedError(
+            'No linkage function is defined for {} regions'.format(
+                len(regions)))
 
     return linkage_func(*regions)
 
@@ -274,7 +281,8 @@ def get_linkage(segregation_data, *location_strings):
     of all possible combinations of windows within the different regions.
     """
 
-    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
+    regions = [segregation.region_from_location_string(
+        segregation_data, l) for l in location_strings]
 
     return get_linkage_from_regions(*regions)
 
@@ -299,7 +307,8 @@ def get_dprime_from_regions(*regions):
     if len(regions) == 2:
         dprime_func = dprime_2d
     else:
-        raise NotImplementedError('There is currently no implementation of normalized linkage disequilibrium for more than 2 dimensions')
+        raise NotImplementedError(
+            'There is currently no implementation of normalized linkage disequilibrium for more than 2 dimensions')
 
     return dprime_func(*regions)
 
@@ -316,8 +325,8 @@ def get_dprime(segregation_data, *location_strings):
     disequilibrium of all possible combinations of windows within the different regions.
     """
 
-
-    regions = [segregation.region_from_location_string(segregation_data, l) for l in location_strings]
+    regions = [segregation.region_from_location_string(
+        segregation_data, l) for l in location_strings]
 
     return get_dprime_from_regions(*regions)
 
@@ -326,6 +335,7 @@ matrix_types = {
     'linkage': get_linkage_from_regions,
     'cosegregation': get_cosegregation_from_regions,
 }
+
 
 def get_regions_and_windows(segregation_data, location_strings):
     """Get the windows which fall into a given genomic location, and the
@@ -342,19 +352,21 @@ def get_regions_and_windows(segregation_data, location_strings):
     window locations in the form (chromosome, start, stop).
     """
 
-
     if len(location_strings) == 1:
         location_strings = location_strings * 2
 
-    regions = [segregation.region_from_location_string(segregation_data, location_str)
-               for location_str in location_strings]
+    regions = [
+        segregation.region_from_location_string(
+            segregation_data,
+            location_str) for location_str in location_strings]
 
     windows = [np.array(list(region.index)) for region in regions]
 
     return regions, windows
 
+
 def matrix_and_windows_from_segregation_file(
-    segregation_file, location_strings, matrix_type='dprime'):
+        segregation_file, location_strings, matrix_type='dprime'):
     """Get the proximity matrix between the given genomic locations, and the
     locations of the genomic windows corresponding to each axis of the
     proximity matrix.
@@ -381,12 +393,13 @@ def matrix_and_windows_from_segregation_file(
     :returns: A :ref:`proximity matrix <proximity_matrices>` for the given \
             genomic locations, and a list of tuples giving window locations \
             in the form (chromosome, start, stop).
-    
+
     """
 
     segregation_data = segregation.open_segregation(segregation_file)
 
-    regions, windows = get_regions_and_windows(segregation_data, location_strings)
+    regions, windows = get_regions_and_windows(
+        segregation_data, location_strings)
     matrix_func = matrix_types[matrix_type]
     contact_matrix = matrix_func(*regions)
 
@@ -443,7 +456,12 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
 
     print 'Done!'
 
-def get_output_file(segregation_file, location_strings, matrix_type, output_format):
+
+def get_output_file(
+        segregation_file,
+        location_strings,
+        matrix_type,
+        output_format):
     """Automatically generate an output file path for a proximity matrix given
     the input segregation file.
 
@@ -479,14 +497,20 @@ def get_output_file(segregation_file, location_strings, matrix_type, output_form
             continue
 
         chrom, start, stop = segregation.parse_location_string(loc_string)
-        start, stop = format_genomic_distance(start), format_genomic_distance(stop)
+        start, stop = format_genomic_distance(
+            start), format_genomic_distance(stop)
         formatted_location = '{chrom}_{start}-{stop}'.format(chrom=chrom,
                                                              start=start,
                                                              stop=stop)
         locations.append(formatted_location)
     region_string = '_x_'.join(locations)
 
-    return '{}.{}_{}.{}'.format(segregation_base, region_string, matrix_type, output_format)
+    return '{}.{}_{}.{}'.format(
+        segregation_base,
+        region_string,
+        matrix_type,
+        output_format)
+
 
 def matrix_from_args(args):
     """Extract parameters from an argparse namespace object and pass them to
@@ -515,6 +539,7 @@ def matrix_from_args(args):
                                    args.output_file, args.output_format,
                                    args.matrix_type)
 
+
 def matrix_from_doit(output_file, segregation_file, region):
     """Partial function that passes parameters from doit to
     create_and_save_contact_matrix
@@ -522,4 +547,3 @@ def matrix_from_doit(output_file, segregation_file, region):
 
     create_and_save_contact_matrix(segregation_file, region,
                                    output_file, 'txt.gz', 'dprime')
-

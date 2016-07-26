@@ -2,6 +2,7 @@ from . import segregation
 import numpy as np
 import pandas as pd
 
+
 def permute_segregation(input_segregation):
     """Circularly permute each column of a segregation table.
 
@@ -40,13 +41,14 @@ def permute_segregation(input_segregation):
         # Swap the two chunks around and write them to the copied df
         offset = np.random.randint(no_windows)
 
-        new_start = input_segregation[mappable].iloc[offset:,i]
-        new_end = input_segregation[mappable].iloc[:offset,i]
+        new_start = input_segregation[mappable].iloc[offset:, i]
+        new_end = input_segregation[mappable].iloc[:offset, i]
         new_col = list(pd.concat([new_start, new_end]))
 
-        permutation.ix[mappable,i] = new_col
+        permutation.ix[mappable, i] = new_col
 
     return permutation
+
 
 def permute_segregation_autosomal(input_segregation, autosomes=None):
     """Circularly permute each autosomal chromosome in a segregation table
@@ -70,7 +72,7 @@ def permute_segregation_autosomal(input_segregation, autosomes=None):
     # Sex chromosomes, unjoined contigs and mtDNA behave weirdly,
     # so don't permute them into the autosomal regions.
 
-    autosomes = ['chr{0}'.format(c) for c in range(1,20)]
+    autosomes = ['chr{0}'.format(c) for c in range(1, 20)]
 
     is_autosomal = input_segregation.index.get_level_values(0).isin(autosomes)
 
@@ -90,4 +92,8 @@ def permute_segregation_from_args(args):
 
     permuted_segregation = permute_segregation_autosomal(input_segregation)
 
-    permuted_segregation.to_csv(args.output_file, sep='\t', header=True, index=True)
+    permuted_segregation.to_csv(
+        args.output_file,
+        sep='\t',
+        header=True,
+        index=True)

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import itertools
 
+
 def get_overlap(features_df1, features_df2, doublets_df):
     """Subset a table of interactions given two tables of possible interacting elements.
 
@@ -49,18 +50,22 @@ def get_overlap(features_df1, features_df2, doublets_df):
 
     """
 
-    intermediate12 = pd.merge(features_df1, doublets_df,
-                             left_on=['chrom', 'i'], right_on=['chrom', 'Pos_A'])
-    overlap12 =       pd.merge(features_df2, intermediate12,
-                             left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
+    intermediate12 = pd.merge(
+        features_df1, doublets_df, left_on=[
+            'chrom', 'i'], right_on=[
+            'chrom', 'Pos_A'])
+    overlap12 = pd.merge(features_df2, intermediate12,
+                         left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
 
-    intermediate21 = pd.merge(features_df2, doublets_df,
-                             left_on=['chrom', 'i'], right_on=['chrom', 'Pos_A'])
-    overlap21 =       pd.merge(features_df1, intermediate21,
-                             left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
+    intermediate21 = pd.merge(
+        features_df2, doublets_df, left_on=[
+            'chrom', 'i'], right_on=[
+            'chrom', 'Pos_A'])
+    overlap21 = pd.merge(features_df1, intermediate21,
+                         left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
 
-    both_overlap = pd.concat([overlap12[['chrom', 'Pos_A', 'Pos_B', 'interaction']],
-                    overlap21[['chrom', 'Pos_A', 'Pos_B', 'interaction']]]).drop_duplicates()
+    both_overlap = pd.concat([overlap12[['chrom', 'Pos_A', 'Pos_B', 'interaction']], overlap21[
+                             ['chrom', 'Pos_A', 'Pos_B', 'interaction']]]).drop_duplicates()
 
     return both_overlap
 
@@ -125,29 +130,36 @@ def randomize_doublets(doublets_orig, chrom_lengths):
 
         # Shift both positions by chrom_shift
         doublets_df.ix[doublets_df.chrom == chrom,
-                        ['Pos_A', 'Pos_B']] = np.array(
-                            doublets_df.ix[doublets_df.chrom == chrom,
-                                        ['Pos_A', 'Pos_B']]) + chrom_shift
+                       ['Pos_A', 'Pos_B']] = np.array(
+            doublets_df.ix[doublets_df.chrom == chrom,
+                           ['Pos_A', 'Pos_B']]) + chrom_shift
 
         # Check left doesn't extend past chromosome end
-        doublets_df.ix[(doublets_df.chrom == chrom) &
-                       (doublets_df.Pos_A >= chrom_lengths[chrom]),
-                        ['Pos_A']] = np.array(doublets_df.ix[(doublets_df.chrom == chrom) &
-                                             (doublets_df.Pos_A >= chrom_lengths[chrom]),
-                                             ['Pos_A']]) - chrom_lengths[chrom]
+        doublets_df.ix[
+            (doublets_df.chrom == chrom) & (
+                doublets_df.Pos_A >= chrom_lengths[chrom]),
+            ['Pos_A']] = np.array(
+            doublets_df.ix[
+                (doublets_df.chrom == chrom) & (
+                    doublets_df.Pos_A >= chrom_lengths[chrom]),
+                ['Pos_A']]) - chrom_lengths[chrom]
 
-        #Check right doesn't extend past chromosome end
-        doublets_df.ix[(doublets_df.chrom == chrom) &
-                       (doublets_df.Pos_B >= chrom_lengths[chrom]),
-                        ['Pos_B']] = np.array(doublets_df.ix[(doublets_df.chrom == chrom) &
-                                             (doublets_df.Pos_B >= chrom_lengths[chrom]),
-                                             ['Pos_B']]) - chrom_lengths[chrom]
+        # Check right doesn't extend past chromosome end
+        doublets_df.ix[
+            (doublets_df.chrom == chrom) & (
+                doublets_df.Pos_B >= chrom_lengths[chrom]),
+            ['Pos_B']] = np.array(
+            doublets_df.ix[
+                (doublets_df.chrom == chrom) & (
+                    doublets_df.Pos_B >= chrom_lengths[chrom]),
+                ['Pos_B']]) - chrom_lengths[chrom]
 
     for chrom in chrom_lengths.keys():
 
         randomize_chrom(chrom, shift)
 
     return doublets_df
+
 
 def feature_pair_values(pairwise_interactions, window_classes, feat1, feat2):
     """Subset a table of interactions, to obtain only those where windows
@@ -193,10 +205,10 @@ def feature_pair_values(pairwise_interactions, window_classes, feat1, feat2):
 
     """
 
-
     return get_overlap(window_classes[window_classes[feat1]],
                        window_classes[window_classes[feat2]],
-                                   pairwise_interactions)
+                       pairwise_interactions)
+
 
 def get_feature_summary(pairwise_interactions, window_classes):
     """
@@ -237,15 +249,22 @@ def get_feature_summary(pairwise_interactions, window_classes):
     feature_classes = [col for col in window_classes.columns
                        if not col in ['chrom', 'start', 'stop', 'i']]
 
-    for feat1, feat2 in itertools.combinations_with_replacement(feature_classes, 2):
+    for feat1, feat2 in itertools.combinations_with_replacement(
+            feature_classes, 2):
 
-        feat_values = feature_pair_values(pairwise_interactions, window_classes, feat1, feat2)
+        feat_values = feature_pair_values(
+            pairwise_interactions, window_classes, feat1, feat2)
 
         results.append((feat1, feat2, len(feat_values)))
 
     return results
 
-def randomized_summary(pairwise_interactions, window_classes, chrom_lengths, randomization_count):
+
+def randomized_summary(
+        pairwise_interactions,
+        window_classes,
+        chrom_lengths,
+        randomization_count):
     """
     Randomly shuffle a table of pairwise interactions and count the number of
     randomized interactions involving each feature class.
@@ -301,6 +320,7 @@ def randomized_summary(pairwise_interactions, window_classes, chrom_lengths, ran
 
     return results
 
+
 def get_p_val(obs, rand):
     """Calculate a two-tailed p-value from an observed value and a
     list of permuted (bootstrapped) values.
@@ -317,6 +337,7 @@ def get_p_val(obs, rand):
     p_low = 1.0 - (randoms < obs).mean()
 
     return min((p_high, p_low))
+
 
 def get_full_output_path(output_prefix, num_permutations):
     """Generate the path for an output csv file.
@@ -341,12 +362,19 @@ def get_full_output_path(output_prefix, num_permutations):
 
     small_hash = str(uuid.uuid4())[:10]
 
-    #TODO: Check that this file doesn't exist
-    full_outpath = '{0}_{1}.{2}.csv'.format(output_prefix, permute_string, small_hash)
+    # TODO: Check that this file doesn't exist
+    full_outpath = '{0}_{1}.{2}.csv'.format(
+        output_prefix, permute_string, small_hash)
 
     return full_outpath
 
-def do_enrichment(pairwise_interactions, window_classes, num_permutations, output_prefix, chroms=None):
+
+def do_enrichment(
+        pairwise_interactions,
+        window_classes,
+        num_permutations,
+        output_prefix,
+        chroms=None):
     """Calculate the number of pairwise pairwise_interactions connecting each class of windows
     (either in real or permuted data) and save the results to a file
 
@@ -361,16 +389,24 @@ def do_enrichment(pairwise_interactions, window_classes, num_permutations, outpu
     """
 
     if chroms is None:
-        chroms = ['chr{0}'.format(c) for c in range(1,20)]
+        chroms = ['chr{0}'.format(c) for c in range(1, 20)]
 
-    chrom_lengths = {chrom:len(window_classes[window_classes.chrom == chrom]) for chrom in chroms}
+    chrom_lengths = {
+        chrom: len(
+            window_classes[
+                window_classes.chrom == chrom]) for chrom in chroms}
 
     if num_permutations == 0:
         results = get_feature_summary(pairwise_interactions, window_classes)
     else:
-        results = randomized_summary(pairwise_interactions, window_classes, chrom_lengths, num_permutations)
+        results = randomized_summary(
+            pairwise_interactions,
+            window_classes,
+            chrom_lengths,
+            num_permutations)
 
-    results_df = pd.DataFrame.from_records(results, columns=['class1', 'class2', 'count'])
+    results_df = pd.DataFrame.from_records(
+        results, columns=['class1', 'class2', 'count'])
 
     if num_permutations == 0:
         results_df['permuted'] = 'no'
@@ -389,9 +425,8 @@ def enrichment_from_args(args):
 
     interactions = pd.read_csv(args.interactions_file, delim_whitespace=True)
     if 'interaction' not in interactions.columns:
-        interactions = interactions.rename(columns={'Pi':'interaction'})
+        interactions = interactions.rename(columns={'Pi': 'interaction'})
 
     window_classes = pd.read_csv(args.classes_file)
     do_enrichment(interactions, window_classes,
                   args.num_permutations, args.output_prefix)
-

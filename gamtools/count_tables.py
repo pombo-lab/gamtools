@@ -7,6 +7,7 @@ import numpy as np
 #
 ########################################################
 
+
 def get_transpositions(array):
     """
     Generator that iterates through all possible transpositions of
@@ -38,8 +39,8 @@ def get_marginal_probabilities(probs_table):
 
     ind = []
     for t in get_transpositions(probs_table):
-        marginal_probs = [probs_table.transpose(t)[1,...].sum(),
-                 probs_table.transpose(t)[0,...].sum()]
+        marginal_probs = [probs_table.transpose(t)[1, ...].sum(),
+                          probs_table.transpose(t)[0, ...].sum()]
         ind.append(marginal_probs)
     return np.array(ind)
 
@@ -68,6 +69,7 @@ def cosegregation(counts_table):
         return np.NAN
 
     return probs_table.flat[-1]
+
 
 def expected(counts_table):
     """

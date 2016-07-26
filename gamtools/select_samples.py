@@ -1,5 +1,6 @@
 from . import segregation
 
+
 def select_samples(segregation_path, sample_names, output_file, drop=False):
 
     segregation_data = segregation.open_segregation(segregation_path)
@@ -14,7 +15,12 @@ def select_samples(segregation_path, sample_names, output_file, drop=False):
 
     subset.to_csv(output_file, index=True, sep='\t')
 
-def select_samples_from_file(segregation_path, sample_names_path, output_file, drop=False):
+
+def select_samples_from_file(
+        segregation_path,
+        sample_names_path,
+        output_file,
+        drop=False):
 
     names = []
 
@@ -24,9 +30,15 @@ def select_samples_from_file(segregation_path, sample_names_path, output_file, d
 
     select_samples(segregation_path, names, output_file, drop)
 
+
 def select_samples_from_args(args):
 
-    select_samples(args.segregation_file, args.sample_names, args.output_file, args.drop_samples)
+    select_samples(
+        args.segregation_file,
+        args.sample_names,
+        args.output_file,
+        args.drop_samples)
+
 
 def select_samples_from_doit(dependencies, targets):
 
@@ -40,4 +52,7 @@ def select_samples_from_doit(dependencies, targets):
 
     assert len(targets) == 1
 
-    select_samples_from_file(segregation_path, sample_names_path, list(targets)[0])
+    select_samples_from_file(
+        segregation_path,
+        sample_names_path,
+        list(targets)[0])
