@@ -36,7 +36,7 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     packages=['gamtools'],
-    install_requires=['numpy', 'scipy', 'doit', 'pandas', 'wrapit'],
+    install_requires=['numpy', 'scipy', 'doit', 'pandas', 'wrapit', 'pytest'],
     include_dirs=[numpy.get_include()],
     ext_modules = [Extension('gamtools.cosegregation_internal',
                             ["gamtools/cosegregation_internal.c"])],
