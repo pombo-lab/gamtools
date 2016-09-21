@@ -401,7 +401,7 @@ def read_thresholds(thresholds_file):
     """Read a file containing interaction thresholds"""
 
     return pd.read_csv(thresholds_file,
-                       delim_whitespace=True, header=6).set_index('distance')
+                       delim_whitespace=True, comment='#').set_index('distance')
 
 
 def kth_diag_indices(a, k):
