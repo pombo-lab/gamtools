@@ -30,7 +30,7 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "0.0.1",
+    version = "1.0.0-alpha.1",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.com",
     description = ("A package containing some utilities for analyzing GAM data."),
