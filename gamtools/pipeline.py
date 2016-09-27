@@ -529,9 +529,25 @@ class input_file_mapping_tasks(object):
                        'actions': ['mkdir -p $(dirname %(targets)s)',
                                    (cosegregation.matrix_from_doit, (matrix_out, segregation_file, [chrom]))], }
 
+def check_resolution_consistency(args):
+    """
+    Ensure that matrix_sizes and qc_window_size are subsets of window_sizes.
+    """
+
+    all_window_sizes = list(args.window_sizes)
+    all_window_sizes.extend(args.matrix_sizes)
+    if args.qc_window_size is not None:
+        all_window_sizes.append(args.qc_window_size)
+
+    args.window_sizes = sorted(list(set(all_window_sizes)))
 
 def process_nps_from_args(args):
     """Wrapper function to call doit from argparse"""
+
+    check_resolution_consistency(args)
+
+    if len(args.matrix_sizes):
+        args.to_run.append('Calculating linkage matrix')
 
     task_dict = {
         'input_file_tasks': input_file_mapping_tasks(args)

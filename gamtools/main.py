@@ -262,14 +262,8 @@ process_parser.add_argument(
     '-w', '--window-sizes', metavar='WINDOW_SIZE',
     default=[50000], type=int, nargs='+',
     help='One or more window sizes for calling positive windows')
-# TODO: Remove this option, and check window-sizes, matrix-sizes and
-# qc-window-size are all consistent
 process_parser.add_argument(
-    '-m', '--calculate-matrices', action='append_const',
-    dest='to_run', const='Calculating linkage matrix',
-    help='Calculate linkage matrices.')
-process_parser.add_argument(
-    '-s', '--matrix-sizes', metavar='MATRIX_SIZE',
+    '-m', '--matrix-sizes', metavar='MATRIX_SIZE',
     default=[], type=int, nargs='+',
     help='Resolutions for which linkage matrices should be produced.')
 process_parser.add_argument(
@@ -369,14 +363,6 @@ def main():
     """Main gamtools function that is called by the gamtools command line script."""
 
     args = parser.parse_args()
-
-    if hasattr(
-            args,
-            'to_run') and 'Calculating linkage matrix' in args.to_run and not len(
-            args.matrix_sizes):
-        sys.exit(
-            'If you want to calculate linkage matrices (-m/--calculate-matrices) '
-            'you must specify the desired resolution using -s/--matrix-sizes')
 
     args.func(args)
 
