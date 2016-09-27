@@ -64,6 +64,11 @@ compaction_parser.add_argument(
     type=argparse.FileType('w'),
     help='Output bedgraph file path (or - to write to stdout)')
 
+compaction_parser.add_argument(
+    '-n', '--no-blanks', default=False,
+    action='store_true',
+    help='Do not include lines with no value in the output.')
+
 compaction_parser.set_defaults(func=compaction.compaction_from_args)
 
 
@@ -349,6 +354,12 @@ radial_pos_parser.add_argument(
     '-o', '--output-file', required=True,
     type=argparse.FileType('w'),
     help='Output bedgraph file path (or - to write to stdout)')
+
+radial_pos_parser.add_argument(
+    '-n', '--no-blanks', default=False,
+    action='store_true',
+    help='Do not include lines with no value in the output.')
+
 
 radial_pos_parser.set_defaults(func=radial_position.radial_position_from_args)
 
