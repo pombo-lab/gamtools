@@ -1,7 +1,8 @@
 import uuid
+import itertools
+
 import numpy as np
 import pandas as pd
-import itertools
 
 
 def get_overlap(features_df1, features_df2, doublets_df):
@@ -53,19 +54,20 @@ def get_overlap(features_df1, features_df2, doublets_df):
     intermediate12 = pd.merge(
         features_df1, doublets_df, left_on=[
             'chrom', 'i'], right_on=[
-            'chrom', 'Pos_A'])
+                'chrom', 'Pos_A'])
     overlap12 = pd.merge(features_df2, intermediate12,
                          left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
 
     intermediate21 = pd.merge(
         features_df2, doublets_df, left_on=[
             'chrom', 'i'], right_on=[
-            'chrom', 'Pos_A'])
+                'chrom', 'Pos_A'])
     overlap21 = pd.merge(features_df1, intermediate21,
                          left_on=['chrom', 'i'], right_on=['chrom', 'Pos_B'])
 
-    both_overlap = pd.concat([overlap12[['chrom', 'Pos_A', 'Pos_B', 'interaction']], overlap21[
-                             ['chrom', 'Pos_A', 'Pos_B', 'interaction']]]).drop_duplicates()
+    both_overlap = pd.concat([overlap12[['chrom', 'Pos_A', 'Pos_B', 'interaction']],
+                              overlap21[['chrom', 'Pos_A', 'Pos_B', 'interaction']]
+                             ]).drop_duplicates()
 
     return both_overlap
 
@@ -131,28 +133,28 @@ def randomize_doublets(doublets_orig, chrom_lengths):
         # Shift both positions by chrom_shift
         doublets_df.ix[doublets_df.chrom == chrom,
                        ['Pos_A', 'Pos_B']] = np.array(
-            doublets_df.ix[doublets_df.chrom == chrom,
-                           ['Pos_A', 'Pos_B']]) + chrom_shift
+                           doublets_df.ix[doublets_df.chrom == chrom,
+                                          ['Pos_A', 'Pos_B']]) + chrom_shift
 
         # Check left doesn't extend past chromosome end
         doublets_df.ix[
             (doublets_df.chrom == chrom) & (
                 doublets_df.Pos_A >= chrom_lengths[chrom]),
             ['Pos_A']] = np.array(
-            doublets_df.ix[
-                (doublets_df.chrom == chrom) & (
-                    doublets_df.Pos_A >= chrom_lengths[chrom]),
-                ['Pos_A']]) - chrom_lengths[chrom]
+                doublets_df.ix[
+                    (doublets_df.chrom == chrom) & (
+                        doublets_df.Pos_A >= chrom_lengths[chrom]),
+                    ['Pos_A']]) - chrom_lengths[chrom]
 
         # Check right doesn't extend past chromosome end
         doublets_df.ix[
             (doublets_df.chrom == chrom) & (
                 doublets_df.Pos_B >= chrom_lengths[chrom]),
             ['Pos_B']] = np.array(
-            doublets_df.ix[
-                (doublets_df.chrom == chrom) & (
-                    doublets_df.Pos_B >= chrom_lengths[chrom]),
-                ['Pos_B']]) - chrom_lengths[chrom]
+                doublets_df.ix[
+                    (doublets_df.chrom == chrom) & (
+                        doublets_df.Pos_B >= chrom_lengths[chrom]),
+                    ['Pos_B']]) - chrom_lengths[chrom]
 
     for chrom in chrom_lengths.keys():
 

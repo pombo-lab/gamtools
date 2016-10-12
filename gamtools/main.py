@@ -1,10 +1,15 @@
-from . import cosegregation, matrix, call_windows, enrichment, permutation, plotting, pipeline, select_samples
-from wrapit.parser import add_doit_options
-import sys
-import pytest
-import os
+# pylint: disable=invalid-name
 
+import sys
+import os
 import argparse
+
+from wrapit.parser import add_doit_options
+import pytest
+
+from . import cosegregation, matrix, call_windows, enrichment, \
+        permutation, plotting, pipeline, select_samples
+
 
 parser = argparse.ArgumentParser(
     prog='gamtools',
@@ -172,14 +177,6 @@ matrix_parser.set_defaults(func=cosegregation.matrix_from_args)
 
 
 # TODO: add Markus' matrix permutation code
-"""
-# Options for 'permute_matrix' command
-
-permute_matrix_parser = subparsers.add_parser(
-    'permute_matrix',
-    help='Circularly permute a GAM matrix')
-
-"""
 
 
 # Options for 'permute_segregation' command

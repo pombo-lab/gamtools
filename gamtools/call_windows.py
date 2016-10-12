@@ -1,17 +1,18 @@
 """
-Something here
-
+The call windows module contains code for identifying positive
+window from GAM sequencing data.
 
 """
 
 from __future__ import print_function
 import sys
+import os
+from bisect import bisect_left
+
 import pandas as pd
 import numpy as np
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
-import os
-from bisect import bisect_left
 
 # define plt as a global so that we can import
 # matplotlib later if we need it
@@ -225,17 +226,19 @@ def mask_x_by_z(x, z):
 
 def erode(coverage_data, prob):
     """
-    Probabilistically erode a :ref:`read coverage table <read_coverage_table>`, to generate a new table with
-    less total read coverage. Each entry in the table, representing a number of
-    reads mapping to a given window, is replaced by a random value drawn from a
-    binomial distribution where each of the original reads has a certain
-    probability of detection.
+    Probabilistically erode a
+    :ref:`read coverage table <read_coverage_table>`, to generate a new table
+    with less total read coverage. Each entry in the table, representing a
+    number of reads mapping to a given window, is replaced by a random value
+    drawn from a binomial distribution where each of the original reads has a
+    certain probability of detection.
 
     :param coverage_data: Read coverage table to erode.
     :param float prob: Amount by which to erode the original table (e.g. if \
             the original table had 1000 reads and prob is 0.7, the new table \
             will have approximately 700 reads.
-    :returns: New :ref:`read coverage table <read_coverage_table>` with eroded values
+    :returns: New :ref:`read coverage table <read_coverage_table>` \
+            with eroded values
     """
 
     return coverage_data.astype(np.int32).apply(
@@ -618,7 +621,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
             parameters for each NP).
     """
 
-    fitting_data = []
+    fitting_list = []
 
     segregation_table = coverage_data.copy()
 
@@ -640,7 +643,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
         segregation_table.loc[:, sample_name] = above_threshold.astype(int)
 
-        fitting_data.append([sample_name] + sample_fitting_data.values())
+        fitting_list.append([sample_name] + sample_fitting_data.values())
 
         print(
             '{0} done (number {1}) threshold {2}'.format(
@@ -650,7 +653,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
             file=sys.stderr)
 
     fitting_data = pd.DataFrame(
-        fitting_data, columns=['Sample'] + sample_fitting_data.keys()
+        fitting_list, columns=['Sample'] + sample_fitting_data.keys()
     )
 
     return segregation_table, fitting_data
@@ -659,16 +662,18 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 def threshold_file(input_file, output_file,
                    fitting_folder, fitting_details_file, fitting_function):
     """
-    Read a :ref:`read coverage table <read_coverage_table>` file and threshold each NP, to generate
-    a :ref:`segregation table <segregation_table>`.
+    Read a :ref:`read coverage table <read_coverage_table>` file and threshold
+    each NP, to generate a :ref:`segregation table <segregation_table>`.
 
-    :param str input_file: Path to :ref:`read coverage table <read_coverage_table>`.
-    :param str output_file: Path to save :ref:`segregation table <segregation_table>`.
+    :param str input_file: Path to \
+            :ref:`read coverage table <read_coverage_table>`.
+    :param str output_file: Path to save \
+            :ref:`segregation table <segregation_table>`.
     :param fitting_folder: Path to save plots of each individual fit \
             (or None to skip saving fitting images).
     :type fitting_folder: str or None
-    :param fitting_details_file: Path to save table of parameters for each fit \
-            (or None to skip saving fitting table).
+    :param fitting_details_file: Path to save table of parameters for each \
+            fit (or None to skip saving fitting table).
     :type fitting_details_file: str or None
     :param func fitting_function: Function to use for thresholding each NP.
     """

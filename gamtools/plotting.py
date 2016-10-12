@@ -137,8 +137,8 @@ def assign_chroms_to_rows(chrom_sizes):
             rows.append(current_row)
             current_row = []
 
-    chrom_names_by_row = [map(lambda c:'chr' + str(c), row) for row in rows]
-    chrom_sizes_by_row = [map(lambda n:int(chrom_sizes.loc[n]), row)
+    chrom_names_by_row = [['chr{}'.format(c) for c in row] for row in rows]
+    chrom_sizes_by_row = [[int(chrom_sizes.loc[n]) for n in row]
                           for row in chrom_names_by_row]
 
     return chrom_names_by_row, chrom_sizes_by_row
@@ -288,8 +288,8 @@ def plot_genome(
             else:
                 col = '#e34a33'
 
-            plot_both((read_cov_obj, pos_window_obj), ax, row_names[
-                      p][q], row_sizes[p][q], color=col, bins=10000)
+            plot_both((read_cov_obj, pos_window_obj), ax,
+                      row_names[p][q], row_sizes[p][q], color=col, bins=10000)
             i += 1
 
     max_ylim = max([max([ax[0].get_ylim()[1] for ax in row]) for row in axes])

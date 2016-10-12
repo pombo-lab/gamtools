@@ -1,7 +1,7 @@
-from . import segregation
 import numpy as np
 import pandas as pd
 
+from . import segregation
 
 def permute_segregation(input_segregation):
     """Circularly permute each column of a segregation table.

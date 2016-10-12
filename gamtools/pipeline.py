@@ -1,11 +1,13 @@
 import os
 import sys
 import subprocess
-from distutils.version import LooseVersion
 import re
-from wrapit.api import run
 import itertools
 import inspect
+
+from distutils.version import LooseVersion
+from wrapit.api import run
+
 from . import call_windows, segregation, qc, select_samples, cosegregation, utils
 
 
@@ -74,16 +76,16 @@ def get_samtools_version():
     """Get the version number for the installed version of samtools"""
 
     try:
-        p = subprocess.Popen('samtools',
+        proc = subprocess.Popen('samtools',
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError:
         sys.exit('samtools is either not installed or not present in $PATH. '
                  'Please install samtools to continue.')
 
-    output, err = p.communicate()
-    status = p.wait()
+    output, err = proc.communicate()
+    status = proc.wait()
 
-    vnum_regexp = '^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
+    vnum_regexp = r'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
 
     regexp_matches = re.search(vnum_regexp, err, re.MULTILINE)
 
@@ -110,7 +112,7 @@ def get_samtools_sort_actions():
     return samtools_actions
 
 
-class input_file_mapping_tasks(object):
+class InputFileMappingTasks(object):
     """Class for generating doit tasks from command-line arguments.
 
     GAMtools "process_nps" command generates a set of doit tasks at
@@ -165,7 +167,8 @@ class input_file_mapping_tasks(object):
             yield {
                 "name": input_fastq,
                 "basename": 'Mapping fastq',
-                "actions": ['bowtie2 -x genome -U %(dependencies)s | sed \'/XS : /d\' | samtools view -q %(minimum_mapq)s -F 4 -bS - > %(targets)s'],
+                "actions": ['bowtie2 -x genome -U %(dependencies)s | sed \'/XS : /d\' | '
+                            'samtools view -q %(minimum_mapq)s -F 4 -bS - > %(targets)s'],
                 "targets": [swap_extension(input_fastq, ".bam")],
                 "file_dep": [input_fastq],
             }
@@ -215,7 +218,8 @@ class input_file_mapping_tasks(object):
             yield {
                 "name": input_fastq,
                 "basename": 'Converting bam to bedgraph',
-                "actions": ['genomeCoverageBed -bg -ibam %(dependencies)s -g %(genome_file)s > %(targets)s',
+                "actions": ['genomeCoverageBed -bg -ibam %(dependencies)s '
+                            '-g %(genome_file)s > %(targets)s',
                             'if [ ! -s "%(targets)s" ]; '
                             'then echo "Creating empty bedgraph %(targets)s";'
                             'create_empty_bedgraph %(genome_file)s %(targets)s; fi'],
@@ -255,7 +259,9 @@ class input_file_mapping_tasks(object):
                 'basename': 'Getting coverage',
                 'name': '{0} windows'.format(pretty_resolution(window_size)),
                 'actions': ['echo "chrom start stop %(dependencies)s" > %(targets)s',
-                            'bash -i -c "bedtools multicov -bams %(dependencies)s -bed <(bedtools makewindows -w {0} -g %(genome_file)s) >> %(targets)s"' .format(window_size)],
+                            'bash -i -c "bedtools multicov -bams %(dependencies)s '
+                            '-bed <(bedtools makewindows -w {0} -g %(genome_file)s) '
+                            '>> %(targets)s"' .format(window_size)],
                 'targets': [coverage_path(self.args.output_dir, window_size)],
                 'file_dep': bamfiles,
                 'task_dep': ['Indexing bam', 'Creating output directory'],
@@ -315,7 +321,9 @@ class input_file_mapping_tasks(object):
                     'basename': 'Getting segregation bed',
                     'name': '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
                     'actions': [(segregation.sample_segregation_to_bed,
-                                 (input_segregation, swap_extension(input_fastq, '.rmdup.bam'), output_bed + '.unsorted')),
+                                 (input_segregation,
+                                  swap_extension(input_fastq, '.rmdup.bam'),
+                                  output_bed + '.unsorted')),
                                 'sort -k1,1 -k2,2n %(targets)s.unsorted > %(targets)s',
                                 'rm %(targets)s.unsorted', ],
                     'targets': [output_bed],
@@ -331,12 +339,18 @@ class input_file_mapping_tasks(object):
                 yield {
                     'basename': 'Getting segregation bigBed',
                     'name': '{0}, {1}'.format(pretty_resolution(window_size), input_fastq),
-                    # If the input bed is empty, bedToBigBed will fail. We can force it not to return an
-                    # error code, but we must touch the target first to ensure it gets created.
+                    # If the input bed is empty, bedToBigBed will fail. We can force it not
+                    # to return an error code, but we must touch the target first to ensure
+                    # it gets created.
                     'actions': ['touch %(targets)s',
-                                'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || true', ],
-                    'targets': [swap_extension(input_fastq, ".segregation_{0}.bb".format(pretty_resolution(window_size)))],
-                    'file_dep': [swap_extension(input_fastq, ".segregation_{0}.bed".format(pretty_resolution(window_size)))],
+                                'bedToBigBed %(dependencies)s %(genome_file)s %(targets)s || '
+                                'true', ],
+                    'targets': [swap_extension(input_fastq,
+                                               ".segregation_{0}.bb".format(
+                                                   pretty_resolution(window_size)))],
+                    'file_dep': [swap_extension(input_fastq,
+                                                ".segregation_{0}.bed".format(
+                                                    pretty_resolution(window_size)))],
                 }
 
     def task_run_fastqc(self):
@@ -463,13 +477,12 @@ class input_file_mapping_tasks(object):
         """Task to identify NPs passing/failing QC"""
 
         return {
-            'basename': 'Finding samples that pass QC', 'actions': [
-                qc.pass_qc.samples_passing_qc_from_doit], 'targets': [
-                os.path.join(
-                    self.args.output_dir, 'samples_passing_qc.txt')], 'file_dep': [
-                    os.path.join(
-                        self.args.output_dir, 'qc_parameters.cfg'), os.path.join(
-                            self.args.output_dir, 'merged_stats.txt')], }
+            'basename': 'Finding samples that pass QC',
+            'actions': [qc.pass_qc.samples_passing_qc_from_doit],
+            'targets': [os.path.join(self.args.output_dir, 'samples_passing_qc.txt')],
+            'file_dep': [
+                os.path.join(self.args.output_dir, 'qc_parameters.cfg'),
+                os.path.join(self.args.output_dir, 'merged_stats.txt')], }
 
     def task_filter_segregation(self):
         """Task to exclude NPs failing QC from segregation tables"""
@@ -527,7 +540,8 @@ class input_file_mapping_tasks(object):
                        'targets': [matrix_out],
                        'file_dep': [segregation_file],
                        'actions': ['mkdir -p $(dirname %(targets)s)',
-                                   (cosegregation.matrix_from_doit, (matrix_out, segregation_file, [chrom]))], }
+                                   (cosegregation.matrix_from_doit,
+                                    (matrix_out, segregation_file, [chrom]))], }
 
 def check_resolution_consistency(args):
     """
@@ -550,6 +564,6 @@ def process_nps_from_args(args):
         args.to_run.append('Calculating linkage matrix')
 
     task_dict = {
-        'input_file_tasks': input_file_mapping_tasks(args)
+        'input_file_tasks': InputFileMappingTasks(args)
     }
     run(task_dict, args, args.to_run)

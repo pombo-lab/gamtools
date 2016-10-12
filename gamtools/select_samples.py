@@ -2,6 +2,18 @@ from . import segregation
 
 
 def select_samples(segregation_path, sample_names, output_file, drop=False):
+    """Create a file containing a subset of columns from a segregation table
+
+    Given the path to a segregation table and a list of columns in that table,
+    save a new version of the table containing only those columns to the path
+    specified by output_file. If drop is True, save a new version of the table
+    that excludes the listed columns, rather than including them
+
+    :param str segregation_path: Path to input segregation table
+    :param str sample_names: List of samples to subset on
+    :param str segregation_path: Path to save output segregation table
+    :param bool drop: Whether to exclude (drop) samples instead of including them.
+    """
 
     segregation_data = segregation.open_segregation(segregation_path)
 
@@ -21,6 +33,18 @@ def select_samples_from_file(
         sample_names_path,
         output_file,
         drop=False):
+    """Create a file containing a subset of columns from a segregation table
+
+    Given the path to a segregation table and a path to a second file containing
+    samples to subset on, save a new version of the table to the path
+    specified by output_file. If drop is True, save a new version of the table
+    that excludes the listed columns, rather than including them
+
+    :param str segregation_path: Path to input segregation table
+    :param str sample_names_path: Path to the list of samples to subset on
+    :param str segregation_path: Path to save output segregation table
+    :param bool drop: Whether to exclude (drop) samples instead of including them.
+    """
 
     names = []
 
@@ -32,6 +56,7 @@ def select_samples_from_file(
 
 
 def select_samples_from_args(args):
+    """Wrapper function to call select_samples_from_file from argparse"""
 
     select_samples(
         args.segregation_file,
@@ -39,8 +64,8 @@ def select_samples_from_args(args):
         args.output_file,
         args.drop_samples)
 
-
 def select_samples_from_doit(dependencies, targets):
+    """Wrapper function to call select_samples_from_file from a doit task"""
 
     for dep_file in dependencies:
         dep_ext = dep_file.split('.')[-1]
