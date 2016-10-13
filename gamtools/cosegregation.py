@@ -34,26 +34,29 @@ Here is some information about location strings.
 
 
 """
-
-from .cosegregation_internal import cosegregation_2d, cosegregation_3d, linkage_2d, linkage_3d, dprime_2d
-from . import segregation, matrix
-from .utils import format_genomic_distance
-import numpy as np
 import itertools
 import time
 import warnings
 import sys
 
+import numpy as np
+
+from .cosegregation_internal import cosegregation_2d, cosegregation_3d, \
+        linkage_2d, linkage_3d, dprime_2d
+from . import segregation, matrix
+from .utils import format_genomic_distance
+
 
 class InvalidDataError(Exception):
-    """Exception raised if segregation data contains \
-       anything other than 0s and 1s.
+    """
+    Exception raised if segregation data contains anything other than 0s and 1s.
     """
     pass
 
 
 def regions_are_valid(regions):
-    """Test whether any regions contain values other than the integers 0 and 1
+    """
+    Test whether any regions contain values other than the integers 0 and 1
 
     :param list regions: List of :ref:`regions <regions>` to check.
     :returns: Returns False if any regions contain invalid data, otherwise True.
@@ -74,9 +77,10 @@ def regions_are_valid(regions):
 def prepare_regions(regions):
     """Checks and formats a list of regions
 
-    Takes a list of :ref:`regions <regions>`, checks if they are valid (see :func:`regions_are_valid`)
-    and converts them to integer arrays. If there is only one region in the list, cosegregation
-    should be calculated for that region against itself, so returns a list containing the same
+    Takes a list of :ref:`regions <regions>`, checks if they are valid
+    (see :func:`regions_are_valid`) and converts them to integer arrays.
+    If there is only one region in the list, cosegregation should be calculated
+    for that region against itself, so returns a list containing the same
     region twice
 
     :param list regions: List of :ref:`regions <regions>` to check.
@@ -260,7 +264,8 @@ def get_linkage_from_regions(*regions):
         linkage_func = linkage_2d
     elif len(regions) == 3:
         warnings.warn(
-            '3D linkage is calculated following Hastings - Genetics (1984) 106:153-164. Please check and make sure this is what you want.')
+            '3D linkage is calculated following Hastings - Genetics (1984) 106:153-164. '
+            'Please check and make sure this is what you want.')
         linkage_func = linkage_3d
     else:
         raise NotImplementedError(
@@ -308,7 +313,8 @@ def get_dprime_from_regions(*regions):
         dprime_func = dprime_2d
     else:
         raise NotImplementedError(
-            'There is currently no implementation of normalized linkage disequilibrium for more than 2 dimensions')
+            'There is currently no implementation of normalized linkage '
+            'disequilibrium for more than 2 dimensions')
 
     return dprime_func(*regions)
 
@@ -330,7 +336,7 @@ def get_dprime(segregation_data, *location_strings):
 
     return get_dprime_from_regions(*regions)
 
-matrix_types = {
+MATRIX_TYPES = {
     'dprime': get_dprime_from_regions,
     'linkage': get_linkage_from_regions,
     'cosegregation': get_cosegregation_from_regions,
@@ -341,10 +347,10 @@ def get_regions_and_windows(segregation_data, location_strings):
     """Get the windows which fall into a given genomic location, and the
     segregation of those windows across samples.
 
-    For each location string, find the rows of the :ref:`segregation table <segregation_table>` that
-    overlap the given genomic location. Return the resulting :ref:`segregation table <segregation_table>`
-    subsets (i.e. :ref:`regions`), and a list of the locations of the
-    windows within each region.
+    For each location string, find the rows of the :ref:`segregation table <segregation_table>`
+    that overlap the given genomic location. Return the resulting
+    :ref:`segregation table <segregation_table>` subsets (i.e. :ref:`regions`),
+    and a list of the locations of the windows within each region.
 
     :param segregation_data: Input :ref:`segregation table <segregation_table>`
     :param list location_strings: One or more :ref:`location strings <location_string>`
@@ -371,13 +377,13 @@ def matrix_and_windows_from_segregation_file(
     locations of the genomic windows corresponding to each axis of the
     proximity matrix.
 
-    Calculate the :ref:`proximity matrix <proximity_matrices>` between the windows in different genomic
-    locations. If only one location string is given, calculate the matrix
-    for that location against itself. For example, if location_strings is
-    ['chr1'], the matrix will give the proximity between all windows on
-    chromosome 1 (x-axis) against all windows on chromosome 1 (y-axis).
-    Alternatively, if location_strings is ['chr1', 'chr2'], the matrix
-    will give the proximity between windows on chromosome 1 (x-axis) and
+    Calculate the :ref:`proximity matrix <proximity_matrices>` between the
+    windows in different genomic locations. If only one location string is
+    given, calculate the matrix for that location against itself. For example,
+    if location_strings is ['chr1'], the matrix will give the proximity between
+    all windows on chromosome 1 (x-axis) against all windows on chromosome 1
+    (y-axis).  Alternatively, if location_strings is ['chr1', 'chr2'], the
+    matrix will give the proximity between windows on chromosome 1 (x-axis) and
     windows on chromosome 2 (y-axis).
 
     Three types of :ref:`proximity matrix <proximity_matrices>` are supported, 'cosegregation' (see
@@ -400,7 +406,7 @@ def matrix_and_windows_from_segregation_file(
 
     regions, windows = get_regions_and_windows(
         segregation_data, location_strings)
-    matrix_func = matrix_types[matrix_type]
+    matrix_func = MATRIX_TYPES[matrix_type]
     contact_matrix = matrix_func(*regions)
 
     return contact_matrix, windows
@@ -412,13 +418,13 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
     """Calculate the proximity matrix for the given genomic locations and save it
     to disk.
 
-    Calculate the :ref:`proximity matrix <proximity_matrices>` between the windows in different genomic
-    locations. If only one location string is given, calculate the matrix
-    for that location against itself. For example, if location_strings is
-    ['chr1'], the matrix will give the proximity between all windows on
-    chromosome 1 (x-axis) against all windows on chromosome 1 (y-axis).
-    Alternatively, if location_strings is ['chr1', 'chr2'], the matrix
-    will give the proximity between windows on chromosome 1 (x-axis) and
+    Calculate the :ref:`proximity matrix <proximity_matrices>` between the
+    windows in different genomic locations. If only one location string is
+    given, calculate the matrix for that location against itself. For example,
+    if location_strings is ['chr1'], the matrix will give the proximity between
+    all windows on chromosome 1 (x-axis) against all windows on chromosome 1
+    (y-axis).  Alternatively, if location_strings is ['chr1', 'chr2'], the
+    matrix will give the proximity between windows on chromosome 1 (x-axis) and
     windows on chromosome 2 (y-axis).
 
     Three types of :ref:`proximity matrix <proximity_matrices>` are supported, 'cosegregation' (see
@@ -450,7 +456,7 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
     print 'Calculation took {0}s'.format(time.clock() - start_time)
     print 'Saving matrix to file {}'.format(output_file)
 
-    output_func = matrix.output_formats[output_format]
+    output_func = matrix.OUTPUT_FORMATS[output_format]
 
     output_func(windows, contact_matrix, output_file)
 

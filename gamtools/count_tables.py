@@ -51,10 +51,7 @@ def either_locus_not_detected(probs):
     table is 0.
     """
 
-    if probs.min() == 0.0:
-        return True
-    else:
-        return False
+    return bool(probs.min())
 
 
 def cosegregation(counts_table):
@@ -83,8 +80,8 @@ def expected(counts_table):
     if either_locus_not_detected(marginal_probs):
         return np.NAN
 
-    expected = marginal_probs.prod(axis=0)[0]
-    return expected
+    exp_freqs = marginal_probs.prod(axis=0)[0]
+    return exp_freqs
 
 
 def D(counts_table):
@@ -99,8 +96,8 @@ def D(counts_table):
     if either_locus_not_detected(marginal_probs):
         return np.NAN
 
-    expected = marginal_probs.prod(axis=0)[0]
+    exp_freqs = marginal_probs.prod(axis=0)[0]
     observed = probs_table.flat[-1]
     if observed == 0:
         return np.NAN
-    return observed - expected
+    return observed - exp_freqs

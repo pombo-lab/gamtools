@@ -70,15 +70,15 @@ convert_parser.add_argument(
 
 convert_parser.add_argument(
     '-i', '--input-format',
-    choices=matrix.input_formats,
+    choices=matrix.INPUT_FORMATS,
     help='Input matrix file format (choose from: {})'.format(
-        ', '.join(matrix.input_formats.keys())))
+        ', '.join(matrix.INPUT_FORMATS.keys())))
 
 convert_parser.add_argument(
     '-o', '--output-format',
-    choices=matrix.output_formats,
+    choices=matrix.OUTPUT_FORMATS,
     help='Output matrix file format (choose from: {})'.format(
-        ', '.join(matrix.output_formats.keys())))
+        ', '.join(matrix.OUTPUT_FORMATS.keys())))
 
 convert_parser.add_argument(
     '-t', '--thresholds-file', metavar='THRESHOLDS_FILE',
@@ -153,19 +153,19 @@ matrix_parser.add_argument(
 
 matrix_parser.add_argument(
     '-f', '--output-format',
-    choices=matrix.output_formats,
+    choices=matrix.OUTPUT_FORMATS,
     help='Output matrix file format (choose from: {}, default is txt.gz)'.format(
-        ', '.join(matrix.output_formats.keys())))
+        ', '.join(matrix.OUTPUT_FORMATS.keys())))
 
 matrix_parser.add_argument(
     '-t',
     '--matrix-type',
     default='dprime',
-    choices=cosegregation.matrix_types,
+    choices=cosegregation.MATRIX_TYPES,
     help='Method used to calculate the interaction matrix (choose from: '
     '{}, default is dprime)'.format(
         ', '.join(
-            cosegregation.matrix_types.keys())))
+            cosegregation.MATRIX_TYPES.keys())))
 
 matrix_parser.add_argument(
     '-o', '--output-file', metavar='OUTPUT_FILE',

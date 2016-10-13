@@ -608,7 +608,8 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
     NP. Using this distribution, determine a read coverage threshold to
     distinguish positive (signal) windows from negative (noise) windows.
     Finally, use the determined thresholds to convert the
-    :ref:`read coverage table <read_coverage_table>` to a :ref:`segregation table <segregation_table>` giving the
+    :ref:`read coverage table <read_coverage_table>` to a
+    :ref:`segregation table <segregation_table>` giving the
     locations of positive windows for each NP.
 
     :param coverage_data: :ref:`read coverage table <read_coverage_table>`

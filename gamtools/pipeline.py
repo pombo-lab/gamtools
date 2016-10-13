@@ -77,7 +77,8 @@ def get_samtools_version():
 
     try:
         proc = subprocess.Popen('samtools',
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
     except OSError:
         sys.exit('samtools is either not installed or not present in $PATH. '
                  'Please install samtools to continue.')

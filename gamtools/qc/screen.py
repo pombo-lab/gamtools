@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 
 def screen_out_path(input_fastq):
@@ -15,7 +16,7 @@ def screen_out_path(input_fastq):
     if path_parts[-1] == 'gz':
         path_parts.pop()
 
-    if path_parts[-1] in ['txt','seq','fastq','fq']:
+    if path_parts[-1] in ['txt', 'seq', 'fastq', 'fq']:
         path_parts.pop()
 
     path_parts[-1] += '_screen'
@@ -94,9 +95,10 @@ def parse_fastq_screen_output(fastq_screen_output):
     total_reads = results['num_reads']
     del results['num_reads']
 
-    for k in results.keys():
-        if k == 'Unmapped': continue
-        results[k] = 100 * float(results[k]) / total_reads
+    for value, key in results.items():
+        if key == 'Unmapped':
+            continue
+        results[k] = 100 * float(value) / total_reads
 
     organisms = []
 
@@ -125,7 +127,7 @@ def parse_fastq_screen_output(fastq_screen_output):
         del results[single_key]
         del results[multi_key]
 
-    results = {key + '_screen_result':value for key,value in results.items()}
+    results = {key + '_screen_result': value for key, value in results.items()}
 
     return results
 

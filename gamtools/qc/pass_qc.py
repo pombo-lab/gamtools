@@ -130,12 +130,13 @@ def parse_conditions_file(conditions_file, stats_df):
 
         fields = line.split()
 
-        if (line[0] == '#') or len(fields) == 0: continue
+        if (line[0] == '#') or len(fields) == 0:
+            continue
 
         left_str, op, right_str = fields
 
         try:
-            this_comparison =  do_comparison(left_str, op, right_str, stats_df)
+            this_comparison = do_comparison(left_str, op, right_str, stats_df)
         except QcParamError, err_msg:
             raise QcParamError(
                 'Error in QC conditions file line {}: {}'.format(

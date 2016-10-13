@@ -15,14 +15,16 @@ Available matrix input formats are:
 
 """
 
-import numpy as np
-import pandas as pd
 import sys
 import os
-from .segregation import parse_location_string
-from .utils import DelayedImportError
 import itertools
 import argparse
+
+import numpy as np
+import pandas as pd
+
+from .segregation import parse_location_string
+from .utils import DelayedImportError
 
 try:
     from matplotlib import pyplot as plt
@@ -68,7 +70,7 @@ def read_npz(filepath):
         windows = [
             handle[
                 'windows_{}'.format(i)] for i in range(
-                proximity_matrix.ndim)]
+                    proximity_matrix.ndim)]
     except KeyError:
         windows = [handle['windows'], handle['windows']]
 
@@ -161,7 +163,7 @@ def read_triangular(filepath):
     return None, proximity_matrix
 
 
-input_formats = {
+INPUT_FORMATS = {
     'npz': read_npz,
     'txt': read_txt,
     'txt.gz': read_txt,
@@ -193,18 +195,15 @@ def write_txt(windows, proximity_matrix, output_file):
 
     if proximity_matrix.ndim != 2:
         raise NotImplementedError(
-            'Plain text output is only supported for 2 dimensional matrices. Please try saving as an npz file.')
+            'Plain text output is only supported for 2 dimensional matrices. '
+            'Please try saving as an npz file.')
 
     names_0, names_1 = [get_name_strings(
         axis_windows) for axis_windows in windows]
 
     pd.DataFrame(
-        proximity_matrix,
-        index=names_0,
-        columns=names_1).to_csv(
-        output_file,
-        sep='\t',
-        na_rep="NaN")
+        proximity_matrix, index=names_0, columns=names_1).to_csv(
+            output_file, sep='\t', na_rep="NaN")
 
 
 def write_zipped_txt(windows, proximity_matrix, output_file):
@@ -313,7 +312,7 @@ def write_png(windows, proximity_matrix, output_file):
     plt.axis('off')
     plt.savefig(output_file)
 
-output_formats = {
+OUTPUT_FORMATS = {
     'npz': write_npz,
     'txt': write_txt,
     'txt.gz': write_zipped_txt,
@@ -322,7 +321,7 @@ output_formats = {
     'png': write_png,
 }
 
-supported_formats = list(set(input_formats.keys() + output_formats.keys()))
+SUPPORTED_FORMATS = list(set(INPUT_FORMATS.keys() + OUTPUT_FORMATS.keys()))
 
 
 def detect_file_type(file_name):
@@ -357,7 +356,7 @@ def detect_file_type(file_name):
     if file_ext == 'gz':
         file_ext = '.'.join(file_parts[-2:])
 
-    if file_ext in supported_formats:
+    if file_ext in SUPPORTED_FORMATS:
         return file_ext
 
     raise TypeError('Extension "{}" not recognized'.format(file_ext))
@@ -373,7 +372,7 @@ def read_file(file_name):
     """
 
     file_type = detect_file_type(file_name)
-    read_func = input_formats[file_type]
+    read_func = INPUT_FORMATS[file_type]
     return read_func(file_name)
 
 
@@ -490,7 +489,7 @@ def convert(input_file, input_format,
     :type thresholds: :class:`pandas.DataFrame`
     """
 
-    _windows, proximity_matrix = input_formats[input_format](input_file)
+    _windows, proximity_matrix = INPUT_FORMATS[input_format](input_file)
 
     if input_format == 'triangular':
         if windows is None:
@@ -506,7 +505,7 @@ def convert(input_file, input_format,
     if thresholds is not None:
         proximity_matrix = apply_threshold(proximity_matrix, thresholds)
 
-    output_formats[output_format](_windows, proximity_matrix, output_file)
+    OUTPUT_FORMATS[output_format](_windows, proximity_matrix, output_file)
 
 
 def convert_from_args(args):

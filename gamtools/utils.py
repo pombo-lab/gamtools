@@ -2,14 +2,17 @@
 by other components but don't have their own place.
 """
 
-import pandas as pd
 import sys
+
+import pandas as pd
 
 
 def format_genomic_distance(distance, precision=1):
-    """Turn an integer genomic distance into a pretty string.
+    """
+    Turn an integer genomic distance into a pretty string.
+
     :param int distance: Genomic distance in basepairs.
-    :param int precision: Number of significant figures to display
+    :param int precision: Number of significant figures to display \
         after the decimal point.
     """
 
@@ -26,6 +29,12 @@ def format_genomic_distance(distance, precision=1):
 
 
 def empty_bedgraph(chrom_sizes, output_bedgraph):
+    """
+    Create an empty bedgraph file.
+
+    :param str chrom_sizes: Path to file containing a list of chromosome names and sizes
+    :param str output_bedgraph: Path to save bedgraph.
+    """
 
     bed_df = pd.read_csv(chrom_sizes, sep='\t', names=['chrom', 'stop'])
 
@@ -37,6 +46,9 @@ def empty_bedgraph(chrom_sizes, output_bedgraph):
 
 
 def empty_bedgraph_from_cmdline():
+    """
+    Wrapper function to create empty bedgraphs from the command line.
+    """
 
     empty_bedgraph(sys.argv[1], sys.argv[2])
 

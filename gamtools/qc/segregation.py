@@ -1,9 +1,11 @@
-import pandas as pd
-from .. import segregation
 import os
 import itertools
 
-chroms = ['chr{0}'.format(c) for c in range(1,20)]
+import pandas as pd
+
+from .. import segregation
+
+chroms = ['chr{0}'.format(c) for c in range(1, 20)]
 
 def proportion_with_neighbours(block_list):
     """
@@ -53,7 +55,8 @@ def get_df_stats(segregation_df):
     genome_cover = segregation_df.mean()
     genome_cover.name = 'Genome_coverage'
 
-    positive_chroms = (segregation_df.groupby(level=0).mean() > segregation_df.groupby(level=0).mean().mean()).sum()
+    positive_chroms = (segregation_df.groupby(level=0).mean() >
+                       segregation_df.groupby(level=0).mean().mean()).sum()
     positive_chroms.name = 'Positive_chromosomes'
 
     stats_df = pd.concat([genome_cover, positive_chroms, prop_neighb], axis=1).reset_index()
@@ -61,7 +64,7 @@ def get_df_stats(segregation_df):
     stats_df['Sample'] = stats_df['index'].apply(extract_sample_name)
 
     return stats_df[['Sample', 'Genome_coverage', 'Positive_chromosomes',
-            'Proportion_with_neighbours']]
+                     'Proportion_with_neighbours']]
 
 def get_segregation_stats(input_segregation, output_file):
     """
