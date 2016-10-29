@@ -1,17 +1,40 @@
 """
 .. _segregation_table:
 
+The segregation module
+======================
+
+The primary output of a GAM experiment is a segregation table. The segregation
+module contains functions for reading segregation tables and for extracting
+specific subsets of a segregation table.
+
 Segregation Tables
 ------------------
 
-Regions are :class:`pandas.DataFrame` objects, where columns represent samples
+The segregation table contains all the information about which genomic loci
+are found in which nuclear profiles (NPs). In other words, the segregation
+table gives the segregation of genomic loci across a collection of NPs. Each
+column in a segregation table represents one NP. Each row represents a given
+genomic locus, and each cell contains a 1 (indicating that the locus was
+present in that NP) or a 0 (indicating that the locus was absent).  The
+segregation table contains all the information about chromatin folding that was
+captured during the experiment. For example, the nuclear proximity between any
+two loci is estimated based on the number of times those two loci are
+found in the same NP. Segregation tables are :ref:`pandas.Dataframe` objects.
 
-.. _read_coverage_table:
 
-Read Coverage Tables
---------------------
+.. _regions:
 
-Read coverage tables are something else.
+Regions
+-------
+
+A number of functions in the gamtools package take one or more `regions` as
+an input. Regions are simply subsets of a segregation table, generally a subset
+of the rows from a segregation table that span a smaller genomic region. Regions
+are easily extracted from segregation tables by using the
+`func:region_from_location_string` function.
+
+
 
 """
 import os

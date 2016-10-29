@@ -2,6 +2,13 @@
 The call windows module contains code for identifying positive
 window from GAM sequencing data.
 
+.. _read_coverage_table:
+
+Read Coverage Tables
+--------------------
+
+Read coverage tables are something else.
+
 """
 
 from __future__ import print_function
