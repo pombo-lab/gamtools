@@ -1,6 +1,13 @@
 """
 Something here
 
+.. _read_coverage_table:
+
+Read Coverage Tables
+--------------------
+
+Read coverage tables are something else.
+
 
 """
 
