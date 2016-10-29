@@ -169,8 +169,8 @@ def cosegregation_nd(*regions):
     be found in the cosegregation_optimized module.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation
-    of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation \
+            of all possible combinations of windows within the different regions.
     """
 
     combinations = get_index_combinations(regions)
@@ -206,8 +206,8 @@ def get_cosegregation_from_regions(*regions):
     algorithm is used.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation
-    of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation \
+            of all possible combinations of windows within the different regions.
     """
 
     regions = prepare_regions(regions)
@@ -229,8 +229,8 @@ def get_cosesgregation(segregation_data, *location_strings):
 
     :param segregation_data: Input :ref:`segregation table <segregation_table>`
     :param str location_strings: One or more :ref:`location strings <location_string>`
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation
-    of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the co-segregation \
+            of all possible combinations of windows within the different regions.
     """
 
     regions = [segregation.region_from_location_string(
@@ -254,8 +254,8 @@ def get_linkage_from_regions(*regions):
     regions are not currently supported.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the linkage disequilibrium
-    of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the linkage disequilibrium \
+            of all possible combinations of windows within the different regions.
     """
 
     regions = prepare_regions(regions)
@@ -282,8 +282,8 @@ def get_linkage(segregation_data, *location_strings):
 
     :param segregation_data: Input :ref:`segregation table <segregation_table>`
     :param str location_strings: One or more :ref:`location strings <location_string>`
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the linkage disequilibrium
-    of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the linkage disequilibrium \
+            of all possible combinations of windows within the different regions.
     """
 
     regions = [segregation.region_from_location_string(
@@ -303,8 +303,8 @@ def get_dprime_from_regions(*regions):
     itself.
 
     :param list regions: List of :ref:`regions <regions>`.
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the normalized linkage
-    disequilibrium of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the normalized linkage \
+            disequilibrium of all possible combinations of windows within the different regions.
     """
 
     regions = prepare_regions(regions)
@@ -327,8 +327,8 @@ def get_dprime(segregation_data, *location_strings):
 
     :param segregation_data: Input :ref:`segregation table <segregation_table>`
     :param str location_strings: One or more :ref:`location strings <location_string>`.
-    :returns: :ref:`proximity matrix <proximity_matrices>` giving the normalized linkage
-    disequilibrium of all possible combinations of windows within the different regions.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the normalized linkage \
+            disequilibrium of all possible combinations of windows within the different regions.
     """
 
     regions = [segregation.region_from_location_string(
@@ -354,8 +354,8 @@ def get_regions_and_windows(segregation_data, location_strings):
 
     :param segregation_data: Input :ref:`segregation table <segregation_table>`
     :param list location_strings: One or more :ref:`location strings <location_string>`
-    :returns: A list of :ref:`regions` and a list of tuples giving
-    window locations in the form (chromosome, start, stop).
+    :returns: A list of :ref:`regions` and a list of tuples giving \
+            window locations in the form (chromosome, start, stop).
     """
 
     if len(location_strings) == 1:
