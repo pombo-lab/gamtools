@@ -1,13 +1,29 @@
 """
+=======================
+The call_windows module
+=======================
+
+
+Calling positive windows
+========================
+
 The call windows module contains code for identifying positive
 window from GAM sequencing data.
 
 .. _read_coverage_table:
 
 Read Coverage Tables
---------------------
+====================
 
-Read coverage tables are something else.
+Read coverage tables are tables that give the number of sequencing reads from
+each NP that map to each genomic region. Each column gives the read coverage
+for a single NP, whilst each row gives the number of reads mapping to a
+specific genomic region. In order to proceed further with analyzing the output
+of a GAM experiment, read coverage tables must be converted to
+:ref:`segregation_table` by identifying windows which were truly present in
+each NP and discarding regions where a low number of mapped reads are more
+likely to stem from background sequencing noise than from genomic DNA that was
+truly present in the original NP.
 
 """
 

@@ -1,3 +1,13 @@
+"""
+====================
+The qc.passqc module
+====================
+
+The qc.passqc module contains functions for determining which NPs pass
+a set of quality control conditions.
+
+"""
+
 import pandas as pd
 
 

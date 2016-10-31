@@ -1,3 +1,16 @@
+"""
+===============
+The main module
+===============
+
+The `main` module creates the relatively complex argument parser used by the
+GAMtools command line application, and the :func:`main` function which handles
+dispatching command line arguments to the correct functions.
+
+"""
+
+# more or less everything in this module is in the global scope, so pylint
+# thinks objects are constants that should be in capital letters
 # pylint: disable=invalid-name
 
 import sys

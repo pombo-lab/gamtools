@@ -1,5 +1,4 @@
 """
-.. _segregation_table:
 
 The segregation module
 ======================
@@ -8,7 +7,18 @@ The primary output of a GAM experiment is a segregation table. The segregation
 module contains functions for reading segregation tables and for extracting
 specific subsets of a segregation table.
 
-Segregation Tables
+.. _NPs:
+
+Nuclear profiles
+----------------
+
+In a GAM experiment, thin sections are taken through a cell nucleus and
+the DNA content is sequenced. Each slice of a single nucleus is called
+a nuclear profile or "NP".
+
+.. _segregation_table:
+
+Segregation tables
 ------------------
 
 The segregation table contains all the information about which genomic loci
@@ -34,6 +44,17 @@ of the rows from a segregation table that span a smaller genomic region. Regions
 are easily extracted from segregation tables by using the
 `func:region_from_location_string` function.
 
+.. _location_string:
+
+Location strings
+----------------
+
+UCSC_ style location strings are convenient ways to specify a given genomic
+region. They are given in the format "chromosome:start-end", e.g.
+"chr2:100000-200000" or "chrX:15001-15100". The names of different chromosomes
+are typically determined by the genome annotation you are using.
+
+.. _UCSC: https://genome.ucsc.edu/
 
 
 """

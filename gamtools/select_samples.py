@@ -1,3 +1,13 @@
+"""
+=========================
+The select_samples module
+=========================
+
+The select_samples module contains functions for extracting samples
+from :ref:`segregation_tables`.
+
+"""
+
 from . import segregation
 
 

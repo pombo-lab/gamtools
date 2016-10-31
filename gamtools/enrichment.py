@@ -1,3 +1,24 @@
+"""
+=====================
+The enrichment module
+=====================
+
+Identifying patterns in chromatin interaction datasets
+======================================================
+
+The enrichment module contains functions for identifying sets
+of genomic features which are over- or under-represented in
+chromatin interactions. In essence, given a list of interactions
+of interest between genomic windows, and a classification of those
+same windows (for example, windows could be classified according
+to whether or not they contain CTCF binding sites),
+:func:`do_enrichment` function can be used to randomly permute 
+the input interactions and determine whether interactions between
+different classes of window are more or less likely than expected
+by chance.
+
+"""
+
 import uuid
 import itertools
 

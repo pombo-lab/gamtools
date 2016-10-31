@@ -1,3 +1,13 @@
+"""
+====================
+The qc.screen module
+====================
+
+The qc.screen module contains functions for parsing the output of
+fastq_screen.
+
+"""
+
 import os
 
 import pandas as pd

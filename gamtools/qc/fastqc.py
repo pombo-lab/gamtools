@@ -1,5 +1,14 @@
-# Shamelessly stolen from
-# https://code.google.com/p/bioinformatics-misc/source/browse/trunk/fastqc_to_pgtable.py?spec=svn93&r=93
+"""
+=================
+The qc.fastqc module
+=================
+
+The qc.fastqc module contains functions for parsing fastqc output files.
+Code in this module was shamelessly stolen from
+https://code.google.com/p/bioinformatics-misc/source/browse/trunk/fastqc_to_pgtable.py?spec=svn93&r=93
+
+"""
+
 
 import os
 

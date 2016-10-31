@@ -1,36 +1,29 @@
 """
-.. _regions:
+========================
+The cosegregation module
+========================
 
-Regions
--------
+Measuring proximity in GAM datasets
+===================================
 
-Regions are :class:`pandas.DataFrame` objects, where columns represent samples
-and rows represent windows. The values should be either 1 (signifying that the
-given window was detected as present in the given sample) or 0 (signifying that
-the window was not detected.)
+The fundamental principle behind GAM is that two regions which are in close
+proximity in the nucleus should be frequently found in the same thin
+nuclear slice - i.e. that more proximal genomic regions co-segregate more
+frequently than less proximal genomic regions. The cosegregation module
+provides functions that calculate the co-segregation of genomic regions,
+thereby allowing the relative nuclear proximity of different regions
+to be inferred.
 
-.. _samples:
-
-Samples
--------
-
-Each column in a :ref:`region <regions>` is an integer
-:class:`numpy arrays <numpy.ndarray>` of length x, representing the segregation
-of a particular genomic window across x samples.
-
-.. _proximity_matrices:
-
-Proximity matrices
-------------------
-
-Here is some information about proximity matrices.
-
-.. _location_string:
-
-Location strings
-----------------
-
-Here is some information about location strings.
+Co-segregation, the number of times that location x and location y are
+found in the same :ref:`nuclear profile <NPs>`, is the simplest measure
+of proximity but there are alternative approaches. Other ways of generating a
+:ref:`proximity matrix <proximity_matrices>` generally attempt to normalize for
+the differential detection of the two locations. For example, if locations x
+and y are detected in 100 :ref:`NPs` and location z is detected in only 20, the
+co-segregation of x and y will likely be higher than that between x and z even
+if their respective nuclear proximities are the same. In general, the approach
+that best accounts for such detection effects is the
+:func:`normalized linkage disequilibrium <get_dprime>` (or Dprime).
 
 
 """
@@ -434,13 +427,13 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
 
     Three output formats are supported: 'npz', 'txt' and 'csv'. 'txt' and
     'csv' outputs also support gzip compression ('txt.gz' and 'csv.gz'
-    formats). See :ref:`matrix_output_formats` for more details.
+    formats). See :ref:`matrix_formats` for more details.
 
     :param str segregation_file: Path to input :ref:`segregation table <segregation_table>`.
     :param list location_strings: One or more :ref:`location strings <location_string>`.
     :param str output_file: Path to use for saving output file.
     :param str output_format: Format to use when saving matrix. \
-            (see :ref:`matrix_output_formats` for more details)
+            (see :ref:`matrix_formats` for more details)
     :param str matrix_type: Type of :ref:`proximity matrix <proximity_matrices>`\
             to calculate.
     """
@@ -480,7 +473,7 @@ def get_output_file(
     :param str matrix_type: Type of :ref:`proximity matrix <proximity_matrices>`\
             to calculate.
     :param str output_format: Format to use when saving matrix. \
-            (see :ref:`matrix_output_formats` for more details)
+            (see :ref:`matrix_formats` for more details)
     :returns: Path to save matrix file.
 
     >>> get_output_file('/path/to/segregation_file.multibam', ['chr1'], 'dprime', 'txt.gz')

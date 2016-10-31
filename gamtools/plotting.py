@@ -1,3 +1,13 @@
+"""
+===================
+The plotting module
+===================
+
+The plotting module contains functions for plotting the read coverage
+and the positive windows identified in a given NP.
+
+"""
+
 import numpy as np
 import pandas as pd
 from .utils import DelayedImportError
