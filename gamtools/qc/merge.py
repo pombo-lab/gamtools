@@ -1,3 +1,12 @@
+"""
+===================
+The qc.merge module
+===================
+
+The qc.merge module contains functions for merging separate qc stats files
+into a single table.
+
+"""
 import pandas as pd
 
 def merge_stats(input_stats_files, output_merged_file):

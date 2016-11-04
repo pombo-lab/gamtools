@@ -1,3 +1,13 @@
+"""
+=========================
+The qc.segregation module
+=========================
+
+The qc.segregation module contains functions for calculating quality control
+statistics from segregation tables.
+
+"""
+
 import os
 import itertools
 

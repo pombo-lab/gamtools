@@ -1,17 +1,77 @@
 """
-.. _matrix_output_formats:
+=================
+The matrix module
+=================
 
-Matrix output formats
----------------------
+The matrix module contains functions for reading and writing proximity
+matrices in various formats.
 
-Here are the output formats:
+.. _proximity_matrices:
 
-.. _matrix_input_formats:
+Proximity matrices
+==================
 
-Matrix input formats:
----------------------
+One of the most common ways of displaying and processing information about
+chromatin folding is as a 2D proximity matrix, where the x-axis represents the
+position along a contiguous genomic region and the y-axis represents the
+position along another contiguous genomic region (which can be the same region
+as on the x-axis). Each point within the matrix gives the inferred distance
+between location x and location y, with higher values generally indicating a
+shorter distance. For example, this type of matrix is the main output of a Hi-C
+experiment (Lieberman-Aiden et al. 2009, Science).
 
-Available matrix input formats are:
+
+.. _matrix_formats:
+
+Proximity matrix formats
+========================
+
+npz
+---
+
+Npz format is the native compressed numpy format. It takes up less disk space
+and is faster to read and write than the other formats, but it is not human
+readable and is not compatible with other programming languages like R.
+
+If you want to work with data that involves interactions between more
+than two partners (i.e. three for four-way interactions), that data can be
+represented as an n-dimensional matrix (tensor). Npz format is the only 
+format supported by GAMtools that can read or write n-dimensional matrices.
+
+txt
+---
+
+Text file format is the simplest matrix format. It is a tab-delimited text file
+where the columns and rows are the columns and rows of the matrix, plus one header
+row and one column of row names. Text files are human readable but take up a lot
+of disk space and are slow to read and write. GAMtools can also read and write
+to gzipped text files by using the txt.gz format (these take up much less disk
+space).
+
+triangular
+----------
+
+Triangular matrix files are similar to text files but they only give one half
+of a symmetrical matrix, and they do not contain column/row names. They are
+the format used by SLICE.
+
+csv
+---
+
+csv files are text files used as input to the enrichment module. The format
+can only be used for saving intrachromosomal data. The first column gives
+the chromosome name, the second and third columns give the column and row
+of the matrix (as 0 based indices, not by using their genomic locations)
+the fourth column gives the distance between the x and y co-ordinate and the
+fifth column gives the interaction strength. See :func:`write_csv` for an
+example.
+
+png
+---
+
+Specifying the png output format will save the proximity matrix to a 2D
+heatmap image.
+
 
 """
 

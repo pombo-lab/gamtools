@@ -1,3 +1,14 @@
+"""
+======================
+The permutation module
+======================
+
+The permutation module contains functions for randomly permuting GAM
+:ref:`segregation tables <segregation_tables>`, which can be a useful
+way of generating random backgrounds for comparison with real datasets.
+
+"""
+
 import numpy as np
 import pandas as pd
 

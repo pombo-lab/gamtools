@@ -50,7 +50,7 @@ setup(
                         'create_empty_bedgraph = gamtools.utils:empty_bedgraph_from_cmdline',
                     ]
                    },
-    long_description=read('README'),
+    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

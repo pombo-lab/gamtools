@@ -1,5 +1,11 @@
-"""This module holds utility functions that can be called
-by other components but don't have their own place.
+"""
+================
+The utils module
+================
+
+The utils module contains various utility functions that don't have
+their own place.
+
 """
 
 import sys

@@ -1,3 +1,26 @@
+"""
+===================
+The pipeline module
+===================
+
+The pipeline module handles the :docs:`tools/process_nps` command.
+
+The process_nps command uses doit_ as a task engine, to determine
+what actions (or tasks) need to be done and in what order. Since
+the pipeline is part of a larger command line program, it needs some
+way to take arguments/parameters outside of the normal doit framework.
+This functionality is provided by wrapit_ - which is an extension of
+doit that allows additional parameters to be passed to tasks.
+
+:class:`InputFileMappingTasks` is a class that saves the input
+parameters and uses them to create tasks. Any method of the class
+that begins with `task_` is considered a task and will be passed
+to doit.
+
+.. _doit: http://pydoit.org/
+
+"""
+
 import os
 import sys
 import subprocess

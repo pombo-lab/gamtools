@@ -1,11 +1,17 @@
-import numpy as np
+"""
+=======================
+The count_tables module
+=======================
 
-########################################################
-#
-# Non-cythonized (i.e. slow) functions for counts tables
-# (otherwise known as contingency tables).
-#
-########################################################
+The count_tables module contains non-cythonized (i.e. slow) functions for counts tables
+(otherwise known as contingency tables). These functions are the equivalent
+of those in the cosegregation_internal cython module, but they generally work for
+n-dimensions and are orders of magnitude slower.
+
+"""
+
+
+import numpy as np
 
 
 def get_transpositions(array):
