@@ -95,10 +95,10 @@ def parse_fastq_screen_output(fastq_screen_output):
     total_reads = results['num_reads']
     del results['num_reads']
 
-    for value, key in results.items():
+    for key, value in results.items():
         if key == 'Unmapped':
             continue
-        results[k] = 100 * float(value) / total_reads
+        results[key] = 100 * float(value) / total_reads
 
     organisms = []
 
