@@ -231,7 +231,8 @@ def sample_segregation_to_bed(input_segregation, sample, output_bed):
 
     subset = data[data[sample] > 0][sample]
 
-    subset.to_csv(output_bed, header=False, index=True, sep='\t')
+    subset.reset_index()[['chrom', 'start', 'stop']].to_csv(
+        output_bed, header=False, index=False, sep='\t')
 
 
 def is_autosome(chrom):
