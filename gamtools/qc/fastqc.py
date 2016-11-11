@@ -112,7 +112,7 @@ def get_kmer_summary(module):
 
     kmer_data = parse_module(module)
     kmers = kmer_data[1]
-    counts = map(float, kmer_data[3])
+    counts = list(map(float, kmer_data[3]))
 
     summary_data = {'dinucleotide_repeats': 0,
                     'mononucleotide_repeats': 0}
@@ -133,7 +133,7 @@ def get_avg_qual(module):
 
     qual_data = parse_module(module)
     qualities, counts = np.array(
-        map(int, qual_data[1])), np.array(map(float, qual_data[2]))
+        list(map(int, qual_data[1]))), np.array(list(map(float, qual_data[2])))
     avg = (qualities * counts).sum() / counts.sum()
     return {'avg_quality': avg}
 

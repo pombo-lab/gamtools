@@ -55,7 +55,7 @@ def get_middle_value(my_list):
 
     :param list my_list: List of sortable values"""
 
-    return sorted(my_list)[len(my_list) / 2]
+    return sorted(my_list)[len(my_list) // 2]
 
 
 def pretty_resolution(window_size):
@@ -109,11 +109,11 @@ def get_samtools_version():
     output, err = proc.communicate()
     status = proc.wait()
 
-    vnum_regexp = r'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
+    vnum_regexp = b'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
 
     regexp_matches = re.search(vnum_regexp, err, re.MULTILINE)
 
-    return regexp_matches.group('version')
+    return regexp_matches.group('version').decode('UTF-8')
 
 
 def get_samtools_sort_actions():
