@@ -141,7 +141,7 @@ def parse_location_string(loc_string):
 
         pos_fields = chrom_fields[1].split('-')
 
-        start, stop = (int(pos.translate(None, ",")) for pos in pos_fields)
+        start, stop = (int(pos.replace(",", "")) for pos in pos_fields)
 
     return chrom, start, stop
 

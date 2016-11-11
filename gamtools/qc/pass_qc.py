@@ -147,7 +147,7 @@ def parse_conditions_file(conditions_file, stats_df):
 
         try:
             this_comparison = do_comparison(left_str, op, right_str, stats_df)
-        except QcParamError, err_msg:
+        except QcParamError as err_msg:
             raise QcParamError(
                 'Error in QC conditions file line {}: {}'.format(
                     line_no, err_msg))

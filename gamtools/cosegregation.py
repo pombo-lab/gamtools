@@ -27,6 +27,7 @@ that best accounts for such detection effects is the
 
 
 """
+from __future__ import print_function
 import itertools
 import time
 import warnings
@@ -139,7 +140,7 @@ def get_index_combinations(regions):
 
     for region in regions:
 
-        indexes.append(range(start, start + len(region)))
+        indexes.append(list(range(start, start + len(region))))
         start = max(indexes[-1]) + 1
 
     return itertools.product(*indexes)
@@ -178,7 +179,7 @@ def cosegregation_nd(*regions):
 
         return cosegregation_frequency_ndim(full_data[indices, :])
 
-    result = map(get_frequency, combinations)
+    result = list(map(get_frequency, combinations))
 
     result_shape = tuple([len(region)
                           for region in regions]) + (2, ) * len(regions)
@@ -438,22 +439,22 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
             to calculate.
     """
 
-    print 'starting calculation for {}'.format(' x '.join(location_strings))
+    print('starting calculation for {}'.format(' x '.join(location_strings)))
     start_time = time.clock()
 
     contact_matrix, windows = matrix_and_windows_from_segregation_file(
         segregation_file, location_strings, matrix_type)
 
     size_string = ' x '.join([str(s) for s in contact_matrix.shape])
-    print 'region size is: {}'.format(size_string),
-    print 'Calculation took {0}s'.format(time.clock() - start_time)
-    print 'Saving matrix to file {}'.format(output_file)
+    print('region size is: {}'.format(size_string), end=' ')
+    print('Calculation took {0}s'.format(time.clock() - start_time))
+    print('Saving matrix to file {}'.format(output_file))
 
     output_func = matrix.OUTPUT_FORMATS[output_format]
 
     output_func(windows, contact_matrix, output_file)
 
-    print 'Done!'
+    print('Done!')
 
 
 def get_output_file(

@@ -381,7 +381,7 @@ OUTPUT_FORMATS = {
     'png': write_png,
 }
 
-SUPPORTED_FORMATS = list(set(INPUT_FORMATS.keys() + OUTPUT_FORMATS.keys()))
+SUPPORTED_FORMATS = list(set(list(INPUT_FORMATS.keys()) + list(OUTPUT_FORMATS.keys())))
 
 
 def detect_file_type(file_name):

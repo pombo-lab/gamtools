@@ -293,7 +293,7 @@ def filter_data(x, percentile, no_zeros=True):
         not_a_zero = x > 0
 
         # only keep points which are both less than percentile AND not a zero
-        points_to_keep = map(all, zip(less_than_percentile, not_a_zero))
+        points_to_keep = list(map(all, list(zip(less_than_percentile, not_a_zero))))
 
     else:
         points_to_keep = less_than_percentile
@@ -329,7 +329,7 @@ def threshold_n_binom(params, p_value, thresh_range=None):
     """
 
     if thresh_range is None:
-        thresh_range = range(500)
+        thresh_range = list(range(500))
 
     bin_n, bin_p, nm_delta, nm_scale, size = params
 
@@ -511,7 +511,7 @@ def prettify_plot(sample_name, fig):
     plt.ylabel('No of windows')
     plt.xlabel('No of reads')
     locs, labels = plt.xticks()
-    labels = map(int, 10 ** locs)
+    labels = list(map(int, 10 ** locs))
     plt.xticks(locs, labels)
 
 
@@ -667,7 +667,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
         segregation_table.loc[:, sample_name] = above_threshold.astype(int)
 
-        fitting_list.append([sample_name] + sample_fitting_data.values())
+        fitting_list.append([sample_name] + list(sample_fitting_data.values()))
 
         print(
             '{0} done (number {1}) threshold {2}'.format(
@@ -677,7 +677,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
             file=sys.stderr)
 
     fitting_data = pd.DataFrame(
-        fitting_list, columns=['Sample'] + sample_fitting_data.keys()
+        fitting_list, columns=['Sample'] + list(sample_fitting_data.keys())
     )
 
     return segregation_table, fitting_data

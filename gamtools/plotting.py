@@ -91,7 +91,7 @@ def chunk_genomic_signal(
 
             yield chunk_x, chunk_y
 
-    x_chunks, y_chunks = zip(*list(_internal_chunker()))
+    x_chunks, y_chunks = list(zip(*list(_internal_chunker())))
 
     x, y = np.concatenate(x_chunks), np.concatenate(y_chunks)
 
