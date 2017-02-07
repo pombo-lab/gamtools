@@ -14,6 +14,25 @@ import pandas as pd
 
 from . import segregation
 
+def permute_by_offset(sample_segregation, offset):
+    """Circularly permute a single column of a segregation table.
+
+    This function takes one single column from a
+    :ref:`segregation_table` (i.e. one sample, or one NP) and circularly
+    permutes each chromosome separately by "offset" bins.
+
+    :param sample_segregation: Input column of a segregation table to permute.
+    :param int offset: Number of bins to permute by.
+    :returns: Returns a newly randomized :ref:`segregation_table`
+    """
+
+    new_start = sample_segregation.iloc[offset:]
+    new_end = sample_segregation.iloc[:offset]
+    new_col = pd.concat([new_start, new_end]).values
+
+    return new_col
+
+
 def permute_segregation(input_segregation):
     """Circularly permute each column of a segregation table.
 
@@ -52,9 +71,7 @@ def permute_segregation(input_segregation):
         # Swap the two chunks around and write them to the copied df
         offset = np.random.randint(no_windows)
 
-        new_start = input_segregation[mappable].iloc[offset:, i]
-        new_end = input_segregation[mappable].iloc[:offset, i]
-        new_col = list(pd.concat([new_start, new_end]))
+        new_col = permute_by_offset(input_segregation.iloc[mappable.values, i], offset)
 
         permutation.ix[mappable, i] = new_col
 
