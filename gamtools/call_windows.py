@@ -408,6 +408,14 @@ def plot_combined_signal_noise(breaks, counts, params):
     :param tuple params: Parameters of the composite \
             distribution (see  :func:`~n_binom_plus_log_normal`).
     """
+    global plt
+
+    if plt is None:
+        try:
+            from matplotlib import pyplot
+            plt = pyplot
+        except ImportError:
+            raise ImportError('Plotting requires matplotlib to be installed.')
 
     fit = sum(counts) * n_binom_plus_log_normal(params,
                                                 breaks)
