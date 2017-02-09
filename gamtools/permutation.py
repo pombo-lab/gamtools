@@ -26,6 +26,7 @@ def permute_by_offset(sample_segregation, offset):
     :returns: Returns a newly randomized :ref:`segregation_table`
     """
 
+    offset = offset % len(sample_segregation)
     # Moving each value in an array of length L right by x bins is the same
     # as splitting the data at bin (L - x) and swapping the two halves
     corrected_offset = len(sample_segregation) - offset

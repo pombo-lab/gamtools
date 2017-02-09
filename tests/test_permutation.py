@@ -43,6 +43,30 @@ def test_permute_by_2():
                           expected_a)
 
 
+def test_permute_by_more_than_length():
+
+    sample_a_perm_2 = permutation.permute_by_offset(data_two_samples.Sample_A, 11)
+    expected_a = np.array([0, 0, 1, 1, 0, 0, 1, 0, 1])
+
+    print 'obs:', sample_a_perm_2
+    print 'exp:', expected_a
+
+    assert np.array_equal(sample_a_perm_2,
+                          expected_a)
+
+
+def test_permute_by_multiple_of_length():
+
+    sample_a_perm_2 = permutation.permute_by_offset(data_two_samples.Sample_A, 29)
+    expected_a = np.array([0, 0, 1, 1, 0, 0, 1, 0, 1])
+
+    print 'obs:', sample_a_perm_2
+    print 'exp:', expected_a
+
+    assert np.array_equal(sample_a_perm_2,
+                          expected_a)
+
+
 @patch('gamtools.permutation.np.random.randint')
 def test_only_permute_mappable(mock_randint):
 
