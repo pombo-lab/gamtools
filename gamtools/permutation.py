@@ -52,7 +52,7 @@ def permute_by_chromosome(sample_segregation, offset):
     permuted_chromosomes = []
     chrom_index = sample_segregation.index.get_level_values(0)
 
-    for chrom in sample_segregation.index.levels[0]:
+    for chrom in chrom_index.unique():
         original_chromosome = sample_segregation[chrom_index == chrom]
         permuted_chromosome = permute_by_offset(original_chromosome, offset)
         permuted_chromosomes.append(permuted_chromosome)
