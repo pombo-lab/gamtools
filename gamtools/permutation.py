@@ -26,8 +26,11 @@ def permute_by_offset(sample_segregation, offset):
     :returns: Returns a newly randomized :ref:`segregation_table`
     """
 
-    new_start = sample_segregation.iloc[offset:]
-    new_end = sample_segregation.iloc[:offset]
+    # Moving each value in an array of length L right by x bins is the same
+    # as splitting the data at bin (L - x) and swapping the two halves
+    corrected_offset = len(sample_segregation) - offset
+    new_start = sample_segregation.iloc[corrected_offset:]
+    new_end = sample_segregation.iloc[:corrected_offset]
     new_col = pd.concat([new_start, new_end]).values
 
     return new_col
