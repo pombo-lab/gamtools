@@ -1,6 +1,8 @@
 import subprocess
 import os
 
+import pytest
+
 def application_installed(name):
     try:
         devnull = open(os.devnull)
@@ -10,42 +12,45 @@ def application_installed(name):
             return False
     return True
 
-def test_pybedtools_installed():
-    try:
-        import pybedtools
-    except ImportError:
-        assert False, "pybedtools is not installed. You will not be able to use the 'plot_np' command."
+@pytest.mark.dependencies
+class TestClass:
 
-def test_matplotlib_installed():
-    try:
-        import matplotlib
-    except ImportError:
-        assert False, "matplotlib is not installed. You will not be able to use the 'plot_np' command."
+    def test_pybedtools_installed(self):
+        try:
+            import pybedtools
+        except ImportError:
+            assert False, "pybedtools is not installed. You will not be able to use the 'plot_np' command."
 
-def test_metaseq_installed():
-    try:
-        import metaseq
-    except ImportError:
-        assert False, "metaseq is not installed. You will not be able to use the 'plot_np' command."
+    def test_matplotlib_installed(self):
+        try:
+            import matplotlib
+        except ImportError:
+            assert False, "matplotlib is not installed. You will not be able to use the 'plot_np' command."
 
-def test_bowtie_installed():
-    assert application_installed('bowtie2'), "bowtie2 could not be found, and is needed for mapping raw sequencing data"
+    def test_metaseq_installed(self):
+        try:
+            import metaseq
+        except ImportError:
+            assert False, "metaseq is not installed. You will not be able to use the 'plot_np' command."
 
-def test_fastqc_installed():
-    assert application_installed('fastqc'), "fastqc could not be found, and is needed for performing sample quality control"
+    def test_bowtie_installed(self):
+        assert application_installed('bowtie2'), "bowtie2 could not be found, and is needed for mapping raw sequencing data"
 
-def test_fastq_screen_installed():
-    assert application_installed('fastq_screen'), "fastq_screen could not be found, and is needed for performing sample quality control"
+    def test_fastqc_installed(self):
+        assert application_installed('fastqc'), "fastqc could not be found, and is needed for performing sample quality control"
 
-def test_samtools_installed():
-    assert application_installed('samtools'), "samtools could not be found, and is needed for removing PCR duplicates"
+    def test_fastq_screen_installed(self):
+        assert application_installed('fastq_screen'), "fastq_screen could not be found, and is needed for performing sample quality control"
 
-def test_bedtools_installed():
-    assert application_installed('bedtools'), "bedtools could not be found, and is needed for calling positive windows"
+    def test_samtools_installed(self):
+        assert application_installed('samtools'), "samtools could not be found, and is needed for removing PCR duplicates"
 
-def test_bedGraphToBigWig_installed():
-    assert application_installed('bedGraphToBigWig'), "bedGraphToBigWig could not be found, and is needed for creating bigwig files"
+    def test_bedtools_installed(self):
+        assert application_installed('bedtools'), "bedtools could not be found, and is needed for calling positive windows"
 
-def test_bedToBigBed_installed():
-    assert application_installed('bedToBigBed'), "bedToBigBed could not be found, and is needed for creating bigbed files"
+    def test_bedGraphToBigWig_installed(self):
+        assert application_installed('bedGraphToBigWig'), "bedGraphToBigWig could not be found, and is needed for creating bigwig files"
+
+    def test_bedToBigBed_installed(self):
+        assert application_installed('bedToBigBed'), "bedToBigBed could not be found, and is needed for creating bigbed files"
 
