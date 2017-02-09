@@ -1,10 +1,11 @@
+from mock import patch
 from gamtools import segregation, permutation
 import numpy as np
 import io
 
 fixture_two_samples = io.StringIO(
 u"""chrom   start   stop    Sample_A    Sample_B
-chr1    0   50000   1   0
+chr1    0       50000   1   0
 chr1    50000   100000  1   0
 chr1    100000  150000  0   1
 chr1    150000  200000  0   0
@@ -16,6 +17,7 @@ chr2    400000  450000  0   1
 """)
 
 data_two_samples = segregation.open_segregation(fixture_two_samples)
+
 
 def test_permute_by_1():
 
@@ -41,7 +43,10 @@ def test_permute_by_2():
                           expected_a)
 
 
-def test_only_permute_mappable():
+@patch('gamtools.permutation.np.random.randint')
+def test_only_permute_mappable(mock_randint):
+
+    mock_randint.return_value = 1
 
     segregation_perm_1 = permutation.permute_segregation(data_two_samples)
     expected_a = np.array([0, 1, 1, 0, 0, 1, 0, 0, 1])
@@ -53,11 +58,14 @@ def test_only_permute_mappable():
                           expected_a)
 
 
-def test_each_np_permuted_separately():
+@patch('gamtools.permutation.np.random.randint')
+def test_each_np_permuted_separately(mock_randint):
+
+    mock_randint.return_value = 1
 
     segregation_perm_1 = permutation.permute_segregation(data_two_samples)
     expected_a = np.array([0, 1, 1, 0, 0, 1, 0, 0, 1])
-    expected_b = np.array([0, 1, 1, 0, 0, 1, 0, 0, 1])
+    expected_b = np.array([1, 0, 0, 0, 1, 1, 1, 0, 0])
 
     print 'obs A:', segregation_perm_1.Sample_A.values
     print 'exp A:', expected_a
@@ -67,7 +75,7 @@ def test_each_np_permuted_separately():
     assert np.array_equal(segregation_perm_1.Sample_A.values,
                           expected_a)
 
-    assert np.array_equal(segregation_perm_1.Sample_B,
+    assert np.array_equal(segregation_perm_1.Sample_B.values,
                           expected_b)
 
 
