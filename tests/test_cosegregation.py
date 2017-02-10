@@ -3,7 +3,10 @@ import io
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 import numpy as np
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 fixture_window1_only = io.StringIO(
 u"""chrom start  stop    A B C D E F G H I J
