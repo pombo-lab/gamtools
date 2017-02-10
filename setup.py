@@ -36,7 +36,7 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     package_dir = {'': 'lib'},
-    packages=['gamtools'],
+    packages=['gamtools', 'gamtools.qc'],
     install_requires=['numpy',
     'scipy',
     'doit==0.29.0;python_version<"3.0"',
