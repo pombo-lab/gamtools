@@ -35,6 +35,7 @@ setup(
     author_email = "rob@beagrie.com",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
+    package_dir = {'': 'lib'},
     packages=['gamtools'],
     install_requires=['numpy',
     'scipy',
@@ -50,7 +51,7 @@ setup(
           'build_ext': CustomBuildExtCommand,
       },
     ext_modules = [Extension('gamtools.cosegregation_internal',
-                            ["gamtools/cosegregation_internal.c"])],
+                            ["lib/gamtools/cosegregation_internal.c"])],
     entry_points = {
                     # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
                     #'EIYBrowse.filetypes': [
