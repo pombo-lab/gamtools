@@ -36,7 +36,7 @@ setup(
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "BSD",
     packages=['gamtools'],
-    install_requires=['numpy', 'scipy', 'doit==0.29.0', 'pandas', 'wrapit', 'pytest'],
+    install_requires=['numpy', 'scipy','doit==0.29.0;python_version<"3.0"', 'pandas', 'wrapit', 'pytest'],
     # Set include_dirs in a custom build_ext class so that numpy is only
     # required if we are compiling C files
     cmdclass={
