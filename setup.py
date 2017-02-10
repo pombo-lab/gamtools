@@ -1,25 +1,25 @@
 import os
-from distutils.extension import Extension
-from setuptools import setup
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 
-failed_imports = []
 
-try:
-    from Cython.Build import cythonize
-except ImportError:
-    failed_imports.append('cython')
+class CustomBuildExtCommand(build_ext):
+    """Customized setuptools build_ext command - checks numpy is installed."""
+    def run(self):
 
-try:
-    import numpy
-except ImportError:
-    failed_imports.append('numpy')
+        # Check numpy is installed before trying to find the location
+        # of numpy headers
 
-if len(failed_imports) > 0:
-    raise ImportError('{} need to be installed before GAMtools can be '
-                      'compiled. Try installing them with "pip '
-                      'install {}" before installing GAMtools.'.format(
-                          ' and '.join(failed_imports),
-                          ' '.join(failed_imports)))
+        try:
+            import numpy
+        except ImportError:
+            raise ImportError('numpy need to be installed before GAMtools can be '
+                              'compiled. Try installing with "pip install numpy" '
+                              'before installing GAMtools.')
+
+        self.include_dirs.append(numpy.get_include())
+
+        build_ext.run(self)
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -37,7 +37,11 @@ setup(
     license = "BSD",
     packages=['gamtools'],
     install_requires=['numpy', 'scipy', 'doit', 'pandas', 'wrapit', 'pytest'],
-    include_dirs=[numpy.get_include()],
+    # Set include_dirs in a custom build_ext class so that numpy is only
+    # required if we are compiling C files
+    cmdclass={
+          'build_ext': CustomBuildExtCommand,
+      },
     ext_modules = [Extension('gamtools.cosegregation_internal',
                             ["gamtools/cosegregation_internal.c"])],
     entry_points = {
