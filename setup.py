@@ -1,6 +1,15 @@
 import os
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
+
+try:
+    from Cython.Distutils import build_ext
+except:
+    from setuptools.command.build_ext import build_ext
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.c"])]
+else:
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.pyx"])]
 
 
 class CustomBuildExtCommand(build_ext):
@@ -37,21 +46,22 @@ setup(
     license = "BSD",
     package_dir = {'': 'lib'},
     packages=['gamtools', 'gamtools.qc'],
-    install_requires=['numpy',
-    'scipy',
-    'doit==0.29.0;python_version<"3.0"',
-    'mock;python_version<"3.0"',
-    'doit==0.30.0;python_version>="3.0"',
-    'pandas',
-    'wrapit',
-    'pytest'],
+    ext_modules = ext_modules,
+    install_requires=[
+      'cython',
+      'numpy',
+      'scipy',
+      'doit==0.29.0;python_version<"3.0"',
+      'mock;python_version<"3.0"',
+      'doit==0.30.0;python_version>="3.0"',
+      'pandas',
+      'wrapit',
+      'pytest'],
     # Set include_dirs in a custom build_ext class so that numpy is only
     # required if we are compiling C files
     cmdclass={
           'build_ext': CustomBuildExtCommand,
       },
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                            ["lib/gamtools/cosegregation_internal.c"])],
     entry_points = {
                     # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
                     #'EIYBrowse.filetypes': [
