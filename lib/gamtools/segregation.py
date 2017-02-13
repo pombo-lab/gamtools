@@ -30,7 +30,7 @@ present in that NP) or a 0 (indicating that the locus was absent).  The
 segregation table contains all the information about chromatin folding that was
 captured during the experiment. For example, the nuclear proximity between any
 two loci is estimated based on the number of times those two loci are
-found in the same NP. Segregation tables are :ref:`pandas.Dataframe` objects.
+found in the same NP. Segregation tables are :class:`pandas.DataFrame` objects.
 
 
 .. _regions:

@@ -1,6 +1,6 @@
-############
+###################
 permute_segregation
-############
+###################
 
 The ``gamtools permute_segregation`` tool is used to circularly permute
 segregation tables. This can be handy for generating random background

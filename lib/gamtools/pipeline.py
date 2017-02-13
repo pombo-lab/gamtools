@@ -28,7 +28,7 @@ import re
 import itertools
 import inspect
 
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion #pylint: disable=no-name-in-module,import-error
 from wrapit.api import run
 
 from . import call_windows, segregation, qc, select_samples, cosegregation, utils
