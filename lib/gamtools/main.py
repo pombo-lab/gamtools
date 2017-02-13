@@ -20,8 +20,8 @@ import argparse
 from wrapit.parser import add_doit_options
 import pytest
 
-from . import cosegregation, matrix, call_windows, enrichment, \
-        permutation, plotting, pipeline, select_samples
+from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
+        permutation, plotting, pipeline, select_samples, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -30,6 +30,8 @@ parser = argparse.ArgumentParser(
     ' Architecture Mapping (GAM) data.')
 
 subparsers = parser.add_subparsers(help='Please select a command:')
+subparsers.required = True
+subparsers.dest = 'command'
 
 # Options for the 'call_windows' command
 
