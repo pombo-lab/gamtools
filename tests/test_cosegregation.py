@@ -1,28 +1,31 @@
 from gamtools import segregation, cosegregation
-import StringIO
+import io
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 import numpy as np
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
-fixture_window1_only = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
+fixture_window1_only = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J
 chr1    0       50000   0 0 0 1 1 1 1 1 1 1
 chr1    50000   100000  0 0 0 0 0 0 0 0 0 0
 """)
 
 data_window1_only = segregation.open_segregation(fixture_window1_only)
 
-fixture_window2_only = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J
+fixture_window2_only = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J
 chr1    0       50000   0 0 0 0 0 0 0 0 0 0
 chr1    50000   100000  0 1 1 0 0 0 1 1 1 1
 """)
 
 data_window2_only = segregation.open_segregation(fixture_window2_only)
 
-fixture_region_a = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K
+fixture_region_a = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K
 chr1    0       50000   1 1 1 1 1 1 0 0 0 0 0
 chr1    50000   100000  0 0 0 1 1 1 1 1 0 0 0
 chr1    100000  150000  0 0 0 0 0 1 1 0 1 1 0
@@ -30,8 +33,8 @@ chr1    100000  150000  0 0 0 0 0 1 1 0 1 1 0
 
 data_region_a = segregation.open_segregation(fixture_region_a)
 
-fixture_region_b = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K
+fixture_region_b = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K
 chr2    0       50000   0 0 0 0 1 1 1 0 0 0 0
 chr2    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 chr2    100000  150000  0 0 0 0 0 0 0 1 1 0 1
@@ -39,16 +42,16 @@ chr2    100000  150000  0 0 0 0 0 0 0 1 1 0 1
 
 data_region_b = segregation.open_segregation(fixture_region_b)
 
-fixture_region_c = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K
+fixture_region_c = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K
 chr3    0       50000   0 0 0 0 1 1 1 0 0 0 0
 chr3    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 """)
 
 data_region_c = segregation.open_segregation(fixture_region_c)
 
-fixture_invalid_data = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K
+fixture_invalid_data = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K
 chr3    0       50000   0 0 0 0 1 2 1 0 0 0 0
 chr3    50000   100000  0 0 0 0 0 1 1 0 1 0 0
 """)
@@ -115,57 +118,57 @@ def test_cosegregation_min():
 #
 #########################################
 
-fixture_region_d = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_d = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 0 0 0 0 0
 """)
 
 data_region_d = segregation.open_segregation(fixture_region_d)
 
-fixture_region_e = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_e = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 1 1 1 1 1 0 0 0 0 0 1 1 1 1 1 0 0 0 0
 """)
 
 data_region_e = segregation.open_segregation(fixture_region_e)
 
-fixture_region_f = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_f = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
 """)
 
 data_region_f = segregation.open_segregation(fixture_region_f)
 
-fixture_region_g = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_g = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 0 0 0 0 0 1 1 1 1 1 0 0 0 0 0 1 1 1 1
 """)
 
 data_region_g = segregation.open_segregation(fixture_region_g)
 
-fixture_region_h = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_h = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 """)
 
 data_region_h = segregation.open_segregation(fixture_region_h)
 
-fixture_region_i = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_i = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1
 """)
 
 data_region_i = segregation.open_segregation(fixture_region_i)
 
-fixture_region_j = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_j = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   1 1 1 1 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0
 """)
 
 data_region_j = segregation.open_segregation(fixture_region_j)
 
-fixture_region_k = StringIO.StringIO(
-"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
+fixture_region_k = io.StringIO(
+u"""chrom start  stop    A B C D E F G H I J K L M N O P Q R S T
 chr3    0       50000   0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0
 """)
 

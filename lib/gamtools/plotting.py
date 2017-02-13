@@ -1,3 +1,13 @@
+"""
+===================
+The plotting module
+===================
+
+The plotting module contains functions for plotting the read coverage
+and the positive windows identified in a given NP.
+
+"""
+
 import numpy as np
 import pandas as pd
 from .utils import DelayedImportError
@@ -41,7 +51,12 @@ if len(failed_packages) > 0:
     failed_import.message = base_message.format(package_list=package_list,
                                                 pip_call=pip_call)
 
-def chunk_genomic_signal(genomic_signal_obj, interval, bins=500, chunk_size=20000000):
+
+def chunk_genomic_signal(
+        genomic_signal_obj,
+        interval,
+        bins=500,
+        chunk_size=20000000):
     """Retrieve intervals from a MetaSeq genomic_signal object in chunks, instead
     of all at once.
 
@@ -68,21 +83,22 @@ def chunk_genomic_signal(genomic_signal_obj, interval, bins=500, chunk_size=2000
             new_interval = Interval(interval.chrom, start, end)
 
             try:
-                chunk_x, chunk_y = genomic_signal_obj.local_coverage(new_interval, bins=chunk_bins)
+                chunk_x, chunk_y = genomic_signal_obj.local_coverage(
+                    new_interval, bins=chunk_bins)
             except ValueError:
                 chunk_x = np.linspace(start, end, chunk_bins)
                 chunk_y = np.zeros_like(chunk_x)
 
             yield chunk_x, chunk_y
 
-    x_chunks, y_chunks = zip(*list(_internal_chunker()))
+    x_chunks, y_chunks = list(zip(*list(_internal_chunker())))
 
     x, y = np.concatenate(x_chunks), np.concatenate(y_chunks)
 
     return x, y
 
-def open_sizes_file(sizes_path):
 
+def open_sizes_file(sizes_path):
     """Open a chromosome sizes file of the sort provided by UCSC
 
     :param str sizes_path: Path to chromosome sizes file
@@ -90,10 +106,17 @@ def open_sizes_file(sizes_path):
     :returns: Pandas DataFrame listing chromosome names and sizes
     """
 
-    chrom_sizes = pd.read_csv(sizes_path, delim_whitespace=True,
-                              header=None, names=['chrom', 'size'], index_col=0)
+    chrom_sizes = pd.read_csv(
+        sizes_path,
+        delim_whitespace=True,
+        header=None,
+        names=[
+            'chrom',
+            'size'],
+        index_col=0)
 
     return chrom_sizes
+
 
 def assign_chroms_to_rows(chrom_sizes):
     """Assign chromosomes to rows of a plot, such that each row covers 18%
@@ -109,21 +132,27 @@ def assign_chroms_to_rows(chrom_sizes):
     row_tot = 0.
     rows = []
     current_row = []
-    chrom_pct_of_genome = list(chrom_sizes['size'] * 100 / chrom_sizes['size'].sum())
+    chrom_pct_of_genome = list(
+        chrom_sizes['size'] *
+        100 /
+        chrom_sizes['size'].sum())
     for i, c in enumerate(chrom_pct_of_genome):
-        current_row.append(i+1)
+        current_row.append(i + 1)
         row_tot += c
 
-        # Once the current row covers more than 18% of the genome, start a new one
+        # Once the current row covers more than 18% of the genome, start a new
+        # one
         if row_tot > 18.:
             row_tot = 0.
             rows.append(current_row)
             current_row = []
 
-    chrom_names_by_row = [ map(lambda c:'chr'+str(c), row) for row in rows ]
-    chrom_sizes_by_row = [ map(lambda n:int(chrom_sizes.loc[n]), row) for row in chrom_names_by_row ]
+    chrom_names_by_row = [['chr{}'.format(c) for c in row] for row in rows]
+    chrom_sizes_by_row = [[int(chrom_sizes.loc[n]) for n in row]
+                          for row in chrom_names_by_row]
 
     return chrom_names_by_row, chrom_sizes_by_row
+
 
 def parse_sizes_file(sizes_path):
     """Open a chromosome sizes file and assign chromosomes to rows of a plot,
@@ -141,6 +170,7 @@ def parse_sizes_file(sizes_path):
 
     return chrom_names_by_row, chrom_sizes_by_row
 
+
 def get_row_pct(row_sizes):
     """Get the span of each chromosome as a percentage of the span of the largest row
 
@@ -149,9 +179,10 @@ def get_row_pct(row_sizes):
     :returns: List of lists of chromosome sizes as percentages by row
     """
 
-    biggest_row = max([ sum(row) for row in row_sizes ])
-    row_pcts = [ [ float(val) / biggest_row for val in row ] for row in row_sizes ]
+    biggest_row = max([sum(row) for row in row_sizes])
+    row_pcts = [[float(val) / biggest_row for val in row] for row in row_sizes]
     return row_pcts
+
 
 def plot_chrom_sig(signal_obj, ax, interval, color, bins=500):
     """Plot the read coverage for a given interval.
@@ -172,9 +203,10 @@ def plot_chrom_sig(signal_obj, ax, interval, color, bins=500):
         top = 2
 
     ax.fill_between(arr[0], arr[1], color=color)
-    ax.set_ylim(1,top)
+    ax.set_ylim(1, top)
     ax.set_xlim(arr[0][0], arr[0][-1])
     ax.axis('off')
+
 
 def plot_chrom_seg(signal_obj, ax, interval, color, bins=500):
     """Plot the positive windows for a given interval.
@@ -191,9 +223,10 @@ def plot_chrom_seg(signal_obj, ax, interval, color, bins=500):
     arr = chunk_genomic_signal(signal_obj, interval, bins=bins)
 
     ax.fill_between(arr[0], arr[1], color=color)
-    ax.set_ylim(0.2,1.2)
+    ax.set_ylim(0.2, 1.2)
     ax.set_xlim(arr[0][0], arr[0][-1])
     ax.axis('off')
+
 
 def plot_both(objects, axes, name, end, color, bins=500):
     """Plot the read coverage and the positive window calls for a given chromosome
@@ -217,7 +250,14 @@ def plot_both(objects, axes, name, end, color, bins=500):
     plot_chrom_sig(sig_obj, sig_ax, i, color, bins)
     plot_chrom_seg(seg_obj, seg_ax, i, color, bins)
 
-def plot_genome(axis_sizes, row_names, row_sizes, read_cov_obj, pos_window_obj, out_file):
+
+def plot_genome(
+        axis_sizes,
+        row_names,
+        row_sizes,
+        read_cov_obj,
+        pos_window_obj,
+        out_file):
     """Plot the read coverage and the positive window calls of a single NP
     for every chromosome.
 
@@ -232,7 +272,7 @@ def plot_genome(axis_sizes, row_names, row_sizes, read_cov_obj, pos_window_obj, 
     :param out_file: Path to save image to.
     """
 
-    fig = plt.figure(figsize=(28,5))
+    fig = plt.figure(figsize=(28, 5))
 
     axes = []
     row_axes = []
@@ -240,8 +280,10 @@ def plot_genome(axis_sizes, row_names, row_sizes, read_cov_obj, pos_window_obj, 
     curr_pos = 0
     for rnum, row in enumerate(axis_sizes):
         for size in row:
-            sig_axis = plt.subplot2grid((20,30), (rnum*4, curr_pos), colspan=size, rowspan=3)
-            seg_axis = plt.subplot2grid((20,30), ((rnum*4)+3, curr_pos), colspan=size)
+            sig_axis = plt.subplot2grid(
+                (20, 30), (rnum * 4, curr_pos), colspan=size, rowspan=3)
+            seg_axis = plt.subplot2grid(
+                (20, 30), ((rnum * 4) + 3, curr_pos), colspan=size)
             row_axes.append((sig_axis, seg_axis))
             curr_pos += size
         axes.append(row_axes)
@@ -256,10 +298,11 @@ def plot_genome(axis_sizes, row_names, row_sizes, read_cov_obj, pos_window_obj, 
             else:
                 col = '#e34a33'
 
-            plot_both((read_cov_obj, pos_window_obj), ax, row_names[p][q], row_sizes[p][q], color=col, bins=10000)
+            plot_both((read_cov_obj, pos_window_obj), ax,
+                      row_names[p][q], row_sizes[p][q], color=col, bins=10000)
             i += 1
 
-    max_ylim = max([ max([ ax[0].get_ylim()[1] for ax in row ]) for row in axes ])
+    max_ylim = max([max([ax[0].get_ylim()[1] for ax in row]) for row in axes])
 
     for row in axes:
         for ax in row:
@@ -278,15 +321,20 @@ def plot_np(bigwig_file, bigbed_file, sizes_file, output_file):
     :param output_file: Path to save image to
     """
 
-
     row_names, row_sizes = parse_sizes_file(sizes_file)
     row_pcts = get_row_pct(row_sizes)
-    axis_sizes = [ [ int(round(val * 30)) for val in row ] for row in row_pcts ]
+    axis_sizes = [[int(round(val * 30)) for val in row] for row in row_pcts]
 
     read_coverage = genomic_signal(bigwig_file, 'bigwig')
     positive_windows = genomic_signal(bigbed_file, 'bed')
 
-    plot_genome(axis_sizes, row_names, row_sizes, read_coverage, positive_windows, output_file)
+    plot_genome(
+        axis_sizes,
+        row_names,
+        row_sizes,
+        read_coverage,
+        positive_windows,
+        output_file)
 
 
 def plot_np_from_args(args):
@@ -294,5 +342,3 @@ def plot_np_from_args(args):
 
     plot_np(args.bigwig_file, args.bed_file,
             args.genome_file, args.output_file)
-
-

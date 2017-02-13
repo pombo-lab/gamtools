@@ -1,8 +1,9 @@
 from gamtools import segregation
-import StringIO
+import io
 import pytest
 
-fixture_two_samples = StringIO.StringIO("""chrom   start   stop    Sample_A    Sample_B
+fixture_two_samples = io.StringIO(
+u"""chrom   start   stop    Sample_A    Sample_B
 chr1    0   50000   0   0
 chr1    50000   100000  0   0
 chr1    100000  150000  0   0
@@ -28,7 +29,7 @@ def test_interval_within_bin():
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     assert len(found_windows) == 1
-    print found_windows
+    print(found_windows)
     found_chrom, found_start, found_stop = found_windows[0]
     assert found_chrom == 'chr1'
     assert found_start == 50000
@@ -40,7 +41,7 @@ def test_interval_is_bin():
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
     assert len(found_windows) == 1
-    print found_windows
+    print(found_windows)
     found_chrom, found_start, found_stop = found_windows[0]
     assert found_chrom == 'chr1'
     assert found_start == 50000
@@ -51,7 +52,7 @@ def test_interval_overlaps_two_bins():
     start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
-    print found_windows
+    print(found_windows)
     assert len(found_windows) == 2
     assert found_windows[0] == ('chr1', 50000, 100000)
     assert found_windows[-1] == ('chr1', 100000, 150000)
@@ -61,7 +62,7 @@ def test_interval_overlaps_many_bins():
     start_index, stop_index = segregation.index_from_interval(data_two_samples,
                                                                interval)
     found_windows = data_two_samples.index[start_index:stop_index]
-    print found_windows
+    print(found_windows)
     assert len(found_windows) == 6
     assert found_windows[0] == ('chr1', 50000, 100000)
     assert found_windows[-1] == ('chr1', 300000, 350000)

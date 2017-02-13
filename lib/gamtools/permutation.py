@@ -1,6 +1,66 @@
-from . import segregation
+"""
+======================
+The permutation module
+======================
+
+The permutation module contains functions for randomly permuting GAM
+:ref:`segregation tables <segregation_table>`, which can be a useful
+way of generating random backgrounds for comparison with real datasets.
+
+"""
+
 import numpy as np
 import pandas as pd
+
+from . import segregation
+
+def permute_by_offset(sample_segregation, offset):
+    """Circularly permute a single column of a segregation table.
+
+    This function takes one single column from a
+    :ref:`segregation_table` (i.e. one sample, or one NP) and circularly
+    permutes it by "offset" bins.
+
+    :param sample_segregation: Input column of a segregation table to permute.
+    :param int offset: Number of bins to permute by.
+    :returns: Returns a newly randomized :ref:`segregation_table`
+    """
+
+    offset = offset % len(sample_segregation)
+    # Moving each value in an array of length L right by x bins is the same
+    # as splitting the data at bin (L - x) and swapping the two halves
+    corrected_offset = len(sample_segregation) - offset
+    new_start = sample_segregation.iloc[corrected_offset:]
+    new_end = sample_segregation.iloc[:corrected_offset]
+    new_col = pd.concat([new_start, new_end]).values
+
+    return new_col
+
+
+def permute_by_chromosome(sample_segregation, offset):
+    """Separately permute each chromosome from a single column of a segregation table.
+
+    This function takes one single column from a
+    :ref:`segregation_table` (i.e. one sample, or one NP) and circularly
+    permutes each chromosome separately by "offset" bins.
+
+    :param sample_segregation: Input column of a segregation table to permute.
+    :param int offset: Number of bins to permute by.
+    :returns: Returns a newly randomized :ref:`segregation_table`
+    """
+
+    permuted_chromosomes = []
+    chrom_index = sample_segregation.index.get_level_values(0)
+
+    for chrom in chrom_index.unique():
+        original_chromosome = sample_segregation[chrom_index == chrom]
+        permuted_chromosome = permute_by_offset(original_chromosome, offset)
+        permuted_chromosomes.append(permuted_chromosome)
+
+    permuted_segregation = np.concatenate(permuted_chromosomes)
+
+    return permuted_segregation
+
 
 def permute_segregation(input_segregation):
     """Circularly permute each column of a segregation table.
@@ -40,13 +100,12 @@ def permute_segregation(input_segregation):
         # Swap the two chunks around and write them to the copied df
         offset = np.random.randint(no_windows)
 
-        new_start = input_segregation[mappable].iloc[offset:,i]
-        new_end = input_segregation[mappable].iloc[:offset,i]
-        new_col = list(pd.concat([new_start, new_end]))
+        new_col = permute_by_chromosome(input_segregation.iloc[mappable.values, i], offset)
 
-        permutation.ix[mappable,i] = new_col
+        permutation.ix[mappable, i] = new_col
 
     return permutation
+
 
 def permute_segregation_autosomal(input_segregation, autosomes=None):
     """Circularly permute each autosomal chromosome in a segregation table
@@ -70,7 +129,7 @@ def permute_segregation_autosomal(input_segregation, autosomes=None):
     # Sex chromosomes, unjoined contigs and mtDNA behave weirdly,
     # so don't permute them into the autosomal regions.
 
-    autosomes = ['chr{0}'.format(c) for c in range(1,20)]
+    autosomes = ['chr{0}'.format(c) for c in range(1, 20)]
 
     is_autosomal = input_segregation.index.get_level_values(0).isin(autosomes)
 
@@ -90,4 +149,8 @@ def permute_segregation_from_args(args):
 
     permuted_segregation = permute_segregation_autosomal(input_segregation)
 
-    permuted_segregation.to_csv(args.output_file, sep='\t', header=True, index=True)
+    permuted_segregation.to_csv(
+        args.output_file,
+        sep='\t',
+        header=True,
+        index=True)

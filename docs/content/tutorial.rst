@@ -22,7 +22,7 @@ get the following ouput:
 
 If this command gives you an error message, it is likely that **GAMtools** has
 not been installed correctly. Please ensure you have followed the steps
-outlined in the :doc:`installation`_ guide.
+outlined in the :doc:`installation` guide.
 
 Downloading the tutorial data
 -----------------------------
@@ -36,7 +36,7 @@ directory should contain a folder called ``fastqs`` and a file called
 
 .. code-block:: bash
 
-  $ wget http:/gam.tools/tutorial_data.tar.gz
+  $ wget http://gam.tools/tutorial_data.tar.gz
   $ tar zxvf tutorial_data.tar.gz
   $ cd gamtools_tutorial
   $ ls
@@ -98,7 +98,7 @@ truncated index:
 .. code-block:: bash
 
   $ wget http://gam.tools/tutorial_index.tar.gz
-  $ zxvf tutorial_index.tar.gz
+  $ tar zxvf tutorial_index.tar.gz
   $ ls
   clean.sh fastqs/ genome/
   $ export BOWTIE2_INDEXES=$(pwd)/genome/
@@ -177,8 +177,8 @@ contains one row per 50kb window, and one column per NP:
 .. code-block:: bash
 
   # Show the first 10 rows and first 5 columns of the segregation table
-  $ head gamtools_output/segmentation_at_50kb.multibam | cut -f 1-5
-  chrom   start   stop    raw_data/NP_027.rmdup.bam       raw_data/NP_020.rmdup.bam
+  $ head segregation_at_50kb.multibam | cut -f 1-5
+  chrom   start   stop    fastqs/NP_027.rmdup.bam       fastqs/NP_020.rmdup.bam
   chr19   0       50000   0       0
   chr19   50000   100000  0       0
   chr19   100000  150000  0       0
@@ -375,14 +375,14 @@ output should look something like this:
   .  Creating QC parameters file with default values
   .  Getting mapping stats
   .  Getting segregation stats
-  .  Running fastqc:raw_data/NP_042.fq.gz
-  .  Running fastqc:raw_data/NP_043.fq.gz
+  .  Running fastqc:fastqs/NP_042.fq.gz
+  .  Running fastqc:fastqs/NP_043.fq.gz
   ...
-  .  Running fastqc:raw_data/NP_070.fq.gz
-  .  Running fastq_screen:raw_data/NP_063.fq.gz
-  .  Running fastq_screen:raw_data/NP_050.fq.gz
+  .  Running fastqc:fastqs/NP_070.fq.gz
+  .  Running fastq_screen:fastqs/NP_063.fq.gz
+  .  Running fastq_screen:fastqs/NP_050.fq.gz
   ...
-  .  Running fastq_screen:raw_data/NP_081.fq.gz
+  .  Running fastq_screen:fastqs/NP_081.fq.gz
   .  Getting quality stats
   .  Getting contamination stats
   .  Merging stats files

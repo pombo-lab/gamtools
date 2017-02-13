@@ -1,15 +1,24 @@
-"""This module holds utility functions that can be called
-by other components but don't have their own place.
+"""
+================
+The utils module
+================
+
+The utils module contains various utility functions that don't have
+their own place.
+
 """
 
-import pandas as pd
 import sys
+
+import pandas as pd
 
 
 def format_genomic_distance(distance, precision=1):
-    """Turn an integer genomic distance into a pretty string.
+    """
+    Turn an integer genomic distance into a pretty string.
+
     :param int distance: Genomic distance in basepairs.
-    :param int precision: Number of significant figures to display
+    :param int precision: Number of significant figures to display \
         after the decimal point.
     """
 
@@ -24,18 +33,31 @@ def format_genomic_distance(distance, precision=1):
         fmt_string = formatting_string + 'Mb'
         return fmt_string.format(float(distance) / 1000000)
 
+
 def empty_bedgraph(chrom_sizes, output_bedgraph):
+    """
+    Create an empty bedgraph file.
+
+    :param str chrom_sizes: Path to file containing a list of chromosome names and sizes
+    :param str output_bedgraph: Path to save bedgraph.
+    """
 
     bed_df = pd.read_csv(chrom_sizes, sep='\t', names=['chrom', 'stop'])
 
     bed_df['start'] = 1
     bed_df['score'] = 0
 
-    bed_df[['chrom', 'start', 'stop', 'score']].to_csv(output_bedgraph, sep='\t', index=False, header=False)
+    bed_df[['chrom', 'start', 'stop', 'score']].to_csv(
+        output_bedgraph, sep='\t', index=False, header=False)
+
 
 def empty_bedgraph_from_cmdline():
+    """
+    Wrapper function to create empty bedgraphs from the command line.
+    """
 
     empty_bedgraph(sys.argv[1], sys.argv[2])
+
 
 class DelayedImportError(object):
     """Class that returns an ImportError if any method or attribute is accessed.

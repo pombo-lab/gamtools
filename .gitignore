@@ -47,3 +47,8 @@ docs/_build
 # py.test #
 ###########
 .cache/
+
+# tox #
+###########
+.tox/
+.coverage

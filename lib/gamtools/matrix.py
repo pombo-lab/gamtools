@@ -1,17 +1,98 @@
-import numpy as np
-import pandas as pd
-import sys, os
-from .segregation import parse_location_string
-from .utils import DelayedImportError
+"""
+=================
+The matrix module
+=================
+
+The matrix module contains functions for reading and writing proximity
+matrices in various formats.
+
+.. _proximity_matrices:
+
+Proximity matrices
+==================
+
+One of the most common ways of displaying and processing information about
+chromatin folding is as a 2D proximity matrix, where the x-axis represents the
+position along a contiguous genomic region and the y-axis represents the
+position along another contiguous genomic region (which can be the same region
+as on the x-axis). Each point within the matrix gives the inferred distance
+between location x and location y, with higher values generally indicating a
+shorter distance. For example, this type of matrix is the main output of a Hi-C
+experiment (Lieberman-Aiden et al. 2009, Science).
+
+
+.. _matrix_formats:
+
+Proximity matrix formats
+========================
+
+npz
+---
+
+Npz format is the native compressed numpy format. It takes up less disk space
+and is faster to read and write than the other formats, but it is not human
+readable and is not compatible with other programming languages like R.
+
+If you want to work with data that involves interactions between more
+than two partners (i.e. three for four-way interactions), that data can be
+represented as an n-dimensional matrix (tensor). Npz format is the only 
+format supported by GAMtools that can read or write n-dimensional matrices.
+
+txt
+---
+
+Text file format is the simplest matrix format. It is a tab-delimited text file
+where the columns and rows are the columns and rows of the matrix, plus one header
+row and one column of row names. Text files are human readable but take up a lot
+of disk space and are slow to read and write. GAMtools can also read and write
+to gzipped text files by using the txt.gz format (these take up much less disk
+space).
+
+triangular
+----------
+
+Triangular matrix files are similar to text files but they only give one half
+of a symmetrical matrix, and they do not contain column/row names. They are
+the format used by SLICE.
+
+csv
+---
+
+csv files are text files used as input to the enrichment module. The format
+can only be used for saving intrachromosomal data. The first column gives
+the chromosome name, the second and third columns give the column and row
+of the matrix (as 0 based indices, not by using their genomic locations)
+the fourth column gives the distance between the x and y co-ordinate and the
+fifth column gives the interaction strength. See :func:`write_csv` for an
+example.
+
+png
+---
+
+Specifying the png output format will save the proximity matrix to a 2D
+heatmap image.
+
+
+"""
+
+import sys
+import os
 import itertools
 import argparse
+
+import numpy as np
+import pandas as pd
+
+from .segregation import parse_location_string
+from .utils import DelayedImportError
 
 try:
     from matplotlib import pyplot as plt
 except ImportError:
     plt = DelayedImportError(
-    'Saving a matrix as an image requires matplotlib to be installed. '
-    'Try to install it by running "pip install matplotlib"')
+        'Saving a matrix as an image requires matplotlib to be installed. '
+        'Try to install it by running "pip install matplotlib"')
+
 
 def get_name_strings(windows):
     """Format a list of tuples representing genomic windows (chrom, start, stop)
@@ -23,6 +104,7 @@ def get_name_strings(windows):
 
     return ['{}:{}-{}'.format(*i) for i in windows]
 
+
 def windows_from_name_strings(name_strings):
     """Convert a list of UCSC-like location strings to a list of window tuples
 
@@ -31,6 +113,7 @@ def windows_from_name_strings(name_strings):
     """
 
     return [parse_location_string(name) for name in name_strings]
+
 
 def read_npz(filepath):
     """Open an npz file containing a proximity matrix
@@ -44,11 +127,15 @@ def read_npz(filepath):
     proximity_matrix = handle['scores']
 
     try:
-        windows = [handle['windows_{}'.format(i)] for i in range(proximity_matrix.ndim)]
+        windows = [
+            handle[
+                'windows_{}'.format(i)] for i in range(
+                    proximity_matrix.ndim)]
     except KeyError:
         windows = [handle['windows'], handle['windows']]
 
     return windows, proximity_matrix
+
 
 def read_txt(filepath, compression='infer'):
     """Open an txt file containing a proximity matrix
@@ -64,12 +151,17 @@ def read_txt(filepath, compression='infer'):
             :class:`numpy array <numpy.ndarray>` proximity matrix.
     """
 
-    proximity_matrix = pd.read_csv(filepath, compression=compression, sep='\t', index_col=0)
+    proximity_matrix = pd.read_csv(
+        filepath,
+        compression=compression,
+        sep='\t',
+        index_col=0)
 
     windows_0 = windows_from_name_strings(proximity_matrix.index)
     windows_1 = windows_from_name_strings(proximity_matrix.columns)
 
     return (windows_0, windows_1), proximity_matrix.values
+
 
 def read_zipped_txt(filepath):
     """Open a gzipped txt file containing a proximity matrix
@@ -81,6 +173,7 @@ def read_zipped_txt(filepath):
     """
 
     return read_txt(filepath, compression='gzip')
+
 
 def read_windows(filepath, chrom):
     """Retrieve the genomic locations (windows) covering a given chromosome
@@ -101,6 +194,7 @@ def read_windows(filepath, chrom):
 
     return [windows, windows]
 
+
 def read_triangular(filepath):
     """Open Pi matrix output from SLICE.
 
@@ -118,7 +212,7 @@ def read_triangular(filepath):
     with open(filepath) as in_data:
         arr = [[float(i) for i in line.split()] for line in in_data]
     N = len(arr[-1])
-    proximity_matrix = np.zeros((N,N))
+    proximity_matrix = np.zeros((N, N))
     lower_i = np.tril_indices_from(proximity_matrix)
     upper_i = np.triu_indices_from(proximity_matrix)
     proximity_matrix[:] = np.NAN
@@ -129,14 +223,15 @@ def read_triangular(filepath):
     return None, proximity_matrix
 
 
-input_formats = {
-        'npz': read_npz,
-        'txt': read_txt,
-        'txt.gz': read_txt,
-        'triangular': read_triangular,
-        # TODO: Convert from interactions csv back into a matrix
-        #'csv': '',
+INPUT_FORMATS = {
+    'npz': read_npz,
+    'txt': read_txt,
+    'txt.gz': read_txt,
+    'triangular': read_triangular,
+    # TODO: Convert from interactions csv back into a matrix
+    #'csv': '',
 }
+
 
 def write_txt(windows, proximity_matrix, output_file):
     """Write a proximity matrix to a txt file.
@@ -155,15 +250,21 @@ def write_txt(windows, proximity_matrix, output_file):
         chr1:0-10       10      0       5
         chr1:10-20      0       10      3
         chr1:20-30      5       3       10
-    
+
     """
 
     if proximity_matrix.ndim != 2:
-        raise NotImplementedError('Plain text output is only supported for 2 dimensional matrices. Please try saving as an npz file.')
+        raise NotImplementedError(
+            'Plain text output is only supported for 2 dimensional matrices. '
+            'Please try saving as an npz file.')
 
-    names_0, names_1 = [get_name_strings(axis_windows) for axis_windows in windows]
+    names_0, names_1 = [get_name_strings(
+        axis_windows) for axis_windows in windows]
 
-    pd.DataFrame(proximity_matrix, index=names_0, columns=names_1).to_csv(output_file, sep='\t', na_rep="NaN")
+    pd.DataFrame(
+        proximity_matrix, index=names_0, columns=names_1).to_csv(
+            output_file, sep='\t', na_rep="NaN")
+
 
 def write_zipped_txt(windows, proximity_matrix, output_file):
     """Write a proximity matrix to a zipped txt file.
@@ -177,6 +278,7 @@ def write_zipped_txt(windows, proximity_matrix, output_file):
     import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_txt(windows, proximity_matrix, zipped_output)
+
 
 def write_npz(windows, proximity_matrix, output_file):
     """Write a proximity matrix to an npz file.
@@ -192,8 +294,11 @@ def write_npz(windows, proximity_matrix, output_file):
     :param str filepath: Path to save matrix file.
     """
 
-    window_dict = {'windows_{}'.format(i):win for i,win in enumerate(windows)}
+    window_dict = {
+        'windows_{}'.format(i): win for i,
+        win in enumerate(windows)}
     np.savez_compressed(output_file, scores=proximity_matrix, **window_dict)
+
 
 def write_csv(windows, proximity_matrix, output_file):
     """Write a proximity matrix to a csv file.
@@ -222,13 +327,15 @@ def write_csv(windows, proximity_matrix, output_file):
 
     interactions_df = pd.DataFrame(proximity_matrix).unstack()
     interactions_df = interactions_df[interactions_df > 0]
-    interactions_df =interactions_df.reset_index()
+    interactions_df = interactions_df.reset_index()
     interactions_df.columns = ['Pos_A', 'Pos_B', 'interaction']
-    interactions_df = interactions_df[interactions_df.Pos_B > interactions_df.Pos_A]
+    interactions_df = interactions_df[
+        interactions_df.Pos_B > interactions_df.Pos_A]
     interactions_df['dist'] = interactions_df.Pos_B - interactions_df.Pos_A
     interactions_df['chrom'] = windows[0][0][0]
     output_cols = ['chrom', 'Pos_A', 'Pos_B', 'dist', 'interaction']
     interactions_df[output_cols].to_csv(output_file, sep='\t', index=False)
+
 
 def write_zipped_csv(windows, proximity_matrix, output_file):
     """Write a proximity matrix to a zipped csv file.
@@ -260,21 +367,22 @@ def write_png(windows, proximity_matrix, output_file):
     :param str filepath: Path to save image file.
     """
 
-    plt.figure(figsize=(7,7))
+    plt.figure(figsize=(7, 7))
     plt.imshow(proximity_matrix, interpolation='none')
     plt.axis('off')
     plt.savefig(output_file)
 
-output_formats = {
-        'npz': write_npz,
-        'txt': write_txt,
-        'txt.gz': write_zipped_txt,
-        'csv': write_csv,
-        'csv.gz': write_zipped_csv,
-        'png': write_png,
+OUTPUT_FORMATS = {
+    'npz': write_npz,
+    'txt': write_txt,
+    'txt.gz': write_zipped_txt,
+    'csv': write_csv,
+    'csv.gz': write_zipped_csv,
+    'png': write_png,
 }
 
-supported_formats = list(set(input_formats.keys() + output_formats.keys()))
+SUPPORTED_FORMATS = list(set(list(INPUT_FORMATS.keys()) + list(OUTPUT_FORMATS.keys())))
+
 
 def detect_file_type(file_name):
     """Given the path to a matrix file, determine the file type
@@ -300,17 +408,19 @@ def detect_file_type(file_name):
     file_parts = file_name.split('.')
 
     if len(file_parts) == 1:
-        raise ValueError('Could not determine file format, file {} has no extension'.format(file_name))
+        raise ValueError(
+            'Could not determine file format, file {} has no extension'.format(file_name))
 
     file_ext = file_parts[-1]
 
     if file_ext == 'gz':
         file_ext = '.'.join(file_parts[-2:])
 
-    if file_ext in supported_formats:
+    if file_ext in SUPPORTED_FORMATS:
         return file_ext
 
     raise TypeError('Extension "{}" not recognized'.format(file_ext))
+
 
 def read_file(file_name):
     """Open a matrix file, guessing the format based on file extension.
@@ -322,8 +432,9 @@ def read_file(file_name):
     """
 
     file_type = detect_file_type(file_name)
-    read_func = input_formats[file_type]
+    read_func = INPUT_FORMATS[file_type]
     return read_func(file_name)
+
 
 def check_windows(proximity_matrix, windows):
     """Check that a list of axis windows matches the dimensions of a proximity matrix.
@@ -349,7 +460,7 @@ def read_thresholds(thresholds_file):
     """Read a file containing interaction thresholds"""
 
     return pd.read_csv(thresholds_file,
-                       delim_whitespace=True, header=6).set_index('distance')
+                       delim_whitespace=True, comment='#').set_index('distance')
 
 
 def kth_diag_indices(a, k):
@@ -405,7 +516,7 @@ def apply_threshold(proximity_matrix, thresholds):
 
     out_matr = np.zeros_like(proximity_matrix)
 
-    for d in range(1, proximity_matrix.shape[0]+1):
+    for d in range(1, proximity_matrix.shape[0] + 1):
         proximity_matrix_diag = proximity_matrix.diagonal(d).copy()
 
         try:
@@ -438,7 +549,7 @@ def convert(input_file, input_format,
     :type thresholds: :class:`pandas.DataFrame`
     """
 
-    _windows, proximity_matrix = input_formats[input_format](input_file)
+    _windows, proximity_matrix = INPUT_FORMATS[input_format](input_file)
 
     if input_format == 'triangular':
         if windows is None:
@@ -454,7 +565,8 @@ def convert(input_file, input_format,
     if thresholds is not None:
         proximity_matrix = apply_threshold(proximity_matrix, thresholds)
 
-    output_formats[output_format](_windows, proximity_matrix, output_file)
+    OUTPUT_FORMATS[output_format](_windows, proximity_matrix, output_file)
+
 
 def convert_from_args(args):
     """Wrapper function to call convert from argparse"""
