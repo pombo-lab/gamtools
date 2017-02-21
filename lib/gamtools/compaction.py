@@ -1,3 +1,13 @@
+"""
+======================
+The compaction module
+======================
+
+The compaction module contains functions for calculating chromatin
+compaction from GAM :ref:`segregation tables <segregation_table>`.
+
+"""
+
 from .segregation import open_segregation
 import numpy as np
 

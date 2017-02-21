@@ -1,3 +1,13 @@
+"""
+==========================
+The radial position module
+==========================
+
+The radial position module contains functions for calculating chromatin
+radial position from GAM :ref:`segregation tables <segregation_table>`.
+
+"""
+
 from .segregation import open_segregation
 import numpy as np
 
