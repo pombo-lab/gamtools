@@ -477,11 +477,11 @@ def get_output_file(
             (see :ref:`matrix_formats` for more details)
     :returns: Path to save matrix file.
 
-    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1'], 'dprime', 'txt.gz')
+    >>> get_output_file('/path/to/segregation_file.table', ['chr1'], 'dprime', 'txt.gz')
     '/path/to/segregation_file.chr1_dprime.txt.gz'
-    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1', 'chr2'], 'linkage', 'npz')
+    >>> get_output_file('/path/to/segregation_file.table', ['chr1', 'chr2'], 'linkage', 'npz')
     '/path/to/segregation_file.chr1_x_chr2_linkage.npz'
-    >>> get_output_file('/path/to/segregation_file.multibam', ['chr1:10000000-20000000'],
+    >>> get_output_file('/path/to/segregation_file.table', ['chr1:10000000-20000000'],
     ...                 'cosegregation', 'csv')
     '/path/to/segregation_file.chr1_10.0Mb-20.0Mb_cosegregation.csv'
 

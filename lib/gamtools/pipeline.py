@@ -77,7 +77,7 @@ def coverage_path(base_folder, window_size):
 
     return os.path.join(
         base_folder,
-        'coverage_at_{0}.multibam'.format(
+        'coverage_at_{0}.table'.format(
             pretty_resolution(window_size)))
 
 
@@ -91,7 +91,7 @@ def segregation_path(base_folder, window_size):
 
     return os.path.join(
         base_folder,
-        'segregation_at_{0}.multibam'.format(
+        'segregation_at_{0}.table'.format(
             pretty_resolution(window_size)))
 
 
@@ -523,7 +523,7 @@ class InputFileMappingTasks(object):
             yield {
                 'basename': 'Filtering samples based on QC values',
                 'name': pretty_resolution(window_size),
-                'targets': [swap_extension(segregation_file, '.passed_qc.multibam')],
+                'targets': [swap_extension(segregation_file, '.passed_qc.table')],
                 'file_dep': [passqc_file, segregation_file],
                 'actions': [select_samples.select_samples_from_doit]
             }
@@ -550,7 +550,7 @@ class InputFileMappingTasks(object):
                     self.args.output_dir, window_size)
                 if 'do_qc' in self.args.to_run:
                     segregation_file = swap_extension(
-                        segregation_file, '.passed_qc.multibam')
+                        segregation_file, '.passed_qc.table')
 
                 matrix_base = '{seg_file}.dprime.{chrom}.txt.gz'.format(
                     seg_file=os.path.basename(segregation_file),

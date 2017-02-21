@@ -80,7 +80,7 @@ def select_samples_from_doit(dependencies, targets):
     for dep_file in dependencies:
         dep_ext = dep_file.split('.')[-1]
 
-        if dep_ext == 'multibam':
+        if dep_ext == 'table':
             segregation_path = dep_file
         elif dep_ext == 'txt':
             sample_names_path = dep_file

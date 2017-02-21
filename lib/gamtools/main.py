@@ -20,8 +20,8 @@ import argparse
 from wrapit.parser import add_doit_options
 import pytest
 
-from . import cosegregation, matrix, call_windows, enrichment, \
-        permutation, plotting, pipeline, select_samples
+from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
+        permutation, plotting, pipeline, select_samples, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -30,6 +30,8 @@ parser = argparse.ArgumentParser(
     ' Architecture Mapping (GAM) data.')
 
 subparsers = parser.add_subparsers(help='Please select a command:')
+subparsers.required = True
+subparsers.dest = 'command'
 
 # Options for the 'call_windows' command
 
@@ -64,6 +66,32 @@ seg_method.add_argument(
 call_windows_parser.set_defaults(
     func=call_windows.threshold_from_args,
     fitting_function=call_windows.signal_and_noise_fitting)
+
+# Options for the 'compaction' command
+
+compaction_parser = subparsers.add_parser(
+    'compaction',
+    help='Get the compaction of each genomic window from a segmentation file')
+
+
+compaction_parser.add_argument(
+    '-s', '--segregation-file', required=True,
+    type=argparse.FileType('r'),
+    help='A segregation file to use for calculating compaction'
+    '(or - to read from stdin)')
+
+compaction_parser.add_argument(
+    '-o', '--output-file', required=True,
+    type=argparse.FileType('w'),
+    help='Output bedgraph file path (or - to write to stdout)')
+
+compaction_parser.add_argument(
+    '-n', '--no-blanks', default=False,
+    action='store_true',
+    help='Do not include lines with no value in the output.')
+
+compaction_parser.set_defaults(func=compaction.compaction_from_args)
+
 
 
 # Options for the 'convert' command
@@ -328,6 +356,32 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                            'quality_stats.txt', 'segregation_stats.txt'],
                             fitting_function=call_windows.signal_and_noise_fitting)
+
+# Options for the 'radial_pos' command
+
+radial_pos_parser = subparsers.add_parser(
+    'radial_pos',
+    help='Get the radial position of each genomic window from a segmentation file')
+
+
+radial_pos_parser.add_argument(
+    '-s', '--segregation-file', required=True,
+    type=argparse.FileType('r'),
+    help='A segregation file to use for calculating radial position'
+    '(or - to read from stdin)')
+
+radial_pos_parser.add_argument(
+    '-o', '--output-file', required=True,
+    type=argparse.FileType('w'),
+    help='Output bedgraph file path (or - to write to stdout)')
+
+radial_pos_parser.add_argument(
+    '-n', '--no-blanks', default=False,
+    action='store_true',
+    help='Do not include lines with no value in the output.')
+
+
+radial_pos_parser.set_defaults(func=radial_position.radial_position_from_args)
 
 # Options for 'select' command
 

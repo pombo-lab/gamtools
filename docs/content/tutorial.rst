@@ -171,13 +171,13 @@ The final steps are to compute the number of
 reads from each NP that overlap each 50kb window in the supplied genome file,
 and then to use this read coverage count to determine which of the windows was
 present in the original NP. After performing this "window calling" step,
-gamtools produces a file called ``segregation_at_50kb.multibam``. This file
+gamtools produces a file called ``segregation_at_50kb.table``. This file
 contains one row per 50kb window, and one column per NP:
     
 .. code-block:: bash
 
   # Show the first 10 rows and first 5 columns of the segregation table
-  $ head segregation_at_50kb.multibam | cut -f 1-5
+  $ head segregation_at_50kb.table | cut -f 1-5
   chrom   start   stop    fastqs/NP_027.rmdup.bam       fastqs/NP_020.rmdup.bam
   chr19   0       50000   0       0
   chr19   50000   100000  0       0
@@ -242,7 +242,7 @@ in png format:
 
 .. code-block:: bash
 
-  $ gamtools matrix -s segregation_at_50kb.multibam \
+  $ gamtools matrix -s segregation_at_50kb.table \
   > -r chr19:10,000,000-15,000,000 -o my_matrix.png
   starting calculation for chr19:10,000,000-15,000,000
   region size is: 100 x 100 Calculation took 1.05s
@@ -261,7 +261,7 @@ you will get some strange looking results:
     
 .. code-block:: bash
 
-  $ gamtools matrix -s segregation_at_50kb.multibam \
+  $ gamtools matrix -s segregation_at_50kb.table \
   > -r chr19:8,000,000-17,000,000 -o larger_matrix.png
   starting calculation for chr19:8,000,000-17,000,000
   region size is: 180 x 180 Calculation took 3.47s
@@ -282,7 +282,7 @@ raw, un-normalized co-segregation matrices by specifying the
     
 .. code-block:: bash
 
-  $ gamtools matrix -s segregation_at_50kb.multibam \
+  $ gamtools matrix -s segregation_at_50kb.table \
   > -r chr19:10,000,000-15,000,000 -o cosegregation_matrix.png \
   > -t cosegregation
   starting calculation for chr19:10,000,000-15,000,000
@@ -329,11 +329,11 @@ need to re-compute the read depth over all 30kb windows, and then decide
 which 30kb windows were positive in each NP.
 
 To create proximity matrices at the new resolution, we need to specify
-the new segregation table: ``segregation_at_30kb.multibam``.
+the new segregation table: ``segregation_at_30kb.table``.
 
 .. code-block:: bash
 
-  $ gamtools matrix -s segregation_at_30kb.multibam \
+  $ gamtools matrix -s segregation_at_30kb.table \
   > -r chr19:10,000,000-15,000,000 -o 30kb_matrix.png
   starting calculation for chr19:10,000,000-15,000,000
   region size is: 167 x 167 Calculation took 0.047s
@@ -415,7 +415,7 @@ NPs. **GAMtools** filters out NPs which match any rules in the
 ``qc_parameters.cfg`` file, which is created with some default
 rules if it does not exist. Finally, **GAMtools** creates new
 segregation tables that exclude poor-quality NPs. In our case,
-this file will be called ``segregation_at_50kb.passed_qc.multibam``.
+this file will be called ``segregation_at_50kb.passed_qc.table``.
 You can use this new segregation table to re-generate the
 proximity matrices (see `Producing proximity matrices`_).
 
