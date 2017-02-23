@@ -4,21 +4,14 @@ Installation
 
 **GAMtools** is intended to run in a command line environment on UNIX, LINUX
 and Apple OS X operating systems. GAMtools can also be installed on Windows
-using cygwin_. Installing **GAMtools** involves either downloading the source code
-and compiling it manually, or installing from PyPi using the python installer
-``pip``.
+using cygwin_.
 
-===========
-First Steps
-===========
+The recommended way to install **GAMtools** is to use python's package manager,
+``pip``. This method should ensure that all of GAMtools required dependencies
+are installed automatically.
 
-GAMtools requires numpy_ and cython_ to be installed before it can compile
-properly. Therefore, the first step is to ensure both numpy and cython are
-properly installed:
-
-.. code-block:: bash
-
-  $ pip install cython numpy
+Alternatively, **GAMtools** can be installed by downloading the source code
+and compiling it manually.
 
 ====================================
 Installing stable releases using pip
@@ -29,7 +22,7 @@ following command:
 
 .. code-block:: bash
 
-  $ pip install -e git+git@github.com:pombo-lab/gamtools.git#egg=gamtools
+  $ pip install gamtools
 
 pip should automatically find and install any `mandatory dependencies`_
 that are not currently installed. Additional `optional dependencies`_ are
@@ -52,7 +45,7 @@ Then install the downloaded package using pip:
 
 .. code-block:: bash
 
-  $ pip install -e gamtools/
+  $ pip install gamtools/
 
 Or if pip is not installed:
 
@@ -65,6 +58,22 @@ Installation using pip is the preferred method, as this will handle installing
 the `mandatory dependencies`_ automatically. If **GAMtools** is installed using
 ``python setup.py install`` you may need to manually install
 `mandatory dependencies`_ yourself.
+
+===============
+Troubleshooting
+===============
+
+GAMtools requires numpy_ and cython_ to be installed before it can compile
+properly. If you are installing using ``pip``, numpy and cython should be installed
+automatically, but there is a chance this might not work. If you are having issues
+installing **GAMtools**, the first step is to ensure both numpy and cython are
+properly installed:
+
+.. code-block:: bash
+
+  $ pip install cython numpy
+
+If you are still having problems, please post a ticket on our `GitHub issues`_ page.
 
 ===============================
 Mandatory dependencies
@@ -168,4 +177,5 @@ messages unless you need the particular gamtools functionality in the message.
 .. _bedToBigBed: http://hgdownload.cse.ucsc.edu/admin/exe/
 .. _fastqc: http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 .. _fastq_screen: http://www.bioinformatics.bbsrc.ac.uk/projects/fastq_screen/
+.. _GitHub issues: https://github.com/pombo-lab/GAMtools/issues
 
