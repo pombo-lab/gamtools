@@ -368,7 +368,7 @@ def write_png(windows, proximity_matrix, output_file):
     """
 
     plt.figure(figsize=(7, 7))
-    plt.imshow(proximity_matrix, interpolation='none')
+    plt.imshow(proximity_matrix, interpolation='none', cmap='jet')
     plt.axis('off')
     plt.savefig(output_file)
 
