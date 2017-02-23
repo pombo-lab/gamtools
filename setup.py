@@ -23,7 +23,7 @@ setup(
                         'gam_segmentation_file = GamTools.segmentation:GamSegmentationFile',
                     ]
                    },
-    long_description=read('README'),
+    long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
