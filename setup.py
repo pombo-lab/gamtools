@@ -73,6 +73,7 @@ setup(
                     ]
                    },
     long_description=read('README.md'),
+    include_package_data=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

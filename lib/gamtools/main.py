@@ -412,13 +412,14 @@ test_parser = subparsers.add_parser(
     help='Test that GAMtools is installed and configured correctly.')
 
 
+test_directory = os.path.join(os.path.dirname(__file__), 'tests')
+
 def test_function(args):
     """Wrapper function to call py.test from arparse"""
 
     # TODO: Fix passing additional arguments to py.test
     test_args = sys.argv[2:]
-    test_dir = os.path.join(os.path.dirname(__file__), '..', 'tests')
-    sys.exit(pytest.main([test_dir] + test_args))
+    sys.exit(pytest.main([test_directory] + test_args))
 
 test_parser.set_defaults(func=test_function)
 
