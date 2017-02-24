@@ -329,7 +329,8 @@ def get_script(script_name):
     """
 
     return os.path.join(os.path.dirname(__file__),
-                        '../scripts',
+                        'data',
+                        'scripts',
                         script_name)
 
 
@@ -341,7 +342,8 @@ def get_example(example_name):
     """
 
     return os.path.join(os.path.dirname(__file__),
-                        '../examples',
+                        'data',
+                        'examples',
                         example_name)
 
 process_parser.set_defaults(func=pipeline.process_nps_from_args,
