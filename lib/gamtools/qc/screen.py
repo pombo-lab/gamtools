@@ -54,10 +54,9 @@ def is_fq_screen_header_row(fields):
     Returns true if the input list represents a header row.
     """
 
-    if (len(fields) == 0) or (fields[0][0] == '#') or (fields[0] == 'Library'):
-        return True
-    else:
-        return False
+    return bool((len(fields) == 0) or
+                (fields[0][0] == '#') or
+                (fields[0] == 'Library'))
 
 def process_fastq_screen_line(line):
     """
@@ -112,10 +111,10 @@ def parse_fastq_screen_output(fastq_screen_output):
 
     organisms = []
 
-    for k in results.keys():
+    for key in results:
 
         try:
-            organism, map_type = k.split('_')
+            organism, map_type = key.split('_')
         except ValueError:
             continue
 

@@ -414,7 +414,7 @@ test_parser = subparsers.add_parser(
 
 test_directory = os.path.join(os.path.dirname(__file__), 'tests')
 
-def test_function(args):
+def test_function(args): #pylint: disable=unused-argument
     """Wrapper function to call py.test from arparse"""
 
     # TODO: Fix passing additional arguments to py.test

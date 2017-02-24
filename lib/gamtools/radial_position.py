@@ -8,8 +8,9 @@ radial position from GAM :ref:`segregation tables <segregation_table>`.
 
 """
 
-from .segregation import open_segregation
 import numpy as np
+
+from .segregation import open_segregation
 
 def get_radial_position(segregation_data, no_blanks=False):
     """Get the radial position of each genomic window from a segregation table

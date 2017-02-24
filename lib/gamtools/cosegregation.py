@@ -112,9 +112,9 @@ def cosegregation_frequency_ndim(loci):
 
     counts = np.zeros(counts_shape)
 
-    for s in loci.T:
+    for sample in loci.T:
 
-        counts[tuple(s)] += 1
+        counts[tuple(sample)] += 1
 
     return counts
 
@@ -365,7 +365,7 @@ def get_regions_and_windows(segregation_data, location_strings):
     return regions, windows
 
 
-def matrix_and_windows_from_segregation_file(
+def matrix_from_segregation_file(
         segregation_file, location_strings, matrix_type='dprime'):
     """Get the proximity matrix between the given genomic locations, and the
     locations of the genomic windows corresponding to each axis of the
@@ -442,7 +442,7 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
     print('starting calculation for {}'.format(' x '.join(location_strings)))
     start_time = time.clock()
 
-    contact_matrix, windows = matrix_and_windows_from_segregation_file(
+    contact_matrix, windows = matrix_from_segregation_file(
         segregation_file, location_strings, matrix_type)
 
     size_string = ' x '.join([str(s) for s in contact_matrix.shape])

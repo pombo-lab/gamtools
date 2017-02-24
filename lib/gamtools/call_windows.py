@@ -27,7 +27,7 @@ truly present in the original NP.
 
 """
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,unused-variable,global-statement
 
 from __future__ import print_function
 import sys

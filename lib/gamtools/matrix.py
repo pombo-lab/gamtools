@@ -35,7 +35,7 @@ readable and is not compatible with other programming languages like R.
 
 If you want to work with data that involves interactions between more
 than two partners (i.e. three for four-way interactions), that data can be
-represented as an n-dimensional matrix (tensor). Npz format is the only 
+represented as an n-dimensional matrix (tensor). Npz format is the only
 format supported by GAMtools that can read or write n-dimensional matrices.
 
 txt
@@ -211,8 +211,8 @@ def read_triangular(filepath):
 
     with open(filepath) as in_data:
         arr = [[float(i) for i in line.split()] for line in in_data]
-    N = len(arr[-1])
-    proximity_matrix = np.zeros((N, N))
+    size = len(arr[-1])
+    proximity_matrix = np.zeros((size, size))
     lower_i = np.tril_indices_from(proximity_matrix)
     upper_i = np.triu_indices_from(proximity_matrix)
     proximity_matrix[:] = np.NAN
@@ -358,7 +358,7 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
         write_csv(windows, proximity_matrix, zipped_output)
 
 
-def write_png(windows, proximity_matrix, output_file):
+def write_png(windows, proximity_matrix, output_file): #pylint: disable=unused-argument
     """Write a proximity matrix to a .png image file.
 
     :param tuple windows: (list of x-axis windows, list of y-axis windows)
@@ -463,13 +463,13 @@ def read_thresholds(thresholds_file):
                        delim_whitespace=True, comment='#').set_index('distance')
 
 
-def kth_diag_indices(a, k):
+def kth_diag_indices(array, diag_k):
     """Return a tuple of indices for retrieving the k'th diagonal
     of matrix a.
 
-    :param a: Input matrix.
-    :type a: :class:`numpy array <numpy.ndarray>`
-    :param int k: Diagonal to index. 0 is the centre, 1 is the first \
+    :param array: Input matrix.
+    :type array: :class:`numpy array <numpy.ndarray>`
+    :param int diag_k: Diagonal to index. 0 is the centre, 1 is the first \
             diagonal below the centre, -1 is the first diagonal above \
             the centre.
 
@@ -489,11 +489,11 @@ def kth_diag_indices(a, k):
     array([-2, -2])
     """
 
-    rows, cols = np.diag_indices_from(a)
-    if k < 0:
-        return rows[:k], cols[-k:]
-    elif k > 0:
-        return rows[k:], cols[:-k]
+    rows, cols = np.diag_indices_from(array)
+    if diag_k < 0:
+        return rows[:diag_k], cols[-diag_k:]
+    elif diag_k > 0:
+        return rows[diag_k:], cols[:-diag_k]
     else:
         return rows, cols
 
@@ -516,23 +516,23 @@ def apply_threshold(proximity_matrix, thresholds):
 
     out_matr = np.zeros_like(proximity_matrix)
 
-    for d in range(1, proximity_matrix.shape[0] + 1):
-        proximity_matrix_diag = proximity_matrix.diagonal(d).copy()
+    for diagonal in range(1, proximity_matrix.shape[0] + 1):
+        proximity_matrix_diag = proximity_matrix.diagonal(diagonal).copy()
 
         try:
-            thresh = np.array(thresholds.loc[d])
+            thresh = np.array(thresholds.loc[diagonal])
         except KeyError:
             thresh = np.array(thresholds.iloc[-1])
 
         below_thresh = proximity_matrix_diag < thresh
         proximity_matrix_diag[below_thresh] = 0.
-        out_matr[kth_diag_indices(out_matr, d)] = proximity_matrix_diag
-        out_matr[kth_diag_indices(out_matr, -d)] = proximity_matrix_diag
+        out_matr[kth_diag_indices(out_matr, diagonal)] = proximity_matrix_diag
+        out_matr[kth_diag_indices(out_matr, -diagonal)] = proximity_matrix_diag
 
     return out_matr
 
 
-def convert(input_file, input_format,
+def convert(input_file, input_format, #pylint: disable=too-many-arguments
             output_file, output_format,
             windows=None, thresholds=None):
     """Convert a proximity matrix to a different file format.

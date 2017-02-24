@@ -106,8 +106,8 @@ def get_samtools_version():
         sys.exit('samtools is either not installed or not present in $PATH. '
                  'Please install samtools to continue.')
 
-    output, err = proc.communicate()
-    status = proc.wait()
+    output, err = proc.communicate() #pylint: disable=unused-variable
+    proc.wait()
 
     vnum_regexp = b'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
 

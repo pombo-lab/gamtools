@@ -59,13 +59,14 @@ def empty_bedgraph_from_cmdline():
     empty_bedgraph(sys.argv[1], sys.argv[2])
 
 
-class DelayedImportError(object):
+class DelayedImportError(object): #pylint: disable=too-few-public-methods
     """Class that returns an ImportError if any method or attribute is accessed.
 
     Useful for delaying the ImportError until an optional dependency is actually used"""
 
     def __init__(self, message):
-        """Instantiate the object with an error message and a list of packages that need to be installed"""
+        """Instantiate the object with an error message and a list
+        of packages that need to be installed"""
 
         self.message = message
 

@@ -61,32 +61,32 @@ def get_references(left_str, right_str, stats_df):
     return left, right
 
 
-def comparison_from_operator(op, left, right):
+def comparison_from_operator(operator, left, right):
     """
     Perform a comparison between left and right values in a QC
     conditions file.
 
-    :param str op: Comparison to carry out.
+    :param str operator: Comparison to carry out.
     :param left: Either a series of QC values or a value to compare QC values to.
     :param right: Either a series of QC values or a value to compare QC values to.
     :returns: :class:`~pandas.Series` indicating which samples pass the condition.
     """
 
-    if op in ['=', '==', 'eq', 'equals']:
+    if operator in ['=', '==', 'eq', 'equals']:
         comparison = (left == right)
-    elif op in ['>', 'gt', 'greater_than']:
+    elif operator in ['>', 'gt', 'greater_than']:
         comparison = (left > right)
-    elif op in ['>=', 'gte', 'greater_than_or_equal_to']:
+    elif operator in ['>=', 'gte', 'greater_than_or_equal_to']:
         comparison = (left >= right)
-    elif op in ['<', 'lt', 'less_than']:
+    elif operator in ['<', 'lt', 'less_than']:
         comparison = (left < right)
-    elif op in ['<=', 'lte', 'less_than_or_equal_to']:
+    elif operator in ['<=', 'lte', 'less_than_or_equal_to']:
         comparison = (left <= right)
-    elif op in ['!=', 'neq', 'not_equal_to']:
+    elif operator in ['!=', 'neq', 'not_equal_to']:
         comparison = (left != right)
     else:
         raise QcParamError(
-            'Operator {} not recognized'.format(op))
+            'Operator {} not recognized'.format(operator))
 
     return comparison
 
@@ -99,13 +99,13 @@ class QcParamError(Exception):
     pass
 
 
-def do_comparison(left_str, op, right_str, stats_df):
+def do_comparison(left_str, operator, right_str, stats_df):
     """
     Given the condition in a QC Parameters file, and a QC statistics table,
     calculate which samples pass the condition.
 
     :param str left_str: Left part of the condition (e.g. "mapped_reads")
-    :param str op: How to compare left and right (e.g. greater_than)
+    :param str operator: How to compare left and right (e.g. greater_than)
     :param str right_str: Right part of the condition (e.g. "150000")
     :param stats_df: QC statistics table
     :type stats_df: :class:`~pandas.DataFrame`
@@ -114,7 +114,7 @@ def do_comparison(left_str, op, right_str, stats_df):
 
     left, right = get_references(left_str, right_str, stats_df)
 
-    comparison = comparison_from_operator(op, left, right)
+    comparison = comparison_from_operator(operator, left, right)
 
     if not isinstance(comparison, pd.Series):
         raise QcParamError('Comparison did not return a series object')
@@ -143,10 +143,10 @@ def parse_conditions_file(conditions_file, stats_df):
         if (line[0] == '#') or len(fields) == 0:
             continue
 
-        left_str, op, right_str = fields
+        left_str, operator, right_str = fields
 
         try:
-            this_comparison = do_comparison(left_str, op, right_str, stats_df)
+            this_comparison = do_comparison(left_str, operator, right_str, stats_df)
         except QcParamError as err_msg:
             raise QcParamError(
                 'Error in QC conditions file line {}: {}'.format(

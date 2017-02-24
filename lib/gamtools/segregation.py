@@ -210,9 +210,9 @@ def map_sample_name_to_column(segregation_table):
 
     name_mapping = {}
 
-    for c in segregation_table.columns:
+    for column in segregation_table.columns:
 
-        name_mapping[os.path.basename(c).split('.')[0]] = c
+        name_mapping[os.path.basename(column).split('.')[0]] = column
 
     return name_mapping
 

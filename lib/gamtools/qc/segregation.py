@@ -15,8 +15,6 @@ import pandas as pd
 
 from .. import segregation
 
-chroms = ['chr{0}'.format(c) for c in range(1, 20)]
-
 def proportion_with_neighbours(block_list):
     """
     Calculate the percentage of positive windows that have positive neighbours
@@ -26,10 +24,10 @@ def proportion_with_neighbours(block_list):
     """
 
     no_with_neighbours = 0
-    for k, g in itertools.groupby(block_list):
-        g = list(g)
-        if k and len(g) > 1:
-            no_with_neighbours += len(g)
+    for key, group in itertools.groupby(block_list):
+        group = list(group)
+        if key and len(group) > 1:
+            no_with_neighbours += len(group)
 
     try:
         return float(no_with_neighbours) / sum(block_list)

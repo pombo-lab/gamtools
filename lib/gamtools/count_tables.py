@@ -44,9 +44,9 @@ def get_marginal_probabilities(probs_table):
     """
 
     ind = []
-    for t in get_transpositions(probs_table):
-        marginal_probs = [probs_table.transpose(t)[1, ...].sum(),
-                          probs_table.transpose(t)[0, ...].sum()]
+    for transp in get_transpositions(probs_table):
+        marginal_probs = [probs_table.transpose(transp)[1, ...].sum(),
+                          probs_table.transpose(transp)[0, ...].sum()]
         ind.append(marginal_probs)
     return np.array(ind)
 
@@ -90,7 +90,7 @@ def expected(counts_table):
     return exp_freqs
 
 
-def D(counts_table):
+def linkage(counts_table):
     """
     Return the linkage disequilibrium (D) for an arbitrary number of
     loci given their contingency table.

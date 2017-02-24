@@ -98,10 +98,7 @@ def is_di_repeat(kmer):
     if not len(set(kmer)) == 2:
         return False
 
-    if len(set(kmer[::2])) == 1 and len(set(kmer[1::2])) == 1:
-        return True
-    else:
-        return False
+    return bool(len(set(kmer[::2])) == 1 and len(set(kmer[1::2])) == 1)
 
 
 def get_kmer_summary(module):
@@ -151,16 +148,16 @@ def process_file(filename):
     Process a fastqc output file and calculate some summary statistics.
     """
 
-    fq = open(filename).readlines()
-    fq = [x.strip() for x in fq]
+    fq_lines = open(filename).readlines()
+    fq_lines = [x.strip() for x in fq_lines]
 
     fastqc_dict = {}
 
     # Get start and end position of all modules:
     mod_start = []
     mod_end = []
-    for i in range(0, len(fq)):
-        line = fq[i]
+    for i in range(0, len(fq_lines)):
+        line = fq_lines[i]
 
         if line == '>>END_MODULE':
             mod_end.append(i)
@@ -170,8 +167,8 @@ def process_file(filename):
             pass
 
     # Start processing modules. First one (Basic statitics) is apart:
-    for s, e in zip(mod_start[1:], mod_end[1:]):
-        module = fq[s:e]
+    for start, end in zip(mod_start[1:], mod_end[1:]):
+        module = fq_lines[start:end]
         module_name = module[0].split('\t')[0]
         if module_name == '>>Kmer Content':
 
