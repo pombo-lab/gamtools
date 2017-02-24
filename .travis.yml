@@ -5,6 +5,7 @@ python:
   - "3.5"
   - "3.6"
 install:
+  - pip install --upgrade pip setuptools
   - pip install tox tox-travis coveralls codeclimate-test-reporter
 script:
   - tox
