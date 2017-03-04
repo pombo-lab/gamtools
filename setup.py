@@ -39,11 +39,12 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "1.0.0-alpha.1",
+    version = "1.0.0",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.com",
+    url = "http://gam.tools",
     description = ("A package containing some utilities for analyzing GAM data."),
-    license = "BSD",
+    license = "Apache2.0",
     package_dir = {'': 'lib'},
     packages=['gamtools', 'gamtools.qc'],
     ext_modules = ext_modules,
@@ -51,12 +52,14 @@ setup(
       'cython',
       'numpy',
       'scipy',
-      'doit==0.29.0;python_version<"3.0"',
-      'mock;python_version<"3.0"',
-      'doit==0.30.0;python_version>="3.0"',
       'pandas',
       'wrapit',
       'pytest'],
+    extras_require={
+      ':python_version<"3.0"': ['doit==0.29.0'],
+      ':python_version>="3.0"': ['doit==0.30.0'],
+      ':python_version<"3.0"': ['mock'],
+    },
     # Set include_dirs in a custom build_ext class so that numpy is only
     # required if we are compiling C files
     cmdclass={
@@ -75,8 +78,9 @@ setup(
     long_description=read('README.md'),
     include_package_data=True,
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: BSD License",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "License :: OSI Approved :: Apache Software License",
     ],
 )
