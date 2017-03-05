@@ -9,6 +9,8 @@ install:
   - pip install tox tox-travis coveralls codeclimate-test-reporter
 script:
   - tox
+after_success:
+  - coveralls
 deploy:
   provider: pypi
   user: rob.beagrie
