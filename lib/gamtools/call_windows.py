@@ -580,6 +580,42 @@ def plot_signal_and_noise_fitting(sample_name, fitting_results):
     prettify_plot(sample_name, fig)
 
 
+def fixed_threshold_fitting_func(read_threshold):
+    """
+    Factory function for creating fitting functions that return a pre-specified
+    threshold for every sample.
+
+    :param int read_threshold: Read threshold to use for every sample.
+    :returns: Fitting function.
+    """
+
+    read_threshold = int(read_threshold)
+
+    def fixed_threshold_fitting(sample_coverage_data):
+        """
+        Return a pre-specified read coverage threshold.
+
+        :param sample_coverage_data: Array of read counts per \
+                genomic window.
+        :type sample_coverage_data: :class:`~numpy.ndarray`
+        :returns: Dictionary of fitting results.
+        """
+
+        counts, breaks = np.histogram(
+            np.log10(
+                filter_data(
+                    sample_coverage_data, 99.99)), bins=50)
+
+        params = None
+
+        return {'read_threshold': read_threshold,
+                'counts': counts,
+                'breaks': breaks,
+                'params': params}
+
+    return fixed_threshold_fitting
+
+
 def signal_and_noise_fitting(sample_coverage_data):
     """
     Fit a composite negative binomial and lognormal
