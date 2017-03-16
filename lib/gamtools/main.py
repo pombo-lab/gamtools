@@ -282,9 +282,6 @@ process_parser.add_argument(
     default=os.getcwd(),
     help='Write segregation, matrix etc. to this directory')
 process_parser.add_argument(
-    '-f', '--fittings_dir', metavar='FITTINGS_DIRECTORY',
-    help='Write segregation curve fitting plots to this directory')
-process_parser.add_argument(
     '-d', '--details-file',
     help='If specified, write a table of fitting parameters to this path')
 process_parser.add_argument(
@@ -317,6 +314,18 @@ process_parser.add_argument(
     '-q', '--minimum-mapq', metavar='MINIMUM_MAPQ', default=20, type=int,
     help='Filter out any mapped read with a mapping quality less than x '
     '(default is 20, use -q 0 for no filtering)')
+
+# If a fixed threshold is specified, we don't need to plot the fits
+fit_method = process_parser.add_mutually_exclusive_group()
+fit_method.add_argument(
+    '-f', '--fitting-folder', metavar='FITTING_FOLDER',
+    help='If specified, save the individual curve fittings to this folder')
+fit_method.add_argument(
+    '-x', '--fixed-threshold', metavar='NUM_READS',
+    dest='fitting_function',
+    type=call_windows.fixed_threshold_fitting_func,
+    help='Instead of fitting each sample individually, use a fixed threshold '
+    'to determine which windows are positive.')
 
 # Add options for doit, the task runner engine (www.pydoit.org)
 add_doit_options(process_parser,
