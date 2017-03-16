@@ -15,6 +15,14 @@ chr1    200000  250000  0   6
 
 data_two_samples = segregation.open_segregation(fixture_two_samples)
 
+def test_filter_data():
+
+    data = np.arange(100)
+
+    filtered_data = call_windows.filter_data(data, 99.5)
+
+    assert_array_equal(filtered_data, np.arange(1,99))
+
 def test_fixed_threshold_4():
 
     threshold_function = call_windows.fixed_threshold_fitting_func(4)
