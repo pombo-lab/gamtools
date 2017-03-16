@@ -54,14 +54,17 @@ call_windows_parser.add_argument(
     help='Output segregation file to create '
     '(or "-" to write to stdout)')
 
-# If --macs is specified, we don't need to plot the fits
+# If a fixed threshold is specified, we don't need to plot the fits
 seg_method = call_windows_parser.add_mutually_exclusive_group()
 seg_method.add_argument(
     '-f', '--fitting-folder', metavar='FITTING_FOLDER',
     help='If specified, save the individual curve fittings to this folder')
 seg_method.add_argument(
-    '-m', '--macs', action='store_true',
-    help='If specified, use MACS to call positive windows')
+    '-x', '--fixed-threshold', metavar='NUM_READS',
+    dest='fitting_function',
+    type=call_windows.fixed_threshold_fitting_func,
+    help='Instead of fitting each sample individually, use a fixed threshold '
+    'to determine which windows are positive.')
 
 call_windows_parser.set_defaults(
     func=call_windows.threshold_from_args,
