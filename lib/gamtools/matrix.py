@@ -492,10 +492,11 @@ def kth_diag_indices(array, diag_k):
     rows, cols = np.diag_indices_from(array)
     if diag_k < 0:
         return rows[:diag_k], cols[-diag_k:]
-    elif diag_k > 0:
+
+    if diag_k > 0:
         return rows[diag_k:], cols[:-diag_k]
-    else:
-        return rows, cols
+
+    return rows, cols
 
 
 def apply_threshold(proximity_matrix, thresholds):
