@@ -584,7 +584,7 @@ def process_nps_from_args(args):
 
     check_resolution_consistency(args)
 
-    if len(args.matrix_sizes):
+    if args.matrix_sizes:
         args.to_run.append('Calculating linkage matrix')
 
     task_dict = {
