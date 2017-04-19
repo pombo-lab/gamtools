@@ -302,7 +302,7 @@ def filter_data(x, percentile, no_zeros=True):
 
     out_data = x[points_to_keep]
 
-    if out_data:
+    if out_data.size:
 
         return out_data
 
