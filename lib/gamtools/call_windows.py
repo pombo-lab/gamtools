@@ -289,7 +289,7 @@ def filter_data(x, percentile, no_zeros=True):
     """
 
     percentile_score = scoreatpercentile(x, percentile)
-    less_than_percentile = x < percentile_score
+    less_than_percentile = list(x < percentile_score)
 
     if no_zeros:
         not_a_zero = x > 0
@@ -302,17 +302,15 @@ def filter_data(x, percentile, no_zeros=True):
 
     out_data = x[points_to_keep]
 
-    if len(out_data):
+    if out_data.size:
 
         return out_data
 
-    elif no_zeros:
+    if no_zeros:
 
         return x[not_a_zero]
 
-    else:
-
-        return x
+    return x
 
 
 def threshold_n_binom(params, p_value, thresh_range=None):

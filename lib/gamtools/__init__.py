@@ -12,3 +12,6 @@ key modules of interest for third-party developers are:
 - gamtools.segregation: functions for dealing with segregation tables (GAM datasets)
 
 """
+
+#from . import call_windows, compaction, cosegregation, enrichment, matrix, \
+#     permutation, plotting, radial_position, segregation, utils

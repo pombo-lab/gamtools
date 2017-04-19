@@ -64,8 +64,8 @@ def regions_are_valid(regions):
 
     if any(invalid_regions):
         return False
-    else:
-        return True
+
+    return True
 
 
 def prepare_regions(regions):
