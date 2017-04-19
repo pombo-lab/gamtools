@@ -108,7 +108,7 @@ def index_from_interval(segregation_table, interval):
 
     covered_windows = np.nonzero(window_in_region)[0]
 
-    if not covered_windows:
+    if not covered_windows.size:
         if not chrom in segregation_table.index.levels[0]:
             raise InvalidChromError(
                 '{0} not found in the list of windows'.format(chrom))
