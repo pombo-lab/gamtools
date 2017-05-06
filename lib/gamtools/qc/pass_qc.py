@@ -140,7 +140,7 @@ def parse_conditions_file(conditions_file, stats_df):
 
         fields = line.split()
 
-        if (line[0] == '#') or len(fields) == 0:
+        if (line[0] == '#') or (not fields):
             continue
 
         left_str, operator, right_str = fields

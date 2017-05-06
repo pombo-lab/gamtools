@@ -35,7 +35,7 @@ except ImportError:
     genomic_signal = failed_import
     failed_packages.append('metaseq')
 
-if len(failed_packages) > 0:
+if failed_packages:
 
     if len(failed_packages) > 1:
         package_list = ', '.join(failed_packages[:-1])
