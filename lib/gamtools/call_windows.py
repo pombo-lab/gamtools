@@ -763,10 +763,6 @@ def threshold_from_args(args):
     Wrapper function to pass arguments to threshold_file from argparse.
     """
 
-    if args.macs:
-        raise NotImplementedError('Thresholding using macs is not supported')
-
-    else:
-        threshold_file(args.coverage_file, args.output_file,
-                       args.fitting_folder, args.details_file,
-                       args.fitting_function)
+    threshold_file(args.coverage_file, args.output_file,
+                   args.fitting_folder, args.details_file,
+                   args.fitting_function)
