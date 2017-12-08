@@ -9,6 +9,7 @@
 *.pyc
 *.pyd
 *.c
+slice/*.out
 
 # Packages #
 ############
