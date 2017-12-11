@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, compaction
+        permutation, plotting, pipeline, select_samples, slice, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -432,6 +432,18 @@ select_parser.add_argument(
     help='Output file path (or - to write to stdout)')
 
 select_parser.set_defaults(func=select_samples.select_samples_from_args)
+
+# Options for 'slice' command
+
+slice_parser = subparsers.add_parser(
+    'slice',
+    help='Use the SLICE library')
+
+slice_parser.add_argument(
+    '-i', '--rand-number', required=True, type=int,
+    help='A random-number to seed')
+
+slice_parser.set_defaults(func=slice.run_slice_from_args)
 
 # Options for 'test' command
 

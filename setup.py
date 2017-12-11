@@ -1,25 +1,16 @@
 import os
 from setuptools import setup, Extension
+from Cython.Distutils import build_ext
 
-try:
-    from Cython.Distutils import build_ext
-except:
-    from setuptools.command.build_ext import build_ext
-    ext_modules = [
-        Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.c"]),
-        Extension('gamtools.mirnylib_numutils_internal',
-                   ["lib/gamtools/mirnylib_numutils_internal.c"],
-                   ),
-    ]
-else:
-    ext_modules = [
-        Extension('gamtools.cosegregation_internal',
-                  ["lib/gamtools/cosegregation_internal.pyx"]),
-        Extension('gamtools.mirnylib_numutils_internal',
-                  ["lib/gamtools/mirnylib_numutils_internal.pyx"],
-                   ),
-    ]
+ext_modules = [
+    Extension('gamtools.cosegregation_internal',
+              ["lib/gamtools/cosegregation_internal.pyx"]),
+    Extension('gamtools.mirnylib_numutils_internal',
+              ["lib/gamtools/mirnylib_numutils_internal.pyx"]),
+    Extension('gamtools.slice',
+              sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice.cpp"],
+              language='c++'),
+               ]
 
 
 class CustomBuildExtCommand(build_ext):
@@ -37,6 +28,7 @@ class CustomBuildExtCommand(build_ext):
                               'before installing GAMtools.')
 
         self.include_dirs.append(numpy.get_include())
+        self.include_dirs.append('lib/gamtools/data/include')
 
         build_ext.run(self)
 
