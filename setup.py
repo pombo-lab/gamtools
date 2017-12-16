@@ -2,15 +2,20 @@ import os
 from setuptools import setup, Extension
 from Cython.Distutils import build_ext
 
-ext_modules = [
-    Extension('gamtools.cosegregation_internal',
-              ["lib/gamtools/cosegregation_internal.pyx"]),
-    Extension('gamtools.mirnylib_numutils_internal',
-              ["lib/gamtools/mirnylib_numutils_internal.pyx"]),
-    Extension('gamtools.slice',
-              sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice.cpp"],
-              language='c++'),
-               ]
+try:
+    from Cython.Distutils import build_ext
+except:
+    from setuptools.command.build_ext import build_ext
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.c"])]
+else:
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.pyx"]),
+                   Extension('gamtools.slice_wrapper',
+                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                             libraries=["gsl", "gslcblas"],
+                             language='c++'),
+                   ]
 
 
 class CustomBuildExtCommand(build_ext):
