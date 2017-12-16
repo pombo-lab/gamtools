@@ -10,8 +10,9 @@ except:
 else:
     ext_modules = [Extension('gamtools.cosegregation_internal',
                    ["lib/gamtools/cosegregation_internal.pyx"]),
-                   Extension('gamtools.slice',
-                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice.cpp"],
+                   Extension('gamtools.slice_wrapper',
+                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                             libraries=["gsl", "gslcblas"],
                              language='c++'),
                    ]
 
