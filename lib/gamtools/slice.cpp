@@ -5,14 +5,14 @@
 #include<string.h>
 #include<cmath>
 #include<sstream>
-#include "GAM-Tools_functions.h"
+#include "slice.h"
 
-#define m  
-#define n_p
-#define b 
-#define h
-#define R
-#define L
+#define m 204
+#define n_p 1
+#define b 30000
+#define h 0.22
+#define R 4.5
+#define L 5000000000
 
 #define file_tube  "matrix.out"
 #define file_chr_names "chr_names.out" 
@@ -32,7 +32,7 @@
 
 using namespace std;
 
-int main(){
+int run_slice(){
     
 #pragma mark DEFINE VARIABLES
 
@@ -302,4 +302,8 @@ int main(){
 
     return(0);
     
+}
+
+int main(){
+    return run_slice();
 }
