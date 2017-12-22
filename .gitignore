@@ -10,6 +10,7 @@
 *.pyd
 *.c
 slice/*.out
+lib/gamtools/slice_wrapper.cpp
 
 # Packages #
 ############

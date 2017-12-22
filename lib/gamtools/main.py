@@ -440,8 +440,12 @@ slice_parser = subparsers.add_parser(
     help='Use the SLICE library')
 
 slice_parser.add_argument(
-    '-i', '--rand-number', required=True, type=int,
-    help='A random-number to seed')
+    '-s', '--segregation-file-path', required=True,
+    help='Path to a segregation file')
+
+slice_parser.add_argument(
+    '-o', '--output-dir', required=True,
+    help='Path to output directory')
 
 slice_parser.set_defaults(func=slice.run_slice_from_args)
 
