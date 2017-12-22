@@ -24,13 +24,7 @@ const int over=100;
 const int thr_u0=100;
 const long int N_draws=1e4;
 const int n_p=1;
-const string file_tube="matrix.out";
 const int m=204;
-const string file_chr_names="chr_names.out";
-const string file_chr_indeces="chr_indeces.out";
-
-const string file_pi_out="./output/pi/pi_pairs";
-const char file_out_pi_thr[] ="./output/pi_thresholds/pi_thresholds";
 
 const int single_chr=-1;
 const int b=30000;
@@ -270,7 +264,7 @@ vector<vector<bool> > load_matrix_tubes(string file_tube, int &n_rows, int &n_co
 
 }
 
-void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_analyse, vector<unsigned int> & start_ind, vector<unsigned int> & end_ind, vector<unsigned int> & chromo_length, vector<int> & ind_chromo_to_analyse,  int & n_chromo_to_analyse,  string file_chr_names, string file_chr_indeces, int single_chr){
+void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_analyse, vector<unsigned int> & start_ind, vector<unsigned int> & end_ind, vector<unsigned int> & chromo_length, vector<int> & ind_chromo_to_analyse,  int & n_chromo_to_analyse,  string file_chr_names, string file_chr_indices, int single_chr){
         
     ifstream is;
     stringstream ss;
@@ -278,7 +272,7 @@ void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_a
     int temp_int, n_chromosomes, n_loci_temp;
     bool flag;
     const char * file_chr_names_char=file_chr_names.c_str();
-    const char * file_chr_indeces_char=file_chr_indeces.c_str();
+    const char * file_chr_indices_char=file_chr_indices.c_str();
 
     is.open(file_chr_names_char,ios::in); 
     if(is==0){
@@ -292,9 +286,9 @@ void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_a
     }
     is.close();
     
-    is.open(file_chr_indeces_char,ios::in); 
+    is.open(file_chr_indices_char,ios::in); 
     if(is==0){
-        cerr << "File with chromosomes' indeces not found!" << endl;
+        cerr << "File with chromosomes' indices not found!" << endl;
         exit(1);
     }
     
@@ -405,7 +399,7 @@ void compute_m1s_eps(long double *avg_m1s, long double * var_m1s, long int *nuse
 }
 
 
-void output_pi_thr(const char* temp_file_name, int m, int n_p, double b, double R, double eps_value, double h, vector<unsigned int> distances_u0, vector<long double> pi_thr){
+void output_pi_thr(string temp_file_name, int m, int n_p, double b, double R, double eps_value, double h, vector<unsigned int> distances_u0, vector<long double> pi_thr){
         
     ofstream os;
 
@@ -683,8 +677,8 @@ void compute_pi_thresholds(vector<long double> & pi_thr, vector<long double>  qu
 }
 
 
-int run_slice(){
-    
+int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices){
+
 #pragma mark DEFINE VARIABLES
 
     ifstream is;
@@ -706,7 +700,7 @@ int run_slice(){
     long double *eps;
     long double eps_value, pi, diff_exp_theo, ratio, u0_value;
 
-    char temp_file_name [1000];
+    string temp_file_name;
 
     vector< vector<bool> > matrix;
     vector<string> chromosomes, chromo_to_analyse;
@@ -742,7 +736,7 @@ int run_slice(){
 #pragma mark LOAD CHROMOSOMES INFO 
     
     cout << "Loading chromosomes info..." << endl;
-    load_chromo_info(chromosomes, chromo_to_analyse, start_ind, end_ind, chromo_length, ind_chromo_to_analyse, n_chromo_to_analyse, file_chr_names, file_chr_indeces, single_chr);
+    load_chromo_info(chromosomes, chromo_to_analyse, start_ind, end_ind, chromo_length, ind_chromo_to_analyse, n_chromo_to_analyse, file_chr_names, file_chr_indices, single_chr);
     cout << "Analysing chromosomes: " << endl;    
     for(int i=0; i<ind_chromo_to_analyse.size(); i++){    
         cout << chromo_to_analyse[i] << " " << ind_chromo_to_analyse[i] << endl;
@@ -835,9 +829,8 @@ int run_slice(){
             exit(1);
         }  
                 
-        temp_string=("_"+chromosomes[index]+".out");
-        strcpy(temp_file_name, file_out_pi_thr);
-        //strcat(temp_file_name, temp_string.c_str());
+        temp_file_name=file_out_pi_thr;
+        temp_file_name=temp_file_name+"_"+chromosomes[index]+".out";
         
         cout << "Writing output file with thresholds for pi's for chromosome " << chromosomes[index] << endl;
         output_pi_thr(temp_file_name,  m,  n_p,  b,  R,  eps_vector[i],  h,  distances_u0,  pi_thr);
@@ -953,5 +946,9 @@ int run_slice(){
 
     return(0);
  
+}
+
+int compilation_test(){
+    return(4);
 }
 
