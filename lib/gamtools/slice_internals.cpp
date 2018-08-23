@@ -24,13 +24,8 @@ const int over=100;
 const int thr_u0=100;
 const long int N_draws=1e4;
 const int n_p=1;
-const int m=204;
 
 const int single_chr=-1;
-const int b=30000;
-const double h=0.22;
-const double R=4.5;
-const long L=5000000000;
 
 long double compute_v0(long double avg_m1s_m, int n_p, const double eps_fix ){
     
@@ -677,14 +672,14 @@ void compute_pi_thresholds(vector<long double> & pi_thr, vector<long double>  qu
 }
 
 
-int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices){
+int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices, int m, long L, int b, double h, double R){
 
 #pragma mark DEFINE VARIABLES
 
     ifstream is;
     ofstream os;
     stringstream ss;
-    ofstream os_pi;            
+    ofstream os_pi;
 
     int n_columns, n_rows, temp_int, n_chromosomes, n_loci_temp, n_chromo_to_analyse, index, index_chromo, ind_locus;
     int locus;

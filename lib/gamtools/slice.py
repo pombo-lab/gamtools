@@ -53,22 +53,61 @@ def create_matrix_file(segregation_table, matrix_path):
     print('Creating matrix file: {}'.format(matrix_path))
     segregation_table.to_csv(matrix_path, header=False, index=False, sep='\t')
 
-def split_segregation_table(segregation_file_path, matrix_path, chr_names_path, chr_indices_path):
+def segregation_info(segregation_table, haploid_chroms):
+    m = segregation_table.shape[1]
+    print('{} tubes in dataset'.format(m))
 
-    segregation_table = segregation.open_segregation(segregation_file_path)
+    segregation_windows = segregation_table.reset_index()[['chrom', 'start', 'stop']]
+    segregation_windows['size'] = segregation_windows.stop - segregation_windows.start
+    L = segregation_windows.loc[
+            np.logical_not(segregation_windows.chrom.isin(haploid_chroms)),
+            'size'].sum() * 2
+    print('Diploid genome size is {}'.format(L))
+
+    bin_sizes = segregation_windows['size'].value_counts()
+    frequent_sizes = [size for (size, freq)
+                      in (bin_sizes / bin_sizes.sum()).iteritems()
+                      if freq > 0.99]
+    if not frequent_sizes:
+        raise Exception('SLICE requires windows of even sizes')
+    b = frequent_sizes[0]
+    print('Bin size is {}'.format(b))
+
+    return m, L, b
+
+def split_segregation_table(segregation_table, matrix_path, chr_names_path, chr_indices_path):
 
     create_chr_indices_file(segregation_table, chr_indices_path)
     create_chr_names_file(segregation_table, chr_names_path)
     create_matrix_file(segregation_table, matrix_path)
 
-def run_slice(segregation_file_path, output_dir):
+def process_segregation_table(segregation_file_path, matrix_path,
+                              chr_names_path, chr_indices_path,
+                              haploid_chroms):
+
+    segregation_table = segregation.open_segregation(segregation_file_path)
+
+    split_segregation_table(segregation_table, matrix_path, chr_names_path, chr_indices_path)
+
+    return segregation_info(segregation_table, haploid_chroms)
+
+def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R):
     print('Running slice...')
 
     pi_out_path, threshold_out_path, chr_names_path, chr_indices_path, matrix_path = get_slice_output_dirs(output_dir)
 
-    split_segregation_table(segregation_file_path, matrix_path, chr_names_path, chr_indices_path)
+    m, L, b = process_segregation_table(segregation_file_path, matrix_path,
+                                     chr_names_path, chr_indices_path,
+                                     haploid_chroms)
 
-    slice_wrapper.slice(matrix_path, pi_out_path, threshold_out_path, chr_names_path, chr_indices_path)
+    slice_wrapper.slice(matrix_path,
+          pi_out_path, threshold_out_path,
+          chr_names_path, chr_indices_path,
+          m, L, b, h, R)
 
 def run_slice_from_args(args):
-    run_slice(args.segregation_file_path, args.output_dir)
+    run_slice(args.segregation_file_path,
+              args.output_dir,
+              args.haploid_chroms,
+              args.slice_thickness,
+              args.nuclear_radius)
