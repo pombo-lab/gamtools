@@ -104,13 +104,9 @@ def segregation_info(segregation_table, haploid_chroms):
 
     segregation_windows = segregation_table.reset_index()[['chrom', 'start', 'stop']]
     segregation_windows['size'] = segregation_windows.stop - segregation_windows.start
-    diploid_size = segregation_windows.loc[
+    L = segregation_windows.loc[
         np.logical_not(segregation_windows.chrom.isin(haploid_chroms)),
         'size'].sum() * 2
-    haploid_size = segregation_windows.loc[
-        segregation_windows.chrom.isin(haploid_chroms),
-        'size'].sum()
-    L = diploid_size + haploid_size
     print('Diploid genome size is {}'.format(L))
 
     bin_sizes = segregation_windows['size'].value_counts()

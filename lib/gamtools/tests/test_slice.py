@@ -22,7 +22,6 @@ def test_slice_pkg_structure():
 def test_slice_compilation():
     assert gamtools.slice_wrapper.test_compilation() == 4
 
-
 @patch('gamtools.gam_slice.get_slice_output_dirs', return_value=['a', 'b', 'c', 'd', 'e'])
 @patch('gamtools.gam_slice.slice_wrapper.slice')
 def test_slice_no_G(slice_mock, output_dirs_mock):
@@ -47,5 +46,3 @@ def test_slice_with_G(slice_mock, output_dirs_mock):
     gamtools.gam_slice.run_slice_from_args(args)
 
     slice_mock.assert_called_with('e', 'a', 'b', 'c', 'd', 5, 1e9, 1000, 0.22, 100)
-
-
