@@ -4,9 +4,6 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libgsl0ldbl
 install:
   - pip install --upgrade pip setuptools
   - pip install tox tox-travis coveralls codeclimate-test-reporter
@@ -14,6 +11,10 @@ script:
   - tox
 after_success:
   - coveralls
+addons:
+  apt:
+    packages:
+    - libgsl-dev
 deploy:
   provider: pypi
   user: rob.beagrie
