@@ -13,7 +13,7 @@ after_success:
 addons:
   apt:
     packages:
-    - libgsl-dev
+    - libgsl0-dev
 deploy:
   provider: pypi
   user: rob.beagrie
