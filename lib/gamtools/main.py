@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, slice, compaction
+        permutation, plotting, pipeline, select_samples, gam_slice, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -432,7 +432,7 @@ slice_parser.add_argument(
     '-R', '--nuclear-radius', default=4.5, type=float,
     help='Radius of the nucleus (same units as slice thickness)')
 
-slice_parser.set_defaults(func=slice.run_slice_from_args)
+slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
 slice_parser.set_defaults(haploid_chroms=['chrX', 'chrY'])
 
 # Options for 'test' command
