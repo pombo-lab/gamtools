@@ -424,7 +424,16 @@ slice_parser.add_argument(
     '-o', '--output-dir', required=True,
     help='Path to output directory')
 
+slice_parser.add_argument(
+    '-t', '--slice-thickness', default=0.22, type=float,
+    help='Thickness of cryosections (same units as nuclear radius)')
+
+slice_parser.add_argument(
+    '-R', '--nuclear-radius', default=4.5, type=float,
+    help='Radius of the nucleus (same units as slice thickness)')
+
 slice_parser.set_defaults(func=slice.run_slice_from_args)
+slice_parser.set_defaults(haploid_chroms=['chrX', 'chrY'])
 
 # Options for 'test' command
 
