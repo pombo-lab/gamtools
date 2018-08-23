@@ -1,7 +1,4 @@
 language: python
-os:
-  - linux
-  - osx
 python:
   - '2.7'
   - '3.5'
@@ -19,12 +16,6 @@ addons:
     - libgsl0-dev
 env:
   - CFLAGS="-std=c++11"
-matrix:
-  exclude:
-  - python: 3.5
-    os: osx
-  - python: 3.4
-    os: osx
 deploy:
   provider: pypi
   user: rob.beagrie
