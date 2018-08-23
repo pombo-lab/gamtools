@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, slice, compaction
+        permutation, plotting, pipeline, select_samples, gam_slice, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -417,10 +417,23 @@ slice_parser = subparsers.add_parser(
     help='Use the SLICE library')
 
 slice_parser.add_argument(
-    '-i', '--rand-number', required=True, type=int,
-    help='A random-number to seed')
+    '-s', '--segregation-file-path', required=True,
+    help='Path to a segregation file')
 
-slice_parser.set_defaults(func=slice.run_slice_from_args)
+slice_parser.add_argument(
+    '-o', '--output-dir', required=True,
+    help='Path to output directory')
+
+slice_parser.add_argument(
+    '-t', '--slice-thickness', default=0.22, type=float,
+    help='Thickness of cryosections (same units as nuclear radius)')
+
+slice_parser.add_argument(
+    '-R', '--nuclear-radius', default=4.5, type=float,
+    help='Radius of the nucleus (same units as slice thickness)')
+
+slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
+slice_parser.set_defaults(haploid_chroms=['chrX', 'chrY'])
 
 # Options for 'test' command
 
