@@ -224,7 +224,7 @@ vector<vector<bool> > load_matrix_tubes(string file_tube, int &n_rows, int &n_co
     const char* file_tube_char= file_tube.c_str();
     
     is.open(file_tube_char, ios::in);
-    if(is==0){
+    if(is.fail()){
         cerr << "File " << file_tube << " not found!" << endl;
         exit(1);
         
@@ -270,7 +270,7 @@ void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_a
     const char * file_chr_indices_char=file_chr_indices.c_str();
 
     is.open(file_chr_names_char,ios::in); 
-    if(is==0){
+    if(is.fail()){
         cerr << "File with chromosomes' names not found! (' " << file_chr_names << " ')" << endl;
         exit(1);
         
@@ -282,7 +282,7 @@ void load_chromo_info(vector<string> & chromosomes,  vector<string> &chromo_to_a
     is.close();
     
     is.open(file_chr_indices_char,ios::in); 
-    if(is==0){
+    if(is.fail()){
         cerr << "File with chromosomes' indices not found!" << endl;
         exit(1);
     }
@@ -399,7 +399,7 @@ void output_pi_thr(string temp_file_name, int m, int n_p, double b, double R, do
     ofstream os;
 
     os.open(temp_file_name, ios::out);
-    if(os==0){
+    if(os.fail()){
         cerr << "Output file " << temp_file_name << " impossible to open!" << endl;
         exit(1);
     }
@@ -848,7 +848,7 @@ int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, stri
         temp_file_name_2=file_pi_out;
         temp_file_name_2=temp_file_name_2+"_"+chromosomes[index_chromo]+".out";
         os_pi.open(temp_file_name_2.c_str(), ios::out);
-        if(os_pi==0){
+        if(os_pi.fail()){
             cerr << "File " << temp_file_name_2 << " impossible to open!" << endl;
         }
  
