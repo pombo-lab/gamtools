@@ -4,7 +4,7 @@ import itertools
 import pandas as pd
 import numpy as np
 from . import matrix
-from mirnylib.numutils import removeDiagonals, observedOverExpected
+from mirnylib_numutils import removeDiagonals, observedOverExpected
 
 
 def open_feature_file(feature_file_path):
