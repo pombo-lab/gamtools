@@ -49,6 +49,7 @@ docs/_build
 # py.test #
 ###########
 .cache/
+.pytest_cache/
 
 # tox #
 ###########

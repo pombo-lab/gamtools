@@ -104,15 +104,19 @@ def segregation_info(segregation_table, haploid_chroms):
 
     segregation_windows = segregation_table.reset_index()[['chrom', 'start', 'stop']]
     segregation_windows['size'] = segregation_windows.stop - segregation_windows.start
-    L = segregation_windows.loc[
+    diploid_size = segregation_windows.loc[
         np.logical_not(segregation_windows.chrom.isin(haploid_chroms)),
         'size'].sum() * 2
+    haploid_size = segregation_windows.loc[
+        segregation_windows.chrom.isin(haploid_chroms),
+        'size'].sum()
+    L = diploid_size + haploid_size
     print('Diploid genome size is {}'.format(L))
 
     bin_sizes = segregation_windows['size'].value_counts()
     frequent_sizes = [size for (size, freq)
                       in (bin_sizes / bin_sizes.sum()).iteritems()
-                      if freq > 0.99]
+                      if freq > 0.95]
     if not frequent_sizes:
         raise Exception('SLICE requires windows of even sizes')
     b = frequent_sizes[0]
@@ -147,7 +151,7 @@ def process_segregation_table(segregation_file_path, matrix_path,
     return segregation_info(segregation_table, haploid_chroms)
 
 
-def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R):
+def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R, genome_size): #pylint: disable=too-many-arguments
     """
     Wrapper function that takes a path to a segregation file, opens and
     processes the segregation table and runs the underlying SLICE C++
@@ -168,6 +172,9 @@ def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R):
                                         chr_indices_path,
                                         haploid_chroms)
 
+    if genome_size is not None:
+        L = genome_size
+
     slice_wrapper.slice(matrix_path, pi_out_path,
                         threshold_out_path,
                         chr_names_path, chr_indices_path,
@@ -181,4 +188,5 @@ def run_slice_from_args(args):
               args.output_dir,
               args.haploid_chroms,
               args.slice_thickness,
-              args.nuclear_radius)
+              args.nuclear_radius,
+              args.genome_size)
