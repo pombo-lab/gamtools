@@ -429,6 +429,10 @@ slice_parser.add_argument(
     help='Thickness of cryosections (same units as nuclear radius)')
 
 slice_parser.add_argument(
+    '-L', '--genome-size', default=None, type=float,
+    help='Total number of bp in the diploid genome of the species studied.')
+
+slice_parser.add_argument(
     '-R', '--nuclear-radius', default=4.5, type=float,
     help='Radius of the nucleus (same units as slice thickness)')
 
