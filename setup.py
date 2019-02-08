@@ -5,11 +5,21 @@ try:
     from Cython.Distutils import build_ext
 except:
     from setuptools.command.build_ext import build_ext
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.c"])]
+    ext_modules = [
+        Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.c"]),
+        Extension('gamtools.mirnylib_numutils_internal',
+                   ["lib/gamtools/mirnylib_numutils_internal.c"],
+                   extra_compile_args=["-mmacosx-version-min=10.9"]),
+    ]
 else:
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.pyx"])]
+    ext_modules = [
+        Extension('gamtools.cosegregation_internal',
+                  ["lib/gamtools/cosegregation_internal.pyx"]),
+        Extension('gamtools.mirnylib_numutils_internal',
+                  ["lib/gamtools/mirnylib_numutils_internal.pyx"],
+                   extra_compile_args=["-mmacosx-version-min=10.9"]),
+    ]
 
 
 class CustomBuildExtCommand(build_ext):
