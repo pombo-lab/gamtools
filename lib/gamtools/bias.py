@@ -1,13 +1,36 @@
-import argparse
+"""
+======================
+The bias module
+======================
+
+The bias module contains functions for calculating the bias in raw or
+normalised proximity matrices.
+
+Given an external variable that might lead to matrix bias, the module first
+normalises the whole proximity matrix by genomic distance, then calculates the
+average normalised proximity value for pairs of windows with a certain range of
+values of the external variable. For example, if the external variable were
+restriction site density, we would expect two windows with high restriction
+site density to have higher ligation frequency on average in un-normalised Hi-C
+matrices. If a Hi-C matric has been well-normalised, we would expect the
+average ligation frequency of two windows to be independent of their
+restriction site density.
+
+"""
 import itertools
 
 import pandas as pd
 import numpy as np
 from . import matrix
-from mirnylib_numutils import removeDiagonals, observedOverExpected
+from .mirnylib_numutils import removeDiagonals, observedOverExpected
 
 
 def open_feature_file(feature_file_path):
+    """Open a bedgraph file containing the feature to be tested for bias
+
+    :param feature_file_path: Path to bedgraph file
+    :returns: :class:`pandas.DataFrame` giving the feature value for each window
+    """
 
     feature_bed = pd.read_csv(
         feature_file_path,
@@ -19,113 +42,134 @@ def open_feature_file(feature_file_path):
 
 
 def calculate_bins(feature_bed):
+    """Calculate the deciles of a feature value
+
+    :param feature_bed: :class:`pandas.DataFrame` giving the feature value for each window
+    :returns: List of boundaries between deciles.
+    """
 
     finite_vals = feature_bed.loc[
         np.isfinite(feature_bed.feature), 'feature'
     ]
 
-    return ([-np.inf] + 
+    return ([-np.inf] +
             [np.percentile(finite_vals, q) for q in range(10, 100, 10)] +
             [np.inf])
 
 
-def discretize_feature(feature_bed, bins=10, percentiles=None):
+def discretize_feature(feature_bed):
+    """Split the feature values into ten equal sized bins (deciles)
 
-    col_all_vals = np.array(feature_bed.feature).astype(np.float64)
+    :param feature_bed: :class:`pandas.DataFrame` giving the feature value for each window
+    :returns: :class:`pandas.Series` giving the bin label for each window
+    """
 
-    col_values = col_all_vals[np.isfinite(col_all_vals)]
-
-    if not percentiles:
-        percentiles = np.linspace(10,90,bins-1)
-
-    col_bins = ([-np.inf] + 
-                [np.percentile(col_values, q) for q in percentiles] +
-                [np.inf])
+    col_bins = calculate_bins(feature_bed)
 
     labels = ['bin_{}_to_{}'.format(low, high)
               for low, high
               in zip(col_bins[:-1], col_bins[1:])]
 
-    return pd.cut(col_all_vals, bins=col_bins,
+    return pd.cut(feature_bed.feature, bins=col_bins,
                   labels=labels)
 
 
-def get_biases_heatmap(df, col, value_getter):
-
-    col_labels = sorted([label for label in df.loc[~df[col].isnull(), col].unique()])
-    bin_combinations = {get_key(l1,l2):[] for l1, l2 in itertools.combinations_with_replacement(col_labels, 2)}
-
-    for chrom in ['chr{}'.format(c) for c in range(1,20)]:
-        chrom_matrix = value_getter(chrom)
-
-        for lab1, lab2 in bin_combinations.keys():
-
-            bins1 = np.array(df.loc[df.chrom==chrom, col] == lab1)
-            bins2 = np.array(df.loc[df.chrom==chrom, col] == lab2)
-
-            bin_combinations[(lab1, lab2)].append(chrom_matrix[bins1,:][:,bins2])
-
-    bin_comb_means = {labels:np.nanmean(np.concatenate([v.flatten() for v in values]))
-                      for labels, values in bin_combinations.items()}
-
-    n_cols = len(col_labels)
-    means_matrix = np.zeros((n_cols, n_cols))
-    for p,q in itertools.product(range(n_cols), range(n_cols)):
-        means_matrix[p,q] = bin_comb_means[get_key(col_labels[p], col_labels[q])]
-
-    return col_labels, means_matrix
-
-
 def get_key(*vals):
+    """Helper function to get the label for a pair of bins"""
     return tuple(sorted(vals))
 
 
-def remove_zeros(a):
-    s = np.nansum(a, axis=0) > 0
-    b = a[:, s]
-    c = b[s, :]
-    return c, s
+def remove_zeros(arr):
+    """Remove columns and rows that sum to zero from a symmetric matrix
+
+    :param arr: 2d symmetric :class:`numpy.Array`
+    :returns: Matrix with no columns or rows that sum to zero and a binary \
+            array giving positions of removed columns/rows.
+    """
+
+    zero_positions = np.nansum(arr, axis=0) > 0
+    arr_rows = arr[:, zero_positions]
+    arr_rows_cols = arr_rows[zero_positions, :]
+    return arr_rows_cols, zero_positions
 
 
-def replace_zeros(a, s, value=np.NAN):
-    N = len(s)
-    new_a = np.ones((N, N), dtype=a.dtype) * value
-    tmp = np.ones((N, len(a)), dtype=a.dtype) * value
-    tmp[s, :] = a
-    new_a[:, s] = tmp
-    return new_a
+def replace_zeros(arr, old_columns, value=np.NAN):
+    """Place new columns and rows into a symmetric matrix
+
+    :param arr: 2d symmetric :class:`numpy.Array`
+    :param old_columns: 1d binary :class:`numpy.Array` giving positions of \
+            old columns/rows in the new matrix.
+    :param value: Fill value for newly inserted columns/rows
+    :returns: Matrix with new columns and rows in the specified positions.
+    """
+    new_size = len(old_columns)
+    new_arr = np.ones((new_size, new_size), dtype=arr.dtype) * value
+    tmp = np.ones((new_size, len(arr)), dtype=arr.dtype) * value
+    tmp[old_columns, :] = arr
+    new_arr[:, old_columns] = tmp
+    return new_arr
 
 
-def get_obs_over_exp(A):
+def get_obs_over_exp(arr):
+    """Calculate a distance normalised version of input array
 
-    removeDiagonals(A, 1)
-    A, mask = remove_zeros(A)
+    :param arr: 2d symmetric :class:`numpy.Array`
+    :returns: Matrix with each diagonal divided by its own mean. (i.e.
+            distance normalised).
+    """
 
-    M = len(A.flat)
-    toclip = 100 * min(0.999, (M - 10.) / M)
+    removeDiagonals(arr, 1)
+    arr, mask = remove_zeros(arr)
 
-    A = observedOverExpected(A)
-    A = np.clip(A, -1e10, np.percentile(A, toclip))
+    arr_size = len(arr.flat)
+    toclip = 100 * min(0.999, (arr_size - 10.) / arr_size)
 
-    return replace_zeros(A, mask)
+    arr = observedOverExpected(arr)
+    arr = np.clip(arr, -1e10, np.percentile(arr, toclip))
+
+    return replace_zeros(arr, mask)
 
 
-def calculate_bias_matrix(feature_bed, matrices):
+def calculate_bias_matrix(feature_bed, matrix_paths):
+    """Given a list of paths to matrix files and a :class:`pandas.DataFrame`
+    giving a feature value for each window in those matrices, calculate the
+    average normalised matrix value between sets of windows in the same
+    decile for the feature value.
+
+    For example, where the feature in question is restriction site density and
+    the matrices are generated by Hi-C, this function would calculate the mean
+    ligation frequency between all pairs of windows where one window is in the
+    top 10% of windows by restriction site density and the other window is in
+    the bottom 10% by restriction site density, after correcting for genomic
+    distance. This calculation is repeated for each possible pair of deciles (
+    i.e. for 10% vs 20%, 10% vs 30%, 10% vs 40% etc.) and the results are
+    returned as a matrix.
+
+
+    :param feature_bed: :class:`pandas.DataFrame` giving the feature value \
+            for each window
+    :param matrix_paths: List of paths to matrix files.
+    :returns: :class:`pandas.DataFrame` giving the average \
+            distance-normalised value between any two bins in any two \
+            combinations of deciles.
+    """
+    #pylint: disable=too-many-locals
+    #TODO: Refactor this function
 
     col_labels = sorted([label for label in feature_bed.feature_bins.unique()])
 
     bin_combinations = {
-        get_key(l1, l2):[] 
-        for l1, l2 
+        get_key(l1, l2):[]
+        for l1, l2
         in itertools.combinations_with_replacement(col_labels, 2)
     }
 
-    for matrix_path in matrices:
-        (w1, w2), mat = matrix.read_file(matrix_path)
+    for matrix_path in matrix_paths:
+        (windows, _windows), mat = matrix.read_file(matrix_path)
 
         normed_mat = get_obs_over_exp(mat)
 
-        chrom_bins = feature_bed.loc[w1, 'feature_bins']
+        chrom_bins = feature_bed.loc[windows, 'feature_bins']
 
         for lab1, lab2 in bin_combinations.keys():
 
@@ -133,15 +177,15 @@ def calculate_bias_matrix(feature_bed, matrices):
             bins2 = np.array(chrom_bins == lab2)
 
             bin_combinations[(lab1, lab2)].append(
-                normed_mat[bins1,:][:,bins2])
+                normed_mat[bins1, :][:, bins2])
 
     bin_comb_means = {labels:np.nanmean(np.concatenate(values, axis=None))
                       for labels, values in bin_combinations.items()}
 
     n_cols = len(col_labels)
     means_matrix = np.zeros((n_cols, n_cols))
-    for p,q in itertools.product(range(n_cols), range(n_cols)):
-        means_matrix[p,q] = bin_comb_means[get_key(col_labels[p], col_labels[q])]
+    for ix_1, ix_2 in itertools.product(range(n_cols), range(n_cols)):
+        means_matrix[ix_1, ix_2] = bin_comb_means[get_key(col_labels[ix_1], col_labels[ix_2])]
 
     means_dataframe = pd.DataFrame(means_matrix)
 
@@ -152,6 +196,7 @@ def calculate_bias_matrix(feature_bed, matrices):
 
 
 def calculate_bias_from_args(args):
+    """Helper function to call calculate_bias_matrix from doit"""
 
     feature_bed = open_feature_file(args.feature_path)
 

@@ -45,7 +45,8 @@ bias_parser.add_argument(
 
 bias_parser.add_argument(
     '-f', '--feature-path', metavar='FEATURE_PATH', required=True,
-    help='Paths to bed file with one additional column giving the feature to use for calculating biases')
+    help='Paths to bed file with one additional column giving the feature to \
+    use for calculating biases')
 
 bias_parser.add_argument(
     '-o', '--output-path', required=True,
