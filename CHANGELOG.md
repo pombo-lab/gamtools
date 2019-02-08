@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed command line option for MACS window calling
+- Removed support for Python3.4
 
 ## [1.1.0] - 2017-05-06
 ### Added
@@ -50,4 +51,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [1.0.0]: https://github.com/pombo-lab/gamtools/compare/nature-2017...v1.0.0
 [1.1.0]: https://github.com/pombo-lab/gamtools/compare/v1.0.0...v1.1.0
+[1.1.1]: https://github.com/pombo-lab/gamtools/compare/v1.1.0...v1.1.1
 
