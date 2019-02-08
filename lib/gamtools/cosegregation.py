@@ -46,7 +46,6 @@ class InvalidDataError(Exception):
     """
     Exception raised if segregation data contains anything other than 0s and 1s.
     """
-    pass
 
 
 def regions_are_valid(regions):

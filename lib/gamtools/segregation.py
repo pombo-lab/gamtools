@@ -66,7 +66,6 @@ import pandas as pd
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
-    pass
 
 
 def open_segregation(path_or_buffer):
