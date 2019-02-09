@@ -10,7 +10,7 @@ except:
                    ["lib/gamtools/cosegregation_internal.c"]),
         Extension('gamtools.mirnylib_numutils_internal',
                    ["lib/gamtools/mirnylib_numutils_internal.c"],
-                   extra_compile_args=["-mmacosx-version-min=10.9"]),
+                   ),
     ]
 else:
     ext_modules = [
@@ -18,7 +18,7 @@ else:
                   ["lib/gamtools/cosegregation_internal.pyx"]),
         Extension('gamtools.mirnylib_numutils_internal',
                   ["lib/gamtools/mirnylib_numutils_internal.pyx"],
-                   extra_compile_args=["-mmacosx-version-min=10.9"]),
+                   ),
     ]
 
 
