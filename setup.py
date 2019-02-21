@@ -53,7 +53,7 @@ setup(
       'numpy',
       'scipy',
       'pandas',
-      'wrapit',
+      'wrapit>=0.3.0',
       'pytest'],
     extras_require={
       ':python_version<"3.0"': ['doit==0.29.0'],
