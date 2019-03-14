@@ -758,6 +758,11 @@ def threshold_file(input_file, output_file,
         fitting_data.to_csv(fitting_details_file, sep='\t', index=False)
 
 
+def merge_coverage(targets, dependencies):
+    (output_file, ) = targets
+    print('DEBUG:', output_file)
+
+
 def threshold_from_args(args):
     """
     Wrapper function to pass arguments to threshold_file from argparse.
