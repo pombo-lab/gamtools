@@ -56,7 +56,7 @@ def regions_are_valid(regions):
     :returns: Returns False if any regions contain invalid data, otherwise True.
     """
 
-    allowed_values = set([0, 1])
+    allowed_values = set([0, 1)
     region_unique_values = [
         set(np.unique(np.array(region).ravel())) for region in regions]
     invalid_regions = [not region_values.issubset(
