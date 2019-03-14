@@ -216,7 +216,7 @@ def get_cosegregation_from_regions(*regions):
     return coseg_func(*regions)
 
 
-def get_cosesgregation(segregation_data, *location_strings):
+def get_cosegregation(segregation_data, *location_strings):
     """Calculate co-segregation frequencies for a given genomic
     location or locations. Where only one location is given,
     co-segregation is calculated for that region against itself.
