@@ -38,6 +38,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
+from . import segregation
 
 # define plt as a global so that we can import
 # matplotlib later if we need it
@@ -756,6 +757,31 @@ def threshold_file(input_file, output_file,
 
     if fitting_details_file is not None:
         fitting_data.to_csv(fitting_details_file, sep='\t', index=False)
+
+
+def merge_reads_coverage(targets, dependencies):
+    """Merge multiple files containing coverage per window for single libraries
+    into one big table containing one column for each input file.
+
+    :param targets: An iterable containing one output path for saving the \
+            merged table
+    :param dependencies: An iterable containing the paths for all of the \
+            input files
+    """
+
+    (output_file, ) = targets
+    input_coverage_paths = list(dependencies)
+
+    first_coverage_path = input_coverage_paths.pop()
+    merged_coverage_table = segregation.open_segregation(first_coverage_path)
+
+    for next_coverage_path in input_coverage_paths:
+        merged_coverage_table = pd.merge(
+            merged_coverage_table,
+            segregation.open_segregation(next_coverage_path),
+            left_index=True, right_index=True)
+
+    merged_coverage_table.to_csv(output_file, sep='\t')
 
 
 def threshold_from_args(args):

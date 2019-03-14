@@ -321,7 +321,8 @@ process_parser.add_argument(
 # Add options for doit, the task runner engine (www.pydoit.org)
 add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
-                  'reporter', 'num_process', 'par_type', 'reset_dep'])
+                  'reporter', 'num_process', 'par_type',
+                  'reset_dep'])
 
 
 def get_script(script_name):
