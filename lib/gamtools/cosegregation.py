@@ -37,6 +37,7 @@ import numpy as np
 
 from .cosegregation_internal import cosegregation_2d, cosegregation_3d, \
         linkage_2d, linkage_3d, dprime_2d
+from .npmi import npmi_2d
 from . import segregation, matrix
 from .utils import format_genomic_distance
 
@@ -330,7 +331,54 @@ def get_dprime(segregation_data, *location_strings):
 
     return get_dprime_from_regions(*regions)
 
+
+def get_npmi_from_regions(*regions):
+    """Get the full normalized pointwise mutual information (npmi) matrix for n
+    regions.
+
+    This is a wrapper which determines the correct npmi function to call based
+    on the number of regions. Only two-dimensional matrices are currently
+    supported. Where only one region is given, npmi is calculated for that
+    region against itself.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the \
+            normalized pointwise mutual information (npmi) of all \
+            possible combinations of windows within the different regions.
+    """
+
+    regions = prepare_regions(regions)
+
+    if len(regions) == 2:
+        npmi_func = npmi_2d
+    else:
+        raise NotImplementedError(
+            'There is currently no implementation of npmi for more than '
+            '2 dimensions')
+
+    return npmi_func(*regions)
+
+
+def get_npmi(segregation_data, *location_strings):
+    """Calculate the normalized pointwise mutual information (npmi) matrix for a given
+    genomic location or locations. Where only one location is given, npmi
+    is calculated for that region against itself.  Where two regions
+    are given, linkage is calculated for region one against region two.
+
+    :param segregation_data: Input :ref:`segregation table <segregation_table>`
+    :param str location_strings: One or more :ref:`location strings <location_string>`.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the \
+            normalized pointwise mutual information (npmi) of all \
+            possible combinations of windows within the different regions.
+    """
+
+    regions = [segregation.region_from_location_string(
+        segregation_data, l) for l in location_strings]
+
+    return get_npmi_from_regions(*regions)
+
 MATRIX_TYPES = {
+    'npmi': get_npmi_from_regions,
     'dprime': get_dprime_from_regions,
     'linkage': get_linkage_from_regions,
     'cosegregation': get_cosegregation_from_regions,
