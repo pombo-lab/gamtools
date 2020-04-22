@@ -14,16 +14,19 @@ provides functions that calculate the co-segregation of genomic regions,
 thereby allowing the relative nuclear proximity of different regions
 to be inferred.
 
-Co-segregation, the number of times that location x and location y are
-found in the same :ref:`nuclear profile <NPs>`, is the simplest measure
-of proximity but there are alternative approaches. Other ways of generating a
-:ref:`proximity matrix <proximity_matrices>` generally attempt to normalize for
-the differential detection of the two locations. For example, if locations x
-and y are detected in 100 :ref:`NPs` and location z is detected in only 20, the
+Co-segregation, the number of times that location x and location y are found in
+the same :ref:`nuclear profile <NPs>`, is the simplest measure of proximity but
+there are alternative approaches. Other ways of generating a :ref:`proximity
+matrix <proximity_matrices>` generally attempt to normalize for the
+differential detection of the two locations. For example, if locations x and y
+are detected in 100 :ref:`NPs` and location z is detected in only 20, the
 co-segregation of x and y will likely be higher than that between x and z even
-if their respective nuclear proximities are the same. In general, the approach
-that best accounts for such detection effects is the
-:func:`normalized linkage disequilibrium <get_dprime>` (or Dprime).
+if their respective nuclear proximities are the same. We have previously
+reported that the approach which best accounts for such detection effects is
+the :func:`normalized linkage disequilibrium <get_dprime>` (or Dprime).
+However, as of GAMtools v2.0 the recommended metric (and the new default for
+all matrix calculations) is :func"`normalized pointwise mutual information \
+        <get_npmi>`.
 
 
 """
