@@ -39,10 +39,11 @@ import numpy as np
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
 
-# define plt as a global so that we can import
-# matplotlib later if we need it
-plt = None
-
+# Don't throw an error if matplotlib is not installed unless we try to use it
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    plt = None
 
 def cumulative_neg_binom(x, n, p):
     """
@@ -408,14 +409,9 @@ def plot_combined_signal_noise(breaks, counts, params):
     :param tuple params: Parameters of the composite \
             distribution (see  :func:`~n_binom_plus_log_normal`).
     """
-    global plt
 
     if plt is None:
-        try:
-            from matplotlib import pyplot
-            plt = pyplot
-        except ImportError:
-            raise ImportError('Plotting requires matplotlib to be installed.')
+        raise ImportError('Plotting requires matplotlib to be installed.')
 
     fit = sum(counts) * n_binom_plus_log_normal(params,
                                                 breaks)
@@ -533,14 +529,8 @@ def plot_signal_and_noise_fitting(sample_name, fitting_results):
             by :func:`~signal_and_noise_fitting`.
     """
 
-    global plt
-
     if plt is None:
-        try:
-            from matplotlib import pyplot
-            plt = pyplot
-        except ImportError:
-            raise ImportError('Plotting requires matplotlib to be installed.')
+        raise ImportError('Plotting requires matplotlib to be installed.')
 
     fig = plt.figure(figsize=(16, 9))
 
@@ -763,10 +753,6 @@ def threshold_from_args(args):
     Wrapper function to pass arguments to threshold_file from argparse.
     """
 
-    if args.macs:
-        raise NotImplementedError('Thresholding using macs is not supported')
-
-    else:
-        threshold_file(args.coverage_file, args.output_file,
-                       args.fitting_folder, args.details_file,
-                       args.fitting_function)
+    threshold_file(args.coverage_file, args.output_file,
+                   args.fitting_folder, args.details_file,
+                   args.fitting_function)

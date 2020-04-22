@@ -79,6 +79,7 @@ import sys
 import os
 import itertools
 import argparse
+import gzip
 
 import numpy as np
 import pandas as pd
@@ -217,7 +218,7 @@ def read_triangular(filepath):
     upper_i = np.triu_indices_from(proximity_matrix)
     proximity_matrix[:] = np.NAN
     proximity_matrix[lower_i] = list(itertools.chain(*arr))
-    proximity_matrix[upper_i] = proximity_matrix.T[upper_i]
+    proximity_matrix[upper_i] = proximity_matrix.T[upper_i] # pylint: disable=E1136
     proximity_matrix[proximity_matrix > 1.] = np.NAN
 
     return None, proximity_matrix
@@ -275,7 +276,6 @@ def write_zipped_txt(windows, proximity_matrix, output_file):
     :param str filepath: Path to save matrix file.
     """
 
-    import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_txt(windows, proximity_matrix, zipped_output)
 
@@ -353,7 +353,6 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
     :param str filepath: Path to save zipped csv file.
     """
 
-    import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_csv(windows, proximity_matrix, zipped_output)
 

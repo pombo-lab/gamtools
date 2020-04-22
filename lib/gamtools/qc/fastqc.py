@@ -156,8 +156,7 @@ def process_file(filename):
     # Get start and end position of all modules:
     mod_start = []
     mod_end = []
-    for i in range(0, len(fq_lines)):
-        line = fq_lines[i]
+    for i, line in enumerate(fq_lines):
 
         if line == '>>END_MODULE':
             mod_end.append(i)

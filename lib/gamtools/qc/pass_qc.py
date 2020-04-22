@@ -96,8 +96,6 @@ class QcParamError(Exception):
     Exception to be raised if the QC Parameters file is malformed.
     """
 
-    pass
-
 
 def do_comparison(left_str, operator, right_str, stats_df):
     """

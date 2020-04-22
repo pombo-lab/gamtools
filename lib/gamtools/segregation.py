@@ -66,7 +66,6 @@ import pandas as pd
 
 class InvalidChromError(Exception):
     """Exception to be raised when an invalid chromosome is specified"""
-    pass
 
 
 def open_segregation(path_or_buffer):
@@ -100,7 +99,7 @@ def index_from_interval(segregation_table, interval):
             'Interval start {0} larger than interval end {1}'.format(
                 *interval))
 
-    window_in_region = np.logical_and(
+    window_in_region = np.logical_and( #pylint: disable=assignment-from-no-return
         np.logical_and(
             segregation_table.index.get_level_values('stop') > start,
             segregation_table.index.get_level_values('start') < stop),
