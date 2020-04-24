@@ -79,7 +79,6 @@ import sys
 import os
 import itertools
 import argparse
-import gzip
 
 import numpy as np
 import pandas as pd
@@ -162,18 +161,6 @@ def read_txt(filepath, compression='infer'):
     windows_1 = windows_from_name_strings(proximity_matrix.columns)
 
     return (windows_0, windows_1), proximity_matrix.values
-
-
-def read_zipped_txt(filepath):
-    """Open a gzipped txt file containing a proximity matrix
-
-    :param str filepath: Path to the gzip compressed txt file
-    :returns: (list of genomic locations for x-axis, list of \
-    genomic locations for y-axis), \
-            :class:`numpy array <numpy.ndarray>` proximity matrix.
-    """
-
-    return read_txt(filepath, compression='gzip')
 
 
 def read_windows(filepath, chrom):
@@ -267,19 +254,6 @@ def write_txt(windows, proximity_matrix, output_file):
             output_file, sep='\t', na_rep="NaN")
 
 
-def write_zipped_txt(windows, proximity_matrix, output_file):
-    """Write a proximity matrix to a zipped txt file.
-
-    :param tuple windows: (list of x-axis windows, list of y-axis windows)
-    :param proximity_matrix: Input proximity matrix.
-    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
-    :param str filepath: Path to save matrix file.
-    """
-
-    with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
-        write_txt(windows, proximity_matrix, zipped_output)
-
-
 def write_npz(windows, proximity_matrix, output_file):
     """Write a proximity matrix to an npz file.
 
@@ -337,26 +311,6 @@ def write_csv(windows, proximity_matrix, output_file):
     interactions_df[output_cols].to_csv(output_file, sep='\t', index=False)
 
 
-def write_zipped_csv(windows, proximity_matrix, output_file):
-    """Write a proximity matrix to a zipped csv file.
-
-    csv file outputs a table giving the index of the windows on the x- and
-    y-axis, the interaction score (if the score is greater than 0), the
-    chromosome, and the distance between the two windows. It is only
-    appropriate for intra-chromosomal proximity matrices because the
-    matrix is assumed to be symmetrical, and duplicated information
-    is discarded.
-
-    :param tuple windows: (list of x-axis windows, list of y-axis windows)
-    :param proximity_matrix: Input proximity matrix.
-    :type proximity_matrix: :class:`numpy array <numpy.ndarray>`
-    :param str filepath: Path to save zipped csv file.
-    """
-
-    with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
-        write_csv(windows, proximity_matrix, zipped_output)
-
-
 def write_png(windows, proximity_matrix, output_file): #pylint: disable=unused-argument
     """Write a proximity matrix to a .png image file.
 
@@ -374,9 +328,9 @@ def write_png(windows, proximity_matrix, output_file): #pylint: disable=unused-a
 OUTPUT_FORMATS = {
     'npz': write_npz,
     'txt': write_txt,
-    'txt.gz': write_zipped_txt,
+    'txt.gz': write_txt,
     'csv': write_csv,
-    'csv.gz': write_zipped_csv,
+    'csv.gz': write_csv,
     'png': write_png,
 }
 
