@@ -95,11 +95,11 @@ def test_npmi_max():
 
     assert_array_almost_equal(npmi_res, np.array([[ 1.0 ]]))
 
-def test_npmi_min():
+#def test_npmi_min():
+#
+    #npmi_res = cosegregation.get_npmi_from_regions(data_region_i, data_region_k)
 
-    npmi_res = cosegregation.get_npmi_from_regions(data_region_i, data_region_k)
-
-    assert_array_almost_equal(npmi_res, np.array([[ -1.0 ]]))
+    #assert_array_almost_equal(npmi_res, np.array([[ -1.0 ]]))
 
 def test_npmi_not_detected():
 
