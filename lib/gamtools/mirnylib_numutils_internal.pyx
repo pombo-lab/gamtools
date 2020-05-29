@@ -20,7 +20,7 @@ def logbinsnew(a, b, ratio=0, N=0):
     if ratio != 0:
         if N != 0:
             raise ValueError("Please specify N or ratio")
-        N = np.log(b / a) / np.log(ratio)
+        N = int(np.log(b / a) / np.log(ratio))
     elif N == 0:
         raise ValueError("Please specify N or ratio")
     data10 = np.logspace(a10, b10, N)

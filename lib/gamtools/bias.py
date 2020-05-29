@@ -156,7 +156,7 @@ def calculate_bias_matrix(feature_bed, matrix_paths):
     #pylint: disable=too-many-locals
     #TODO: Refactor this function
 
-    col_labels = sorted([label for label in feature_bed.feature_bins.unique()])
+    col_labels = sorted(feature_bed.feature_bins.unique())
 
     bin_combinations = {
         get_key(l1, l2):[]
