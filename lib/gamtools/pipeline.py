@@ -67,29 +67,29 @@ def pretty_resolution(window_size):
     return utils.format_genomic_distance(window_size, precision=0)
 
 
-def reads_coverage_path(base_folder, window_size):
-    """Get the path to a reads coverage table given a base folder and resolution.
+def bp_coverage_path(base_folder, window_size):
+    """Get the path to a bp coverage table given a base folder and resolution.
 
-    :param str base_folder: Path to the folder containing the reads coverage table.
+    :param str base_folder: Path to the folder containing the bp coverage table.
     :param int window_size: Resolution in base pairs
-    :returns: Path to reads coverage table
+    :returns: Path to bp coverage table
     """
 
     return os.path.join(
         base_folder,
-        'reads_coverage_at_{0}.table'.format(
+        'bp_coverage_at_{0}.table'.format(
             pretty_resolution(window_size)))
 
 
-def individual_reads_coverage_path(window_size, bam_path):
-    """Get the path to a reads coverage table for one specific bam
+def individual_bp_coverage_path(window_size, bam_path):
+    """Get the path to a bp coverage table for one specific bam
 
     :param int window_size: Resolution in base pairs
-    :param str bam_path: Path to input bam for reads coverage calculation
-    :returns: Path to reads coverage table
+    :param str bam_path: Path to input bam for bp coverage calculation
+    :returns: Path to bp coverage table
     """
 
-    new_suffix = '.reads_at_{}.bed'.format(
+    new_suffix = '.bp_at_{}.bed'.format(
         pretty_resolution(window_size))
     return swap_extension(bam_path, new_suffix)
 
@@ -288,19 +288,20 @@ class InputFileMappingTasks():
             "uptodate": [True],
         }
 
-    def task_get_reads_coverage(self):
+    def task_get_bp_coverage(self):
         """Task to get read coverage per window for a range of resolutions"""
 
         for input_fastq in self.args.input_fastqs:
             for window_size in self.args.window_sizes:
                 input_bam = swap_extension(input_fastq, ".rmdup.bam")
-                output_cov = individual_reads_coverage_path(window_size, input_bam)
+                output_cov = individual_bp_coverage_path(window_size, input_bam)
                 yield {
-                    'basename': 'Getting reads coverage',
+                    'basename': 'Getting bp coverage',
                     'name': output_cov,
                     'actions': ['echo "chrom start stop %(dependencies)s" > %(targets)s',
-                                'bash -i -c "bedtools multicov -bams %(dependencies)s '
-                                '-bed <(bedtools makewindows -w {0} -g %(genome_file)s) '
+                                'bash -i -c "bedtools coverage -b %(dependencies)s '
+                                '-a <(bedtools makewindows -w {0} -g %(genome_file)s) '
+                                '| cut -d \'\t\' -f 1,2,3,7 '
                                 '>> %(targets)s"' .format(window_size)],
                     'targets': [output_cov],
                     'file_dep': [input_bam],
@@ -308,22 +309,22 @@ class InputFileMappingTasks():
                 }
 
 
-    def task_merge_reads_coverage(self):
-        """Task to merge reads coverage files for individual bams into a reads coverage table"""
+    def task_merge_bp_coverage(self):
+        """Task to merge bp coverage files for individual bams into a bp coverage table"""
 
         input_bamfiles = [swap_extension(input_fastq, ".rmdup.bam")
                           for input_fastq in self.args.input_fastqs]
 
         for window_size in self.args.window_sizes:
 
-            input_cov_files = [individual_reads_coverage_path(window_size, input_bam)
+            input_cov_files = [individual_bp_coverage_path(window_size, input_bam)
                                for input_bam in input_bamfiles]
 
             yield {
-                'basename': 'Merging reads coverage',
+                'basename': 'Merging bp coverage',
                 'name': '{0} windows'.format(pretty_resolution(window_size)),
                 'actions': [call_windows.merge_reads_coverage],
-                'targets': [reads_coverage_path(self.args.output_dir, window_size)],
+                'targets': [bp_coverage_path(self.args.output_dir, window_size)],
                 'file_dep': input_cov_files,
             }
 
@@ -333,7 +334,7 @@ class InputFileMappingTasks():
 
         for window_size in self.args.window_sizes:
 
-            input_coverage_file = reads_coverage_path(
+            input_coverage_file = bp_coverage_path(
                 self.args.output_dir, window_size)
             output_segregation_file = segregation_path(
                 self.args.output_dir, window_size)
