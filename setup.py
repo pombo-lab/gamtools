@@ -5,11 +5,21 @@ try:
     from Cython.Distutils import build_ext
 except:
     from setuptools.command.build_ext import build_ext
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.c"])]
+    ext_modules = [
+        Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.c"]),
+        Extension('gamtools.mirnylib_numutils_internal',
+                   ["lib/gamtools/mirnylib_numutils_internal.c"],
+                   ),
+    ]
 else:
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.pyx"])]
+    ext_modules = [
+        Extension('gamtools.cosegregation_internal',
+                  ["lib/gamtools/cosegregation_internal.pyx"]),
+        Extension('gamtools.mirnylib_numutils_internal',
+                  ["lib/gamtools/mirnylib_numutils_internal.pyx"],
+                   ),
+    ]
 
 
 class CustomBuildExtCommand(build_ext):
@@ -39,7 +49,7 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "1.1.1",
+    version = "2.0.0alpha0",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.com",
     url = "http://gam.tools",
@@ -53,7 +63,7 @@ setup(
       'numpy',
       'scipy',
       'pandas',
-      'wrapit',
+      'wrapit>=0.3.0',
       'pytest'],
     extras_require={
       ':python_version<"3.0"': ['doit==0.29.0'],
