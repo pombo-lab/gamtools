@@ -23,6 +23,33 @@ import pytest
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
         permutation, plotting, pipeline, select_samples, compaction
 
+def add_window_calling_options(base_parser):
+
+    base_parser.add_argument(
+        '-f', '--fitting-folder', metavar='FITTING_FOLDER',
+        help='If specified, save the individual curve fittings to this folder')
+
+    base_parser.add_argument( '-d', '--details-file',
+        help='If specified, write a table of fitting parameters to this path')
+
+    seg_method = base_parser.add_mutually_exclusive_group()
+
+    seg_method.add_argument(
+        '--orphan-window-bounds', metavar='LOW_PERCENTILE,HIGH_PERCENTILE',
+        dest='fitting_function',
+        type=call_windows.orphan_windows_fitting_func,
+        default='0,98',
+        help='Only accept thresholds within the given range of percentiles.')
+
+    seg_method.add_argument(
+        '-x', '--fixed-threshold', metavar='NUM_READS',
+        dest='fitting_function',
+        type=call_windows.fixed_threshold_fitting_func,
+        help='Instead of fitting each sample individually, use a fixed threshold '
+        'to determine which windows are positive.')
+
+    base_parser.set_defaults(
+        fitting_function=call_windows.orphan_windows_fitting_func('0,98'))
 
 parser = argparse.ArgumentParser(
     prog='gamtools',
@@ -67,30 +94,16 @@ call_windows_parser.add_argument(
     '(or "-" to read from stdin)')
 
 call_windows_parser.add_argument(
-    '-d', '--details-file',
-    help='If specified, write a table of fitting parameters to this path')
-
-call_windows_parser.add_argument(
     '-o', '--output-file', type=argparse.FileType('w'),
     default=sys.stdout,
     help='Output segregation file to create '
     '(or "-" to write to stdout)')
 
-# If a fixed threshold is specified, we don't need to plot the fits
-seg_method = call_windows_parser.add_mutually_exclusive_group()
-seg_method.add_argument(
-    '-f', '--fitting-folder', metavar='FITTING_FOLDER',
-    help='If specified, save the individual curve fittings to this folder')
-seg_method.add_argument(
-    '-x', '--fixed-threshold', metavar='NUM_READS',
-    dest='fitting_function',
-    type=call_windows.fixed_threshold_fitting_func,
-    help='Instead of fitting each sample individually, use a fixed threshold '
-    'to determine which windows are positive.')
+add_window_calling_options(call_windows_parser)
 
 call_windows_parser.set_defaults(
-    func=call_windows.threshold_from_args,
-    fitting_function=call_windows.signal_and_noise_fitting)
+        func=call_windows.threshold_from_args)
+
 
 # Options for the 'compaction' command
 
@@ -304,12 +317,6 @@ process_parser.add_argument(
     default=os.getcwd(),
     help='Write segregation, matrix etc. to this directory')
 process_parser.add_argument(
-    '-f', '--fittings_dir', metavar='FITTINGS_DIRECTORY',
-    help='Write segregation curve fitting plots to this directory')
-process_parser.add_argument(
-    '-d', '--details-file',
-    help='If specified, write a table of fitting parameters to this path')
-process_parser.add_argument(
     '-i', '--bigwigs', action='append_const',
     dest='to_run', const='Converting bedgraph to bigwig',
     help='Make bigWig files.')
@@ -345,6 +352,8 @@ add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
                   'reporter', 'num_process', 'par_type',
                   'reset_dep'])
+
+add_window_calling_options(process_parser)
 
 
 def get_script(script_name):
@@ -383,7 +392,7 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                                 'qc_parameters.example.cfg'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                            'quality_stats.txt', 'segregation_stats.txt'],
-                            fitting_function=call_windows.signal_and_noise_fitting)
+                            )
 
 # Options for the 'radial_pos' command
 

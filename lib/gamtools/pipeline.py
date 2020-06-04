@@ -347,9 +347,9 @@ class InputFileMappingTasks():
                 'actions': [],
             }
 
-            if self.args.fittings_dir:
+            if self.args.fitting_folder:
                 full_fitting_dir = os.path.join(
-                    self.args.output_dir, self.args.fittings_dir, '{0}'.format(
+                    self.args.output_dir, self.args.fitting_folder, '{0}'.format(
                         pretty_resolution(window_size)))
                 task['actions'].append(
                     'mkdir -pv {0}'.format(full_fitting_dir))

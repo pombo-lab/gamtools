@@ -21,9 +21,7 @@ def test_fixed_threshold_4():
 
     fitting_result = threshold_function(data_two_samples.Sample_A)
 
-    assert fitting_result['read_threshold'] == 4
-    assert 'counts' in fitting_result
-    assert 'breaks' in fitting_result
+    assert fitting_result['coverage_threshold'] == 4.0
     assert fitting_result['params'] is None
 
 
