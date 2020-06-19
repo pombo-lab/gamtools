@@ -32,12 +32,10 @@ truly present in the original NP.
 from __future__ import print_function
 import sys
 import os
-from bisect import bisect_left
 
 import pandas as pd
 import numpy as np
-from scipy.stats import scoreatpercentile, nbinom, norm, mode
-from scipy.optimize import fmin
+from scipy.stats import mode
 from . import segregation
 
 # Don't throw an error if matplotlib is not installed unless we try to use it
@@ -78,7 +76,7 @@ def fixed_threshold_fitting_func(coverage_threshold):
 
     coverage_threshold = float(coverage_threshold)
 
-    def fixed_threshold_fitting(sample_coverage_data):
+    def fixed_threshold_fitting(sample_coverage_data): # pylint: disable=unused-argument
         """
         Return a pre-specified read coverage threshold.
 
@@ -96,17 +94,15 @@ def fixed_threshold_fitting_func(coverage_threshold):
     return fixed_threshold_fitting
 
 
-def get_orphan_windows(sample_coverage_data, threshold):
-    """ Find a coverage threshold that gives the minimum percentage of orphan
+
+def pct_orphan_windows(positive_windows):
+    """Given an array of windows, calculate the percentage of orphan
     windows (positive windows not neighbouring other positive windows).
 
-    :param sample_coverage_data: Array of bp coverage per \
-            genomic window.
-    :type sample_coverage_data: :class:`~numpy.ndarray`
-    :returns: Dictionary of fitting results.
+    :param positive_windows: Array representing positive or negative windows.
+    :returns: Percentage of positive windows not bordering other positive \
+    windows.
     """
-
-    positive_windows = sample_coverage_data > threshold
 
     # If there are no positive windows we cannot calculate a percentage
     # of orphan windows
@@ -123,10 +119,32 @@ def get_orphan_windows(sample_coverage_data, threshold):
     # check which positions in the rolling window match the filter
     orphan_windows = np.all(rolling_window == window_filter, axis=0)
 
-    return orphan_windows.sum() / positive_windows.sum()
+    total_orphans = orphan_windows.sum()
+
+    # Check whether the first and last windows are orphans
+    if (positive_windows[0] == 1) and (positive_windows[1] == 0):
+        total_orphans += 1
+
+    if (positive_windows[-1] == 1) and (positive_windows[-2] == 0):
+        total_orphans += 1
+
+    return float(total_orphans) / positive_windows.sum()
 
 
-def orphan_windows_fitting_func(percentile_str):
+def orphan_windows_fitting_func(percentile_str, clip=True):
+    """
+    Factory function for creating fitting functions that find the threshold
+    giving the minimum percentage of orphan windows.
+
+    :param str percentile_str: Upper and lower bounds for the percentiles of \
+      the coverage distribution to search for a threshold, for example \
+      '10,80' would force a threshold that is higher than 10% of the windows \
+      with non-zero coverage, but lower than 80%.
+    :param bool clip: Whether to clip the threshold to a minimum of one read \
+      (i.e. make sure windows need more than one mapping read to be \
+      considered positive)
+    :returns: Fitting function.
+    """
 
     bottom_percentile, top_percentile = (int(pct) for pct in percentile_str.split(','))
 
@@ -143,22 +161,25 @@ def orphan_windows_fitting_func(percentile_str):
         nonzero_coverage = sample_coverage_data[sample_coverage_data > 0]
 
         thresholds = [np.percentile(nonzero_coverage, pct)
-                      for pct in (range(bottom_percentile, top_percentile + 1))]
+                      for pct in range(bottom_percentile, top_percentile + 1)]
         orphan_windows = []
 
         for threshold in thresholds:
+
+            positive_windows = sample_coverage_data > threshold
+
             orphan_windows.append(
-                get_orphan_windows(sample_coverage_data, threshold))
+                pct_orphan_windows(positive_windows))
 
         optimal_threshold = thresholds[np.argmin(orphan_windows)]
 
-        single_read_estimate = mode(nonzero_coverage)[0][0]
+        if clip:
 
-        optimal_threshold = np.clip(optimal_threshold, single_read_estimate, None)
+            single_read_estimate = mode(nonzero_coverage)[0][0]
 
-        return {
-            'coverage_threshold': optimal_threshold,
-               }
+            optimal_threshold = np.clip(optimal_threshold, single_read_estimate, None)
+
+        return {'coverage_threshold': optimal_threshold}
 
     return orphan_windows_fitting
 
@@ -179,6 +200,14 @@ def prettify_plot(sample_name, fig):
 
 
 def plot_coverage_histogram(sample_name, sample_coverage_data, sample_fitting_data):
+    """
+    Plot the coverage histogram and threshold for a given sample.
+
+    :param str sample_name: Name of the sample to use as plot title
+    :param array sample_coverage_data: Array of windows with read coverages
+    :param dict sample_fitting_data: Dictionary containing a \
+      'coverage_threshold' key
+    """
 
     if plt is None:
         raise ImportError('Plotting requires matplotlib to be installed.')
