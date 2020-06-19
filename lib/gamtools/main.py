@@ -24,12 +24,16 @@ from . import bias, cosegregation, matrix, call_windows, enrichment, radial_posi
         permutation, plotting, pipeline, select_samples, compaction
 
 def add_window_calling_options(base_parser):
+    """
+    Add options related to window calling to an argparse parser.
+    """
 
     base_parser.add_argument(
         '-f', '--fitting-folder', metavar='FITTING_FOLDER',
         help='If specified, save the individual curve fittings to this folder')
 
-    base_parser.add_argument( '-d', '--details-file',
+    base_parser.add_argument(
+        '-d', '--details-file',
         help='If specified, write a table of fitting parameters to this path')
 
     seg_method = base_parser.add_mutually_exclusive_group()
