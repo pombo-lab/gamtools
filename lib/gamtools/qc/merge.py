@@ -42,7 +42,7 @@ def check_index_column(input_stats_files, merged_df):
 
     try:
         first_col = pd.read_csv(input_stats_files[0], delim_whitespace=True, dtype=str).iloc[:, 0]
-    except pd.io.common.EmptyDataError:
+    except pd.errors.EmptyDataError:
         input_stats_files[0].seek(0)
         first_col = pd.read_csv(input_stats_files[0], delim_whitespace=True, dtype=str).iloc[:, 0]
 
