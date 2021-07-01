@@ -99,15 +99,17 @@ def get_samtools_version():
     """Get the version number for the installed version of samtools"""
 
     try:
-        proc = subprocess.Popen('samtools',
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+
+        with subprocess.Popen('samtools',
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE) as proc:
+
+            output, err = proc.communicate() #pylint: disable=unused-variable
+            proc.wait()
+
     except OSError:
         sys.exit('samtools is either not installed or not present in $PATH. '
                  'Please install samtools to continue.')
-
-    output, err = proc.communicate() #pylint: disable=unused-variable
-    proc.wait()
 
     vnum_regexp = b'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
 
@@ -136,7 +138,7 @@ def get_samtools_sort_actions():
     return samtools_actions
 
 
-class InputFileMappingTasks(object):
+class InputFileMappingTasks():
     """Class for generating doit tasks from command-line arguments.
 
     GAMtools "process_nps" command generates a set of doit tasks at
