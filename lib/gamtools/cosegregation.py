@@ -180,8 +180,8 @@ def cosegregation_nd(*regions):
 
     result = list(map(get_frequency, combinations))
 
-    result_shape = tuple([len(region)
-                          for region in regions]) + (2, ) * len(regions)
+    result_shape = tuple(len(region)
+                         for region in regions) + (2, ) * len(regions)
 
     freqs = np.array(result).reshape(result_shape)
 

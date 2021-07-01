@@ -201,8 +201,7 @@ def plot_chrom_sig(signal_obj, ax, interval, color, bins=500):
     arr = chunk_genomic_signal(signal_obj, interval, bins=bins)
 
     top = np.ceil(np.percentile(arr[1], 98.))
-    if top < 2:
-        top = 2
+    top = max(top, 2)
 
     ax.fill_between(arr[0], arr[1], color=color)
     ax.set_ylim(1, top)
