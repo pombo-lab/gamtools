@@ -93,7 +93,11 @@ def create_matrix_file(segregation_table, matrix_path):
     segregation_table.to_csv(matrix_path, header=False, index=False, sep='\t')
 
 
+<<<<<<< HEAD
 def segregation_info(segregation_table, skip_chroms):
+=======
+def segregation_info(segregation_table, haploid_chroms):
+>>>>>>> 0ea3414a3e29b98feca5d2e4715a73f6160871d2
     """
     Given a segregation table, retrieve the number of tubes,
     the diploid genome size and the bin size.
@@ -104,9 +108,19 @@ def segregation_info(segregation_table, skip_chroms):
 
     segregation_windows = segregation_table.reset_index()[['chrom', 'start', 'stop']]
     segregation_windows['size'] = segregation_windows.stop - segregation_windows.start
+<<<<<<< HEAD
     L = segregation_windows.loc[
         np.logical_not(segregation_windows.chrom.isin(skip_chroms)),
         'size'].sum() * 2
+=======
+    diploid_size = segregation_windows.loc[
+        np.logical_not(segregation_windows.chrom.isin(haploid_chroms)),
+        'size'].sum() * 2
+    haploid_size = segregation_windows.loc[
+        segregation_windows.chrom.isin(haploid_chroms),
+        'size'].sum()
+    L = diploid_size + haploid_size
+>>>>>>> 0ea3414a3e29b98feca5d2e4715a73f6160871d2
     print('Diploid genome size is {}'.format(L))
 
     bin_sizes = segregation_windows['size'].value_counts()
@@ -134,7 +148,11 @@ def split_segregation_table(segregation_table, matrix_path, chr_names_path, chr_
 
 def process_segregation_table(segregation_file_path, matrix_path,
                               chr_names_path, chr_indices_path,
+<<<<<<< HEAD
                               skip_chroms):
+=======
+                              haploid_chroms):
+>>>>>>> 0ea3414a3e29b98feca5d2e4715a73f6160871d2
     """
     Given a path to a segregation table, split the table into three input
     files required by SLICE, then return information about the table.
