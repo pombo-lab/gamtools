@@ -93,7 +93,7 @@ def create_matrix_file(segregation_table, matrix_path):
     segregation_table.to_csv(matrix_path, header=False, index=False, sep='\t')
 
 
-def segregation_info(segregation_table, haploid_chroms):
+def segregation_info(segregation_table, skip_chroms):
     """
     Given a segregation table, retrieve the number of tubes,
     the diploid genome size and the bin size.
@@ -105,7 +105,7 @@ def segregation_info(segregation_table, haploid_chroms):
     segregation_windows = segregation_table.reset_index()[['chrom', 'start', 'stop']]
     segregation_windows['size'] = segregation_windows.stop - segregation_windows.start
     L = segregation_windows.loc[
-        np.logical_not(segregation_windows.chrom.isin(haploid_chroms)),
+        np.logical_not(segregation_windows.chrom.isin(skip_chroms)),
         'size'].sum() * 2
     print('Diploid genome size is {}'.format(L))
 
@@ -134,7 +134,7 @@ def split_segregation_table(segregation_table, matrix_path, chr_names_path, chr_
 
 def process_segregation_table(segregation_file_path, matrix_path,
                               chr_names_path, chr_indices_path,
-                              haploid_chroms):
+                              skip_chroms):
     """
     Given a path to a segregation table, split the table into three input
     files required by SLICE, then return information about the table.
@@ -144,10 +144,10 @@ def process_segregation_table(segregation_file_path, matrix_path,
 
     split_segregation_table(segregation_table, matrix_path, chr_names_path, chr_indices_path)
 
-    return segregation_info(segregation_table, haploid_chroms)
+    return segregation_info(segregation_table, skip_chroms)
 
 
-def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R, genome_size): #pylint: disable=too-many-arguments
+def run_slice(segregation_file_path, output_dir, skip_chroms, h, R, genome_size): #pylint: disable=too-many-arguments
     """
     Wrapper function that takes a path to a segregation file, opens and
     processes the segregation table and runs the underlying SLICE C++
@@ -166,7 +166,7 @@ def run_slice(segregation_file_path, output_dir, haploid_chroms, h, R, genome_si
                                         matrix_path,
                                         chr_names_path,
                                         chr_indices_path,
-                                        haploid_chroms)
+                                        skip_chroms)
 
     if genome_size is not None:
         L = genome_size
@@ -182,7 +182,7 @@ def run_slice_from_args(args):
 
     run_slice(args.segregation_file_path,
               args.output_dir,
-              args.haploid_chroms,
+              args.skip_chroms,
               args.slice_thickness,
               args.nuclear_radius,
               args.genome_size)

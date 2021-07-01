@@ -11,7 +11,7 @@ import gamtools.main
 Namespace = namedtuple('Namespace', (
                             'segregation_file_path',
                             'output_dir',
-                            'haploid_chroms',
+                            'skip_chroms',
                             'slice_thickness',
                             'nuclear_radius',
                             'genome_size'))
@@ -28,9 +28,11 @@ def test_slice_no_G(slice_mock, output_dirs_mock):
 
     segregation_path = gamtools.main.get_example('example_segregation.table')
     args = Namespace(segregation_path, '/path/to/matrix',
-                     ['chrX', 'chrY'], 0.22, 100, None)
+                     ['chrY'], 0.22, 100, None)
 
     gamtools.gam_slice.run_slice_from_args(args)
+
+    print(slice_mock)
 
     slice_mock.assert_called_with('e', 'a', 'b', 'c', 'd', 5, 24000, 1000, 0.22, 100)
 
@@ -41,7 +43,7 @@ def test_slice_with_G(slice_mock, output_dirs_mock):
 
     segregation_path = gamtools.main.get_example('example_segregation.table')
     args = Namespace(segregation_path, '/path/to/matrix',
-                     ['chrX', 'chrY'], 0.22, 100, 1e9)
+                     ['chrY'], 0.22, 100, 1e9)
 
     gamtools.gam_slice.run_slice_from_args(args)
 

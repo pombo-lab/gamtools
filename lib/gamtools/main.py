@@ -460,7 +460,7 @@ slice_parser.add_argument(
     help='Radius of the nucleus (same units as slice thickness)')
 
 slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
-slice_parser.set_defaults(haploid_chroms=['chrX', 'chrY'])
+slice_parser.set_defaults(skip_chroms=['chrY'])
 
 # Options for 'test' command
 
