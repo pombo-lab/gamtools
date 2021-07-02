@@ -1,36 +1,60 @@
 import os
+import sys
 from setuptools import setup, Extension
-from Cython.Distutils import build_ext
 
-ext_modules = [Extension('gamtools.cosegregation_internal',
-               ["lib/gamtools/cosegregation_internal.pyx"]),
-               Extension('gamtools.mirnylib_numutils_internal',
-                  ["lib/gamtools/mirnylib_numutils_internal.pyx"],),
-               Extension('gamtools.slice_wrapper',
-                         sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
-                         libraries=["gsl", "gslcblas"],
-                         language='c++'),
-               ]
+def parse_setuppy_commands():
+    """Check the commands and respond appropriately (avoid
+    parsing Cython and template files if False).
+    """
+    args = sys.argv[1:]
+
+    if not args:
+        # User forgot to give an argument probably, let setuptools handle that.
+        return True
+
+    info_commands = ['--help-commands', '--name', '--version', '-V',
+                     '--fullname', '--author', '--author-email',
+                     '--maintainer', '--maintainer-email', '--contact',
+                     '--contact-email', '--url', '--license', '--description',
+                     '--long-description', '--platforms', '--classifiers',
+                     '--keywords', '--provides', '--requires', '--obsoletes',
+                     'egg_info', 'install_egg_info', 'rotate']
+
+    for command in info_commands:
+        if command in args:
+            return False
+    else:
+        return True
 
 
-class CustomBuildExtCommand(build_ext):
-    """Customized setuptools build_ext command - checks numpy is installed."""
-    def run(self):
+if parse_setuppy_commands():
 
-        # Check numpy is installed before trying to find the location
-        # of numpy headers
+    from Cython.Distutils import build_ext
 
-        try:
-            import numpy
-        except ImportError:
-            raise ImportError('numpy need to be installed before GAMtools can be '
-                              'compiled. Try installing with "pip install numpy" '
-                              'before installing GAMtools.')
+    class CustomBuildExtCommand(build_ext):
+        """Customized setuptools build_ext command - checks numpy is installed."""
+        def run(self):
 
-        self.include_dirs.append(numpy.get_include())
-        self.include_dirs.append('lib/gamtools/data/include')
+            # Check numpy is installed before trying to find the location
+            # of numpy headers
 
-        build_ext.run(self)
+            try:
+                import numpy
+            except ImportError:
+                raise ImportError('numpy need to be installed before GAMtools can be '
+                                  'compiled. Try installing with "pip install numpy" '
+                                  'before installing GAMtools.')
+
+            self.include_dirs.append(numpy.get_include())
+            self.include_dirs.append('lib/gamtools/data/include')
+
+            build_ext.run(self)
+
+else:
+
+    from setuptools.command.build_ext import build_ext
+
+    CustomBuildExtCommand = build_ext
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -49,7 +73,15 @@ setup(
     license = "Apache2.0",
     package_dir = {'': 'lib'},
     packages=['gamtools', 'gamtools.qc'],
-    ext_modules = ext_modules,
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.pyx"]),
+                   Extension('gamtools.mirnylib_numutils_internal',
+                      ["lib/gamtools/mirnylib_numutils_internal.pyx"],),
+                   Extension('gamtools.slice_wrapper',
+                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                             libraries=["gsl", "gslcblas"],
+                             language='c++'),
+                   ],
     install_requires=[
       'cython',
       'numpy',
