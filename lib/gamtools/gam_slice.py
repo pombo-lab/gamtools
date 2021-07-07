@@ -107,7 +107,6 @@ def segregation_info(segregation_table, skip_chroms):
     L = segregation_windows.loc[
         np.logical_not(segregation_windows.chrom.isin(skip_chroms)),
         'size'].sum() * 2
-    print('Diploid genome size is {}'.format(L))
 
     bin_sizes = segregation_windows['size'].value_counts()
     frequent_sizes = [size for (size, freq)
@@ -147,7 +146,7 @@ def process_segregation_table(segregation_file_path, matrix_path,
     return segregation_info(segregation_table, skip_chroms)
 
 
-def run_slice(segregation_file_path, output_dir, skip_chroms, h, R, genome_size): #pylint: disable=too-many-arguments
+def run_slice(segregation_file_path, output_dir, skip_chroms, h, R, genome_size, n_p): #pylint: disable=too-many-arguments
     """
     Wrapper function that takes a path to a segregation file, opens and
     processes the segregation table and runs the underlying SLICE C++
@@ -171,10 +170,15 @@ def run_slice(segregation_file_path, output_dir, skip_chroms, h, R, genome_size)
     if genome_size is not None:
         L = genome_size
 
+    print('Slice thickness is {}'.format(h))
+    print('Nuclear radius is {}'.format(R))
+    print('Diploid genome size is {}'.format(L))
+    print('{} NPs per tube'.format(n_p))
+
     slice_wrapper.slice(matrix_path, pi_out_path,
                         threshold_out_path,
                         chr_names_path, chr_indices_path,
-                        m, L, b, h, R)
+                        m, L, b, h, R, n_p)
 
 
 def run_slice_from_args(args):
@@ -185,4 +189,5 @@ def run_slice_from_args(args):
               args.skip_chroms,
               args.slice_thickness,
               args.nuclear_radius,
-              args.genome_size)
+              args.genome_size,
+              args.nps_per_tube)

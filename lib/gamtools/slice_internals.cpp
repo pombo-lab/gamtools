@@ -23,7 +23,6 @@ const int under=0;
 const int over=100;
 const int thr_u0=100;
 const long int N_draws=1e4;
-const int n_p=1;
 
 const int single_chr=-1;
 
@@ -672,7 +671,7 @@ void compute_pi_thresholds(vector<long double> & pi_thr, vector<long double>  qu
 }
 
 
-int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices, int m, long L, int b, double h, double R){
+int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices, int m, long L, int b, double h, double R, int n_p){
 
 #pragma mark DEFINE VARIABLES
 

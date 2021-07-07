@@ -457,7 +457,11 @@ slice_parser.add_argument(
 
 slice_parser.add_argument(
     '-R', '--nuclear-radius', default=4.5, type=float,
-    help='Radius of the nucleus (same units as slice thickness)')
+    help='Radius of the nucleus (same units as slice thickness).')
+
+slice_parser.add_argument(
+    '-n', '--nps-per-tube', default=1, type=int,
+    help='Number of NPs microdissected into each tube.')
 
 slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
 slice_parser.set_defaults(skip_chroms=['chrY'])
