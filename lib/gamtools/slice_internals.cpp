@@ -670,6 +670,11 @@ void compute_pi_thresholds(vector<long double> & pi_thr, vector<long double>  qu
     
 }
 
+long double compute_heff_R(long double h, long double R, long double bL){
+
+    return ((long double)(h)/(long double)(R))+2*pow((long double)(bL),(long double)(1./3.));
+
+}
 
 int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, string file_chr_names, string file_chr_indices, int m, long L, int b, double h, double R, int n_p){
 
@@ -714,10 +719,12 @@ int run_slice(string file_tube, string file_pi_out, string file_out_pi_thr, stri
 #pragma CALCULATE PARAMETER VALUES	
 
     const long double bL=(long double)b/(long double)L;
-    const long double heff_R=((long double)(h)/(long double)(R))+2*pow((long double)(bL),(long double)(1./3.));
+    const long double heff_R=compute_heff_R(h, R, bL);
     const long double v0=2./(2.+(heff_R));
  
     const double v0_value=2./(2.+(heff_R));
+
+    cout << "heff/R: " << heff_R << endl;
 
 #pragma mark LOAD THE MATRIX OF TUBES 
     

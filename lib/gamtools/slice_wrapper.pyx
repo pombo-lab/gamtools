@@ -5,8 +5,16 @@ cdef extern from "slice.h":
                   string file_chr_names, string file_chr_indices,
                   int m, long L, int b, double h, double R, int n_p)
 
+    long double compute_eps(long double avg_m1s_m, long double heff_R, int n_p)
+
+    long double compute_heff_R(long double h, long double R, long double bL)
+
     int compilation_test()
 
+def compute_detection_efficiency(avg_m1s_m, h, R, b, L, n_p):
+    bL = b / L
+    heff_R = compute_heff_R(h, R, bL)
+    return compute_eps(avg_m1s_m, heff_R, n_p)
 
 def slice(matrix_path,
           pi_out_path, threshold_out_path,
