@@ -20,8 +20,8 @@ import argparse
 from wrapit.parser import add_doit_options
 import pytest
 
-from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, compaction
+from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
+        permutation, plotting, pipeline, select_samples, gam_slice, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -32,6 +32,28 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers(help='Please select a command:')
 subparsers.required = True
 subparsers.dest = 'command'
+
+# Options for the 'bias' command
+
+bias_parser = subparsers.add_parser(
+    'bias',
+    help='Calculate the bias in a set of matrices based on a genomic feature.')
+
+bias_parser.add_argument(
+    '-m', '--matrix-paths', metavar='MATRIX_PATH', nargs='+', required=True,
+    help='Paths to matrix files for each chromosome')
+
+bias_parser.add_argument(
+    '-f', '--feature-path', metavar='FEATURE_PATH', required=True,
+    help='Paths to bed file with one additional column giving the feature to \
+    use for calculating biases')
+
+bias_parser.add_argument(
+    '-o', '--output-path', required=True,
+    help='Path to save output matrix')
+
+bias_parser.set_defaults(
+    func=bias.calculate_bias_from_args)
 
 # Options for the 'call_windows' command
 
@@ -321,7 +343,8 @@ process_parser.add_argument(
 # Add options for doit, the task runner engine (www.pydoit.org)
 add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
-                  'reporter', 'num_process', 'par_type'])
+                  'reporter', 'num_process', 'par_type',
+                  'reset_dep'])
 
 
 def get_script(script_name):
@@ -409,6 +432,39 @@ select_parser.add_argument(
     help='Output file path (or - to write to stdout)')
 
 select_parser.set_defaults(func=select_samples.select_samples_from_args)
+
+# Options for 'slice' command
+
+slice_parser = subparsers.add_parser(
+    'slice',
+    help='Use the SLICE library')
+
+slice_parser.add_argument(
+    '-s', '--segregation-file-path', required=True,
+    help='Path to a segregation file')
+
+slice_parser.add_argument(
+    '-o', '--output-dir', required=True,
+    help='Path to output directory')
+
+slice_parser.add_argument(
+    '-t', '--slice-thickness', default=0.22, type=float,
+    help='Thickness of cryosections (same units as nuclear radius)')
+
+slice_parser.add_argument(
+    '-L', '--genome-size', default=None, type=float,
+    help='Total number of bp in the diploid genome of the species studied.')
+
+slice_parser.add_argument(
+    '-R', '--nuclear-radius', default=4.5, type=float,
+    help='Radius of the nucleus (same units as slice thickness).')
+
+slice_parser.add_argument(
+    '-n', '--nps-per-tube', default=1, type=int,
+    help='Number of NPs microdissected into each tube.')
+
+slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
+slice_parser.set_defaults(skip_chroms=['chrY'])
 
 # Options for 'test' command
 

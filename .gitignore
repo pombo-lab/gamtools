@@ -9,6 +9,8 @@
 *.pyc
 *.pyd
 *.c
+slice/*.out
+lib/gamtools/slice_wrapper.cpp
 
 # Packages #
 ############
@@ -47,6 +49,7 @@ docs/_build
 # py.test #
 ###########
 .cache/
+.pytest_cache/
 
 # tox #
 ###########

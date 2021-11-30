@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2020??
+### Added
+- Allow the doit dependencies database to be reset
+- Calculate coverage on individual bamfiles instead of all at once
+- Calculate intrinsic bias of a contact matrix
+
 ## [1.1.1] - 2019-02-08
 ### Added
 - Added a CHANGELOG

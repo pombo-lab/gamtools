@@ -165,7 +165,7 @@ def get_contamination_stats(fastq_screen_output_files):
 
     contam_df = pd.DataFrame(sample_contamination)
 
-    columns = ['Sample'] + [col for col in contam_df.columns if col != 'Sample']
+    columns = ['Sample'] + [col for col in contam_df.columns if col != 'Sample'] #pylint: disable=not-an-iterable
 
     return contam_df[columns]
 
