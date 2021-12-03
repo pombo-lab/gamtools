@@ -4,6 +4,11 @@ from setuptools import setup, Extension
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
+try:
+    from wheel.bdist_wheel import bdist_wheel
+except ImportError:
+    bdist_wheel = None
+
 
 class CustomBuildExtCommand(build_ext):
     """Customized setuptools build_ext command - checks numpy is installed."""
@@ -20,6 +25,7 @@ class CustomBuildExtCommand(build_ext):
                               'before installing GAMtools.')
 
         self.include_dirs.append(numpy.get_include())
+        self.include_dirs.append('lib/gamtools/data/include')
 
         build_ext.run(self)
 
@@ -32,7 +38,41 @@ class custom_cythonize_sdist(sdist):
                    "lib/gamtools/cosegregation_internal.pyx",
                    "lib/gamtools/mirnylib_numutils_internal.pyx",
         ], language_level = "3")
+        cythonize(
+            Extension(
+                'gamtools.slice_wrapper',
+                 sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                 libraries=["gsl", "gslcblas"],
+                 language='c++'), language='c++', language_level=3),
         sdist.run(self)
+
+
+custom_classes = {
+      'sdist': custom_cythonize_sdist,
+      'build_ext': CustomBuildExtCommand,
+    }
+
+
+if not bdist_wheel is None:
+    class CustomBdistWheelCommand(bdist_wheel):
+        """Customized bdist_wheel command - checks numpy is installed and cythonises"""
+        def run(self):
+
+            from Cython.Build import cythonize
+            cythonize([
+                       "lib/gamtools/cosegregation_internal.pyx",
+                       "lib/gamtools/mirnylib_numutils_internal.pyx",
+            ], language_level = "3")
+            cythonize(
+                Extension(
+                    'gamtools.slice_wrapper',
+                     sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                     libraries=["gsl", "gslcblas"],
+                     language='c++'), language='c++', language_level=3),
+
+            bdist_wheel.run(self)
+
+    custom_classes['bdist_wheel'] = CustomBdistWheelCommand
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -43,7 +83,7 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "2.0.0alpha6",
+    version = "2.0.0alpha7",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.co.uk",
     url = "https://gam.tools",
@@ -55,11 +95,12 @@ setup(
                    ["lib/gamtools/cosegregation_internal.c"]),
                    Extension('gamtools.mirnylib_numutils_internal',
                       ["lib/gamtools/mirnylib_numutils_internal.c"],),
+                   Extension('gamtools.slice_wrapper',
+                             sources=["lib/gamtools/slice_wrapper.cpp", "lib/gamtools/slice_internals.cpp"],
+                             libraries=["gsl", "gslcblas"],
+                             language='c++'),
                    ],
-    cmdclass = {
-      'sdist': custom_cythonize_sdist,
-      'build_ext': CustomBuildExtCommand,
-    },
+    cmdclass = custom_classes,
     install_requires=[
       'numpy',
       'scipy',

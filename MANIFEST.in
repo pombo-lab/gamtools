@@ -1,4 +1,5 @@
 include README.md
+include lib/gamtools/data/include/*.h
 include lib/gamtools/tests/*.py
 include lib/gamtools/data/examples/*
 include lib/gamtools/data/scripts/*
