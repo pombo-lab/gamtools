@@ -1,5 +1,5 @@
 include README.md
-include lib/gamtools/*.pyx
 include lib/gamtools/tests/*.py
 include lib/gamtools/data/examples/*
 include lib/gamtools/data/scripts/*
+exclude lib/gamtools/*.pyx
