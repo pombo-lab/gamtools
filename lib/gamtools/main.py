@@ -226,10 +226,10 @@ matrix_parser.add_argument(
 matrix_parser.add_argument(
     '-t',
     '--matrix-type',
-    default='dprime',
+    default='npmi',
     choices=cosegregation.MATRIX_TYPES,
     help='Method used to calculate the interaction matrix (choose from: '
-    '{}, default is dprime)'.format(
+    '{}, default is npmi)'.format(
         ', '.join(
             cosegregation.MATRIX_TYPES.keys())))
 

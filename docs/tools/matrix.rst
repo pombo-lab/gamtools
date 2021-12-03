@@ -24,7 +24,7 @@ Usage and option summary
 +---------------------+-------------------------------------------------+
 | -t, --matrix-type   | Method used to calculate the interaction matrix |
 |                     | (choose from: cosegregation, linkage, dprime,   |
-|                     | default is dprime)                              |
+|                     | npmi, default is npmi)                          |
 +---------------------+-------------------------------------------------+
 | -o, --output-file   | Output matrix file. If not specified, new file  |
 |                     | will have the same name as the segregation file |
