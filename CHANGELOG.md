@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed default matrix type from Dprime to NPMI
+- Use base-pair instead of read-count coverage for window calling
+- Use Orphan windows algorithm to call positive windows
 
 ## [1.1.1] - 2019-02-08
 ### Added
