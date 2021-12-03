@@ -7,6 +7,7 @@ try:
     from unittest.mock import patch
 except ImportError:
     from mock import patch
+import unittest
 
 fixture_window1_only = io.StringIO(
 u"""chrom start  stop    A B C D E F G H I J
@@ -310,3 +311,21 @@ def test_dprime_invalid_data():
 
    with pytest.raises(cosegregation.InvalidDataError):
        cosegregation.get_dprime_from_regions(data_invalid_data)
+
+class TestStringMethods(unittest.TestCase):
+
+    def test_create_save_matrix(self):
+
+        expected_output = """	chr1:0-50000	chr1:50000-100000	chr1:100000-150000
+chr1:0-50000	6.0	3.0	1.0
+chr1:50000-100000	3.0	5.0	2.0
+chr1:100000-150000	1.0	2.0	4.0
+"""
+
+        fixture_region_a.seek(0)
+        output_temp = io.StringIO()
+        cosegregation.create_and_save_contact_matrix(
+            fixture_region_a, ['chr1'], output_temp,
+            'txt', 'cosegregation')
+        self.assertMultiLineEqual(output_temp.getvalue(), expected_output)
+

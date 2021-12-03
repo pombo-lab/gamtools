@@ -297,7 +297,7 @@ def filter_data(x, percentile, no_zeros=True):
         not_a_zero = x > 0
 
         # only keep points which are both less than percentile AND not a zero
-        points_to_keep = list(map(all, list(zip(less_than_percentile, not_a_zero))))
+        points_to_keep = np.logical_and(less_than_percentile, not_a_zero)
 
     else:
         points_to_keep = less_than_percentile

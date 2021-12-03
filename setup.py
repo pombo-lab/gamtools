@@ -1,60 +1,45 @@
 import os
 import sys
 from setuptools import setup, Extension
-
-def parse_setuppy_commands():
-    """Check the commands and respond appropriately (avoid
-    parsing Cython and template files if False).
-    """
-    args = sys.argv[1:]
-
-    if not args:
-        # User forgot to give an argument probably, let setuptools handle that.
-        return True
-
-    info_commands = ['--help-commands', '--name', '--version', '-V',
-                     '--fullname', '--author', '--author-email',
-                     '--maintainer', '--maintainer-email', '--contact',
-                     '--contact-email', '--url', '--license', '--description',
-                     '--long-description', '--platforms', '--classifiers',
-                     '--keywords', '--provides', '--requires', '--obsoletes',
-                     'egg_info', 'install_egg_info', 'rotate']
-
-    for command in info_commands:
-        if command in args:
-            return False
-    else:
-        return True
+from setuptools.command.sdist import sdist
+from setuptools.command.build_ext import build_ext
 
 
-if parse_setuppy_commands():
+class CustomBuildExtCommand(build_ext):
+    """Customized setuptools build_ext command - checks numpy is installed."""
+    def run(self):
 
-    from Cython.Distutils import build_ext
+        # Check numpy is installed before trying to find the location
+        # of numpy headers
 
-    class CustomBuildExtCommand(build_ext):
-        """Customized setuptools build_ext command - checks numpy is installed."""
-        def run(self):
+        try:
+            import numpy
+        except ImportError:
+            raise ImportError('numpy need to be installed before GAMtools can be '
+                              'compiled. Try installing with "pip install numpy" '
+                              'before installing GAMtools.')
 
-            # Check numpy is installed before trying to find the location
-            # of numpy headers
+        self.include_dirs.append(numpy.get_include())
+        self.include_dirs.append('lib/gamtools/data/include')
 
-            try:
-                import numpy
-            except ImportError:
-                raise ImportError('numpy need to be installed before GAMtools can be '
-                                  'compiled. Try installing with "pip install numpy" '
-                                  'before installing GAMtools.')
+        build_ext.run(self)
 
-            self.include_dirs.append(numpy.get_include())
-            self.include_dirs.append('lib/gamtools/data/include')
 
-            build_ext.run(self)
-
-else:
-
-    from setuptools.command.build_ext import build_ext
-
-    CustomBuildExtCommand = build_ext
+class custom_cythonize_sdist(sdist):
+    def run(self):
+        # Make sure the compiled Cython files in the distribution are up-to-date
+        from Cython.Build import cythonize
+        cythonize([
+                   "lib/gamtools/cosegregation_internal.pyx",
+                   "lib/gamtools/mirnylib_numutils_internal.pyx",
+        ], language_level = "3", language='c++')
+        cythonize(
+            Extension(
+                'gamtools.slice_wrapper',
+                 sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                 libraries=["gsl", "gslcblas"],
+                 language='c++'), language='c++', language_level=3),
+        sdist.run(self)
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -65,25 +50,28 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "2.0.0alpha0",
+    version = "2.0.0alpha7",
     author = "Rob Beagrie",
-    author_email = "rob@beagrie.com",
-    url = "http://gam.tools",
+    author_email = "rob@beagrie.co.uk",
+    url = "https://gam.tools",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "Apache2.0",
     package_dir = {'': 'lib'},
     packages=['gamtools', 'gamtools.qc'],
     ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.pyx"]),
+                   ["lib/gamtools/cosegregation_internal.cpp"]),
                    Extension('gamtools.mirnylib_numutils_internal',
-                      ["lib/gamtools/mirnylib_numutils_internal.pyx"],),
+                      ["lib/gamtools/mirnylib_numutils_internal.cpp"],),
                    Extension('gamtools.slice_wrapper',
-                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
+                             sources=["lib/gamtools/slice_wrapper.cpp", "lib/gamtools/slice_internals.cpp"],
                              libraries=["gsl", "gslcblas"],
                              language='c++'),
                    ],
+    cmdclass = {
+      'sdist': custom_cythonize_sdist,
+      'build_ext': CustomBuildExtCommand,
+    },
     install_requires=[
-      'cython',
       'numpy',
       'scipy',
       'pandas',
@@ -94,16 +82,7 @@ setup(
       ':python_version>="3.0"': ['doit==0.30.0'],
       ':python_version<"3.0"': ['mock'],
     },
-    # Set include_dirs in a custom build_ext class so that numpy is only
-    # required if we are compiling C files
-    cmdclass={
-          'build_ext': CustomBuildExtCommand,
-      },
     entry_points = {
-                    # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
-                    #'EIYBrowse.filetypes': [
-                    #    'gam_segmentation_file = gamtools.segmentation:GamSegmentationFile',
-                    #],
                     'console_scripts': [
                         'gamtools = gamtools.main:main',
                         'create_empty_bedgraph = gamtools.utils:empty_bedgraph_from_cmdline',
