@@ -28,3 +28,11 @@ def test_fixed_threshold_5():
     assert fitting_result['params'] is None
 
 
+def test_fixed_threshold_process_nps():
+
+    args = main.parser.parse_args(['process_nps', '-g', '/dev/null', '-x', '4', '/dev/null'])
+
+    fitting_result = args.fitting_function(np.arange(100))
+
+    assert fitting_result['coverage_threshold'] == 4
+    assert fitting_result['params'] is None

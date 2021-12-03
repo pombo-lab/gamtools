@@ -28,6 +28,7 @@ def add_window_calling_options(base_parser):
     Add options related to window calling to an argparse parser.
     """
 
+
     base_parser.add_argument(
         '-f', '--fitting-folder', metavar='FITTING_FOLDER',
         help='If specified, save the individual curve fittings to this folder')
@@ -243,10 +244,10 @@ matrix_parser.add_argument(
 matrix_parser.add_argument(
     '-t',
     '--matrix-type',
-    default='dprime',
+    default='npmi',
     choices=cosegregation.MATRIX_TYPES,
     help='Method used to calculate the interaction matrix (choose from: '
-    '{}, default is dprime)'.format(
+    '{}, default is npmi)'.format(
         ', '.join(
             cosegregation.MATRIX_TYPES.keys())))
 
@@ -257,9 +258,6 @@ matrix_parser.add_argument(
     'genomic region(s) and the matrix method')
 
 matrix_parser.set_defaults(func=cosegregation.matrix_from_args)
-
-
-# TODO: add Markus' matrix permutation code
 
 
 # Options for 'permute_segregation' command

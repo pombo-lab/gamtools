@@ -3,13 +3,13 @@ python:
   - '3.7'
   - '3.8'
   - '3.9'
-install:
+before_install:
   - pip install --upgrade pip setuptools
-  - pip install tox tox-travis coveralls codeclimate-test-reporter
+  - pip install tox tox-travis codeclimate-test-reporter cython codecov
 script:
   - tox
 after_success:
-  - coveralls
+  - codecov
 deploy:
   provider: pypi
   user: rob.beagrie
