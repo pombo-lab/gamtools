@@ -20,7 +20,7 @@ import argparse
 from wrapit.parser import add_doit_options
 import pytest
 
-from . import cosegregation, matrix, call_windows, enrichment, radial_position, \
+from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
         permutation, plotting, pipeline, select_samples, compaction
 
 
@@ -32,6 +32,28 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers(help='Please select a command:')
 subparsers.required = True
 subparsers.dest = 'command'
+
+# Options for the 'bias' command
+
+bias_parser = subparsers.add_parser(
+    'bias',
+    help='Calculate the bias in a set of matrices based on a genomic feature.')
+
+bias_parser.add_argument(
+    '-m', '--matrix-paths', metavar='MATRIX_PATH', nargs='+', required=True,
+    help='Paths to matrix files for each chromosome')
+
+bias_parser.add_argument(
+    '-f', '--feature-path', metavar='FEATURE_PATH', required=True,
+    help='Paths to bed file with one additional column giving the feature to \
+    use for calculating biases')
+
+bias_parser.add_argument(
+    '-o', '--output-path', required=True,
+    help='Path to save output matrix')
+
+bias_parser.set_defaults(
+    func=bias.calculate_bias_from_args)
 
 # Options for the 'call_windows' command
 
@@ -330,7 +352,8 @@ fit_method.add_argument(
 # Add options for doit, the task runner engine (www.pydoit.org)
 add_doit_options(process_parser,
                  ['dep_file', 'backend', 'verbosity',
-                  'reporter', 'num_process', 'par_type'])
+                  'reporter', 'num_process', 'par_type',
+                  'reset_dep'])
 
 
 def get_script(script_name):

@@ -97,8 +97,8 @@ def parse_fastq_screen_output(fastq_screen_output):
     for line in fastq_screen_output:
         try:
             results.update(process_fastq_screen_line(line))
-        except ValueError:
-            raise ValueError('Malformed line: "{}"'.format(line))
+        except ValueError as error:
+            raise ValueError('Malformed line: "{}"'.format(line)) from error
 
 
     total_reads = results['num_reads']
@@ -165,7 +165,7 @@ def get_contamination_stats(fastq_screen_output_files):
 
     contam_df = pd.DataFrame(sample_contamination)
 
-    columns = ['Sample'] + [col for col in contam_df.columns if col != 'Sample']
+    columns = ['Sample'] + [col for col in contam_df.columns if col != 'Sample'] #pylint: disable=not-an-iterable
 
     return contam_df[columns]
 

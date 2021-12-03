@@ -38,11 +38,13 @@ import pandas as pd
 import numpy as np
 from scipy.stats import scoreatpercentile, nbinom, norm
 from scipy.optimize import fmin
+from . import segregation
 
-# define plt as a global so that we can import
-# matplotlib later if we need it
-plt = None
-
+# Don't throw an error if matplotlib is not installed unless we try to use it
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    plt = None
 
 def cumulative_neg_binom(x, n, p):
     """
@@ -289,7 +291,7 @@ def filter_data(x, percentile, no_zeros=True):
     """
 
     percentile_score = scoreatpercentile(x, percentile)
-    less_than_percentile = x < percentile_score
+    less_than_percentile = list(x < percentile_score)
 
     if no_zeros:
         not_a_zero = x > 0
@@ -302,17 +304,15 @@ def filter_data(x, percentile, no_zeros=True):
 
     out_data = x[points_to_keep]
 
-    if len(out_data):
+    if out_data.size:
 
         return out_data
 
-    elif no_zeros:
+    if no_zeros:
 
         return x[not_a_zero]
 
-    else:
-
-        return x
+    return x
 
 
 def threshold_n_binom(params, p_value, thresh_range=None):
@@ -410,14 +410,9 @@ def plot_combined_signal_noise(breaks, counts, params):
     :param tuple params: Parameters of the composite \
             distribution (see  :func:`~n_binom_plus_log_normal`).
     """
-    global plt
 
     if plt is None:
-        try:
-            from matplotlib import pyplot
-            plt = pyplot
-        except ImportError:
-            raise ImportError('Plotting requires matplotlib to be installed.')
+        raise ImportError('Plotting requires matplotlib to be installed.')
 
     fit = sum(counts) * n_binom_plus_log_normal(params,
                                                 breaks)
@@ -535,14 +530,8 @@ def plot_signal_and_noise_fitting(sample_name, fitting_results):
             by :func:`~signal_and_noise_fitting`.
     """
 
-    global plt
-
     if plt is None:
-        try:
-            from matplotlib import pyplot
-            plt = pyplot
-        except ImportError:
-            raise ImportError('Plotting requires matplotlib to be installed.')
+        raise ImportError('Plotting requires matplotlib to be installed.')
 
     fig = plt.figure(figsize=(16, 9))
 
@@ -760,15 +749,36 @@ def threshold_file(input_file, output_file,
         fitting_data.to_csv(fitting_details_file, sep='\t', index=False)
 
 
+def merge_reads_coverage(targets, dependencies):
+    """Merge multiple files containing coverage per window for single libraries
+    into one big table containing one column for each input file.
+
+    :param targets: An iterable containing one output path for saving the \
+            merged table
+    :param dependencies: An iterable containing the paths for all of the \
+            input files
+    """
+
+    (output_file, ) = targets
+    input_coverage_paths = list(dependencies)
+
+    first_coverage_path = input_coverage_paths.pop()
+    merged_coverage_table = segregation.open_segregation(first_coverage_path)
+
+    for next_coverage_path in input_coverage_paths:
+        merged_coverage_table = pd.merge(
+            merged_coverage_table,
+            segregation.open_segregation(next_coverage_path),
+            left_index=True, right_index=True)
+
+    merged_coverage_table.to_csv(output_file, sep='\t')
+
+
 def threshold_from_args(args):
     """
     Wrapper function to pass arguments to threshold_file from argparse.
     """
 
-    if args.macs:
-        raise NotImplementedError('Thresholding using macs is not supported')
-
-    else:
-        threshold_file(args.coverage_file, args.output_file,
-                       args.fitting_folder, args.details_file,
-                       args.fitting_function)
+    threshold_file(args.coverage_file, args.output_file,
+                   args.fitting_folder, args.details_file,
+                   args.fitting_function)

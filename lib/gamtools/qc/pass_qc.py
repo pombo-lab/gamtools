@@ -96,8 +96,6 @@ class QcParamError(Exception):
     Exception to be raised if the QC Parameters file is malformed.
     """
 
-    pass
-
 
 def do_comparison(left_str, operator, right_str, stats_df):
     """
@@ -140,7 +138,7 @@ def parse_conditions_file(conditions_file, stats_df):
 
         fields = line.split()
 
-        if (line[0] == '#') or len(fields) == 0:
+        if (line[0] == '#') or (not fields):
             continue
 
         left_str, operator, right_str = fields
@@ -150,7 +148,7 @@ def parse_conditions_file(conditions_file, stats_df):
         except QcParamError as err_msg:
             raise QcParamError(
                 'Error in QC conditions file line {}: {}'.format(
-                    line_no, err_msg))
+                    line_no, err_msg)) from err_msg
 
         conditions.append(this_comparison)
 

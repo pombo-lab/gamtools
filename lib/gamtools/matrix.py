@@ -79,11 +79,12 @@ import sys
 import os
 import itertools
 import argparse
+import gzip
 
 import numpy as np
 import pandas as pd
 
-from .segregation import parse_location_string
+from . import segregation
 from .utils import DelayedImportError
 
 try:
@@ -112,7 +113,7 @@ def windows_from_name_strings(name_strings):
     :returns: List of window tuples
     """
 
-    return [parse_location_string(name) for name in name_strings]
+    return [segregation.parse_location_string(name) for name in name_strings]
 
 
 def read_npz(filepath):
@@ -217,7 +218,7 @@ def read_triangular(filepath):
     upper_i = np.triu_indices_from(proximity_matrix)
     proximity_matrix[:] = np.NAN
     proximity_matrix[lower_i] = list(itertools.chain(*arr))
-    proximity_matrix[upper_i] = proximity_matrix.T[upper_i]
+    proximity_matrix[upper_i] = proximity_matrix.T[upper_i] # pylint: disable=E1136
     proximity_matrix[proximity_matrix > 1.] = np.NAN
 
     return None, proximity_matrix
@@ -275,7 +276,6 @@ def write_zipped_txt(windows, proximity_matrix, output_file):
     :param str filepath: Path to save matrix file.
     """
 
-    import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_txt(windows, proximity_matrix, zipped_output)
 
@@ -353,7 +353,6 @@ def write_zipped_csv(windows, proximity_matrix, output_file):
     :param str filepath: Path to save zipped csv file.
     """
 
-    import gzip
     with gzip.open(output_file, 'wb', compresslevel=5) as zipped_output:
         write_csv(windows, proximity_matrix, zipped_output)
 
@@ -422,7 +421,7 @@ def detect_file_type(file_name):
     raise TypeError('Extension "{}" not recognized'.format(file_ext))
 
 
-def read_file(file_name):
+def read_file(file_name, file_type=None):
     """Open a matrix file, guessing the format based on file extension.
 
     :param str file_name: Path to matrix file.
@@ -431,7 +430,8 @@ def read_file(file_name):
             :class:`numpy array <numpy.ndarray>` proximity matrix.
     """
 
-    file_type = detect_file_type(file_name)
+    if file_type is None:
+        file_type = detect_file_type(file_name)
     read_func = INPUT_FORMATS[file_type]
     return read_func(file_name)
 
@@ -454,6 +454,56 @@ def check_windows(proximity_matrix, windows):
                 'specified the correct region.'.format(
                     ' x '.join([str(s) for s in proximity_matrix.shape]),
                     ' x '.join([str(s) for s in windows_sizes])))
+
+
+def region_from_locations(matrix_tuple, location_string1, location_string2=None):
+    """Retrieve a sub-region of an interaction matrix based on a location string.
+
+    :param matrix_tuple: Tuple of the form (x_windows_list, y_windows_list), matrix
+    :param str location_string1: UCSC format :ref:`location string <location_string>`
+    :param str location_string2: UCSC format :ref:`location string <location_string>`, \
+            if None, location_string2 is set equal to location_string1 (i.e. the function \
+            returns a symmetrical sub-matrix)
+    :returns: Tuple of the form (x_windows_list, y_windows_list), matrix
+    """
+
+    (windows1, windows2), chr_mat = matrix_tuple
+
+    windows1_df = pd.DataFrame(
+        windows1, columns=['chrom', 'start', 'stop']).set_index(['chrom', 'start', 'stop'])
+    windows2_df = pd.DataFrame(
+        windows2, columns=['chrom', 'start', 'stop']).set_index(['chrom', 'start', 'stop'])
+
+    if location_string2 is None:
+        location_string2 = location_string1
+
+    i1_start, i1_stop = segregation.index_from_location_string(windows1_df, location_string1)
+    i2_start, i2_stop = segregation.index_from_location_string(windows2_df, location_string2)
+
+    subregion_w1 = windows1_df.iloc[i1_start:i1_stop]
+    subregion_w2 = windows2_df.iloc[i2_start:i2_stop]
+
+    submatrix = chr_mat[i1_start:i1_stop, i2_start:i2_stop]
+
+    return (subregion_w1, subregion_w2), submatrix
+
+
+def open_region_from_locations(matrix_path,
+                               location_string1, location_string2=None,
+                               file_type=None):
+    """Open an interaction matrix and retrieve a sub-region based on a location string.
+
+    :param matrix_path: Path to an interaction matrix
+    :param str location_string1: UCSC format :ref:`location string <location_string>`
+    :param str location_string2: UCSC format :ref:`location string <location_string>`, \
+            if None, location_string2 is set equal to location_string1 (i.e. the function \
+            returns a symmetrical sub-matrix)
+    :returns: Tuple of the form (x_windows_list, y_windows_list), matrix
+    """
+
+    matrix_tuple = read_file(matrix_path, file_type)
+
+    return region_from_locations(matrix_tuple, location_string1, location_string2)
 
 
 def read_thresholds(thresholds_file):
@@ -492,10 +542,11 @@ def kth_diag_indices(array, diag_k):
     rows, cols = np.diag_indices_from(array)
     if diag_k < 0:
         return rows[:diag_k], cols[-diag_k:]
-    elif diag_k > 0:
+
+    if diag_k > 0:
         return rows[diag_k:], cols[:-diag_k]
-    else:
-        return rows, cols
+
+    return rows, cols
 
 
 def apply_threshold(proximity_matrix, thresholds):

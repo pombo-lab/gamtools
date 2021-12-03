@@ -45,7 +45,6 @@ class InvalidDataError(Exception):
     """
     Exception raised if segregation data contains anything other than 0s and 1s.
     """
-    pass
 
 
 def regions_are_valid(regions):
@@ -64,8 +63,8 @@ def regions_are_valid(regions):
 
     if any(invalid_regions):
         return False
-    else:
-        return True
+
+    return True
 
 
 def prepare_regions(regions):
@@ -181,8 +180,8 @@ def cosegregation_nd(*regions):
 
     result = list(map(get_frequency, combinations))
 
-    result_shape = tuple([len(region)
-                          for region in regions]) + (2, ) * len(regions)
+    result_shape = tuple(len(region)
+                         for region in regions) + (2, ) * len(regions)
 
     freqs = np.array(result).reshape(result_shape)
 
@@ -440,14 +439,14 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
     """
 
     print('starting calculation for {}'.format(' x '.join(location_strings)))
-    start_time = time.clock()
+    start_time = time.perf_counter()
 
     contact_matrix, windows = matrix_from_segregation_file(
         segregation_file, location_strings, matrix_type)
 
     size_string = ' x '.join([str(s) for s in contact_matrix.shape])
     print('region size is: {}'.format(size_string), end=' ')
-    print('Calculation took {0}s'.format(time.clock() - start_time))
+    print('Calculation took {0}s'.format(time.perf_counter() - start_time))
     print('Saving matrix to file {}'.format(output_file))
 
     output_func = matrix.OUTPUT_FORMATS[output_format]

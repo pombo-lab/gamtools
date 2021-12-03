@@ -1,16 +1,15 @@
 language: python
 python:
-  - '2.7'
-  - '3.4'
-  - '3.5'
-  - '3.6'
-install:
+  - '3.7'
+  - '3.8'
+  - '3.9'
+before_install:
   - pip install --upgrade pip setuptools
-  - pip install tox tox-travis coveralls codeclimate-test-reporter
+  - pip install tox tox-travis codeclimate-test-reporter cython codecov
 script:
   - tox
 after_success:
-  - coveralls
+  - codecov
 deploy:
   provider: pypi
   user: rob.beagrie

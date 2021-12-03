@@ -12,6 +12,7 @@ the tools available in the suite.
 ==============================================================      =================================================================================
 Utility	                                                            Description
 ==============================================================      =================================================================================
+:doc:`bias <../tools/bias>`                                         Calculate possible biases for a given genomic feature
 :doc:`call_windows <../tools/call_windows>`                         Call positive windows for individual NPs
 :doc:`compaction <../tools/compaction>`                             Calculate chromatin compaction
 :doc:`convert <../tools/convert>`                                   Convert between different GAM matrix formats

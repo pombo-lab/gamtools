@@ -102,7 +102,7 @@ def permute_segregation(input_segregation):
 
         new_col = permute_by_chromosome(input_segregation.iloc[mappable.values, i], offset)
 
-        permutation.ix[mappable, i] = new_col
+        permutation.iloc[mappable.values, i] = new_col
 
     return permutation
 
