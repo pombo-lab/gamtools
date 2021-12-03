@@ -9,6 +9,9 @@
 *.pyc
 *.pyd
 *.c
+lib/gamtools/cosegregation_internal.cpp
+lib/gamtools/mirnylib_numutils_internal.cpp
+lib/gamtools/slice_wrapper.cpp
 
 # Packages #
 ############
