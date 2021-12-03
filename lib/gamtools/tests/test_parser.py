@@ -14,9 +14,7 @@ def test_fixed_threshold():
 
     fitting_result = args.fitting_function(np.arange(100))
 
-    assert fitting_result['read_threshold'] == 4
-    assert 'counts' in fitting_result
-    assert 'breaks' in fitting_result
+    assert fitting_result['coverage_threshold'] == 4
     assert fitting_result['params'] is None
 
 
@@ -26,9 +24,7 @@ def test_fixed_threshold_5():
 
     fitting_result = args.fitting_function(np.arange(100))
 
-    assert fitting_result['read_threshold'] == 5
-    assert 'counts' in fitting_result
-    assert 'breaks' in fitting_result
+    assert fitting_result['coverage_threshold'] == 5.0
     assert fitting_result['params'] is None
 
 
@@ -38,7 +34,5 @@ def test_fixed_threshold_process_nps():
 
     fitting_result = args.fitting_function(np.arange(100))
 
-    assert fitting_result['read_threshold'] == 4
-    assert 'counts' in fitting_result
-    assert 'breaks' in fitting_result
+    assert fitting_result['coverage_threshold'] == 4
     assert fitting_result['params'] is None
