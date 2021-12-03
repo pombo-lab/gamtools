@@ -5,7 +5,7 @@ python:
   - '3.9'
 install:
   - pip install --upgrade pip setuptools
-  - pip install tox tox-travis coveralls codeclimate-test-reporter
+  - pip install tox tox-travis coveralls codeclimate-test-reporter cython
 script:
   - tox
 after_success:

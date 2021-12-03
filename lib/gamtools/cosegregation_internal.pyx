@@ -11,7 +11,7 @@ cimport cython
 # DTYPE for this, which is assigned to the usual NumPy runtime
 # type info object.
 
-DTYPE = np.int
+DTYPE = int
 
 # "ctypedef" assigns a corresponding compile-time type to DTYPE_t. For
 # every type in the numpy module there's a corresponding compile-time
