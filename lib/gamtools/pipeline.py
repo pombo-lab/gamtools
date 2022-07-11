@@ -301,7 +301,7 @@ class InputFileMappingTasks():
                     'actions': ['echo "chrom start stop %(dependencies)s" > %(targets)s',
                                 'bash -i -c "bedtools coverage -b %(dependencies)s '
                                 '-a <(bedtools makewindows -w {0} -g %(genome_file)s) '
-                                '| cut -d \'\t\' -f 1,2,3,7 '
+                                '-sorted | cut -d \'\t\' -f 1,2,3,7 '
                                 '>> %(targets)s"' .format(window_size)],
                     'targets': [output_cov],
                     'file_dep': [input_bam],
