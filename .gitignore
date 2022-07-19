@@ -9,8 +9,8 @@
 *.pyc
 *.pyd
 *.c
-slice/*.out
-lib/gamtools/slice_wrapper.cpp
+lib/gamtools/cosegregation_internal.cpp
+lib/gamtools/mirnylib_numutils_internal.cpp
 
 # Packages #
 ############
@@ -56,3 +56,4 @@ docs/_build
 .tox/
 .coverage
 .python-version
+coverage.xml
