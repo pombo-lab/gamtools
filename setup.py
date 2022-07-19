@@ -77,10 +77,6 @@ setup(
                    ["lib/gamtools/cosegregation_internal.pyx"]),
                    Extension('gamtools.mirnylib_numutils_internal',
                       ["lib/gamtools/mirnylib_numutils_internal.pyx"],),
-                   Extension('gamtools.slice_wrapper',
-                             sources=["lib/gamtools/slice_wrapper.pyx", "lib/gamtools/slice_internals.cpp"],
-                             libraries=["gsl", "gslcblas"],
-                             language='c++'),
                    ],
     install_requires=[
       'cython',

@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, gam_slice, compaction
+        permutation, plotting, pipeline, select_samples, compaction
 
 
 parser = argparse.ArgumentParser(
@@ -433,38 +433,6 @@ select_parser.add_argument(
 
 select_parser.set_defaults(func=select_samples.select_samples_from_args)
 
-# Options for 'slice' command
-
-slice_parser = subparsers.add_parser(
-    'slice',
-    help='Use the SLICE library')
-
-slice_parser.add_argument(
-    '-s', '--segregation-file-path', required=True,
-    help='Path to a segregation file')
-
-slice_parser.add_argument(
-    '-o', '--output-dir', required=True,
-    help='Path to output directory')
-
-slice_parser.add_argument(
-    '-t', '--slice-thickness', default=0.22, type=float,
-    help='Thickness of cryosections (same units as nuclear radius)')
-
-slice_parser.add_argument(
-    '-L', '--genome-size', default=None, type=float,
-    help='Total number of bp in the diploid genome of the species studied.')
-
-slice_parser.add_argument(
-    '-R', '--nuclear-radius', default=4.5, type=float,
-    help='Radius of the nucleus (same units as slice thickness).')
-
-slice_parser.add_argument(
-    '-n', '--nps-per-tube', default=1, type=int,
-    help='Number of NPs microdissected into each tube.')
-
-slice_parser.set_defaults(func=gam_slice.run_slice_from_args)
-slice_parser.set_defaults(skip_chroms=['chrY'])
 
 # Options for 'test' command
 
