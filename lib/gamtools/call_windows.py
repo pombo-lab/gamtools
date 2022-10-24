@@ -142,7 +142,7 @@ def infer_single_read_coverage(coverage_table):
         genomic window.
     :returns: Inferred coverage of one single read.
     """
-    
+
     cov_values, cov_counts = np.unique(coverage_table, return_counts=True)
     top_20_vals = cov_values[cov_counts.argsort()[-20:]]
     top_20_vals = top_20_vals[top_20_vals > 0]
@@ -353,7 +353,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function,
     return segregation_table, fitting_data
 
 
-def threshold_file(input_file, output_file,
+def threshold_file(input_file, output_file, #pylint: disable=too-many-arguments
                    fitting_folder, fitting_details_file,
                    fitting_function, min_reads):
     """

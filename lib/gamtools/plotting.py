@@ -181,7 +181,7 @@ def get_row_pct(row_sizes):
     :returns: List of lists of chromosome sizes as percentages by row
     """
 
-    biggest_row = max([sum(row) for row in row_sizes])
+    biggest_row = max(sum(row) for row in row_sizes)
     row_pcts = [[float(val) / biggest_row for val in row] for row in row_sizes]
     return row_pcts
 
@@ -303,7 +303,7 @@ def plot_genome(
                       row_names[p][q], row_sizes[p][q], color=col, bins=10000)
             i += 1
 
-    max_ylim = max([max([ax[0].get_ylim()[1] for ax in row]) for row in axes])
+    max_ylim = max(max(ax[0].get_ylim()[1] for ax in row) for row in axes)
 
     for row in axes:
         for ax in row:
