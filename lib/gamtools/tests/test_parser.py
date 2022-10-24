@@ -1,6 +1,10 @@
 import pytest
 import numpy as np
 from gamtools import main
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 
 def test_no_args():
@@ -36,3 +40,15 @@ def test_fixed_threshold_process_nps():
 
     assert fitting_result['coverage_threshold'] == 4
     assert fitting_result['params'] is None
+
+def test_min_threshold_none():
+
+    args = main.parser.parse_args(['call_windows', '/dev/null'])
+
+    assert args.min_read_threshold is None
+
+def test_min_threshold_3():
+
+    args = main.parser.parse_args(['call_windows', '/dev/null', '--min-read-threshold', '3'])
+
+    assert args.min_read_threshold == 3
