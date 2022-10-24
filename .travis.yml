@@ -2,7 +2,6 @@ language: python
 python:
   - '3.8'
   - '3.9'
-  - '3.10'
 before_install:
   - pip install --upgrade pip setuptools
   - pip install tox tox-travis codeclimate-test-reporter cython codecov
