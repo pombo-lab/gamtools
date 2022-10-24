@@ -43,7 +43,7 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "2.0.0alpha6",
+    version = "2.0.0alpha7",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.co.uk",
     url = "https://gam.tools",
