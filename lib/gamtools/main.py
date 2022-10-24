@@ -37,6 +37,12 @@ def add_window_calling_options(base_parser):
         '-d', '--details-file',
         help='If specified, write a table of fitting parameters to this path')
 
+    base_parser.add_argument(
+        '--min-read-threshold',
+        type=int,
+        default=None,
+        help='If specified, require at least this many reads to call a window as positive')
+
     seg_method = base_parser.add_mutually_exclusive_group()
 
     seg_method.add_argument(
