@@ -10,12 +10,6 @@ script:
   - tox
 after_success:
   - codecov
-addons:
-  apt:
-    packages:
-    - libgsl0-dev
-env:
-  - CFLAGS="-std=c++11"
 deploy:
   provider: pypi
   user: rob.beagrie
