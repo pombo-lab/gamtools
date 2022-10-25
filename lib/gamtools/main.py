@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, compaction
+        permutation, plotting, pipeline, select_samples, compaction, resolution
 
 def add_window_calling_options(base_parser):
     """
@@ -357,7 +357,6 @@ add_doit_options(process_parser,
 
 add_window_calling_options(process_parser)
 
-
 def get_script(script_name):
     """Get the absolute path to a script in the gamtools 'scripts' folder
 
@@ -369,7 +368,6 @@ def get_script(script_name):
                         'data',
                         'scripts',
                         script_name)
-
 
 def get_example(example_name):
     """Get the absolute path to a file in the gamtools 'examples' folder
@@ -421,6 +419,44 @@ radial_pos_parser.add_argument(
 
 
 radial_pos_parser.set_defaults(func=radial_position.radial_position_from_args)
+
+
+# Options for 'resolution_qc' command
+
+resolution_parser = subparsers.add_parser(
+    'resolution_qc',
+    help='Check a segregation table to ensure it is of sufficient quality.')
+
+resolution_parser.add_argument(
+    'segregation_table', metavar='SEGREGATION_TABLE',
+    help='Segregation table to check.')
+resolution_parser.add_argument(
+    'slice_thickness', metavar='SLICE_THICKNESS', type=float,
+    help='Thickness of NPs in this dataset (units must match those for nuclear radius).')
+resolution_parser.add_argument(
+    'nuclear_radius', metavar='NUCLEAR_RADIUS', type=float,
+    help='Average radius of nuclei in this dataset (units must match those for slice thickness).')
+resolution_parser.add_argument(
+    '-x', '--skip-chromosomes', metavar='CHROM', nargs='+',
+    default=[],
+    help='Exclude one or more chromosomes when calculating QC metrics.')
+resolution_parser.add_argument(
+    '-g', '--genome-size', metavar='GENOME_SIZE', type=float,
+    help='Total size of the genome in bp. Use approximately 6.4e9 for human '
+    'or 5e9 for mouse. If not specified, the genome size is calculated from '
+    'the segregation table itself.')
+resolution_parser.add_argument(
+    '-p', '--plexity', metavar='NPS_PER_SAMPLE',
+    type=int, default=1,
+    help='Number of NPs multiplexed together in each column of the segregation table.')
+resolution_parser.add_argument(
+    '-i', '--include-invisible', action='store_false', dest='only_visible',
+    help='By default, we assume windows that are never detected are "invisible" '
+    'e.g. they are too repetitive to sequence, and we therefore ignore them. '
+    'This option turns off the default behaviour and includes all windows.')
+
+resolution_parser.set_defaults(func=resolution.resolution_check_from_args)
+
 
 # Options for 'select' command
 
