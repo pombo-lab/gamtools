@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, plotting, pipeline, select_samples, compaction, resolution
+        permutation, pipeline, select_samples, compaction, resolution
 
 def add_window_calling_options(base_parser):
     """
@@ -278,27 +278,6 @@ permute_seg_parser.add_argument(
     help='Output file path (or - to write to stdout)')
 
 permute_seg_parser.set_defaults(func=permutation.permute_segregation_from_args)
-
-
-# Options for 'plot_np' command
-
-plot_np_parser = subparsers.add_parser(
-    'plot_np',
-    help='Plot the segregation results for a particular NP')
-
-plot_np_parser.add_argument(
-    '-w', '--bigwig-file', required=True,
-    help='A bigwig file containing coverage information for the NP')
-plot_np_parser.add_argument(
-    '-b', '--bed-file', required=True,
-    help='A bed file containing positive windows for the NP')
-plot_np_parser.add_argument(
-    '-g', '--genome-file', required=True,
-    help='A file containing chromosome sizes for this genome')
-plot_np_parser.add_argument(
-    '-o', '--output-file', required=True, help='Output image file to create')
-
-plot_np_parser.set_defaults(func=plotting.plot_np_from_args)
 
 
 # Options for 'process' command
