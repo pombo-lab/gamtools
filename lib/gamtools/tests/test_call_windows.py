@@ -13,6 +13,24 @@ chr1    150000  200000  0   0
 chr1    200000  250000  0   6
 """)
 
+fixture_cov_two_samples = io.StringIO(
+u"""chrom   start   stop    Sample_A    Sample_B
+chr1    0   50000   0.002   0
+chr1    50000   100000  0   0.004
+chr1    100000  150000  0.002   0
+chr1    150000  200000  0   0
+chr1    200000  250000  0   0.002
+""")
+
+fixture_cov_two_samples_two_reads = io.StringIO(
+u"""chrom   start   stop    Sample_A    Sample_B
+chr1    0   50000   0.004   0
+chr1    50000   100000  0   0.002
+chr1    100000  150000  0.004   0
+chr1    150000  200000  0   0
+chr1    200000  250000  0   0.004
+""")
+
 fixture_no_positive_windows = np.array(
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -39,6 +57,10 @@ fixture_coverage_data = np.array(
      0, 45, 0, 40, 0, 35, 0, 30, 0, 25, 0, 20, 0, 15, 0, 10, 0, 5, 0, 0])
 
 data_two_samples = segregation.open_segregation(fixture_two_samples)
+
+data_cov_two_samples = segregation.open_segregation(fixture_cov_two_samples)
+
+data_cov_two_samples_two_reads = segregation.open_segregation(fixture_cov_two_samples_two_reads)
 
 def test_fixed_threshold_4():
 
@@ -99,3 +121,13 @@ def test_orphan_threshold_clipping():
 
     assert results['coverage_threshold'] == 60
 
+
+def test_infer_read_length():
+
+    inferred_length = call_windows.infer_single_read_coverage(data_cov_two_samples)
+
+    assert inferred_length == 0.002
+
+    inferred_length = call_windows.infer_single_read_coverage(data_cov_two_samples_two_reads)
+
+    assert inferred_length == 0.002

@@ -130,6 +130,34 @@ def pct_orphan_windows(positive_windows):
     return float(total_orphans) / positive_windows.sum()
 
 
+def infer_single_read_coverage(coverage_table):
+    """
+    Infer the coverage of a single read given the read coverage table.
+    Specifically, find the most frequent non-zero entry in the coverage matrix and
+    check that the value is not exactly double any of the other 20 most frequent
+    entries (in case the most frequent value does not represent one read). Return
+    the inferred coverage from one read multiplied by the inferred window size.
+
+    :param sample_coverage_data: Array of bp coverage per \
+        genomic window.
+    :returns: Inferred coverage of one single read.
+    """
+
+    cov_values, cov_counts = np.unique(coverage_table, return_counts=True)
+    top_20_vals = cov_values[cov_counts.argsort()[-20:]]
+    top_20_vals = top_20_vals[top_20_vals > 0]
+    top_val = top_20_vals[-1]
+
+    half_top_val = np.logical_and(
+        (top_20_vals / top_val) > 0.45,
+        (top_20_vals / top_val) < 0.55)
+
+    if np.any(half_top_val):
+        top_val = top_20_vals[half_top_val]
+
+    return top_val
+
+
 def orphan_windows_fitting_func(percentile_str, clip=True):
     """
     Factory function for creating fitting functions that find the threshold
@@ -253,7 +281,8 @@ def plot_fitting_and_save(sample_name, fitting_folder, sample_coverage_data, sam
     plt.close()
 
 
-def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
+def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function,
+			     min_reads=None):
     """
     Given a :ref:`read coverage table <read_coverage_table>`, extract the read
     coverage histogram for each individual NP. Pass this distribution to a
@@ -268,6 +297,9 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
             images of each individual fit.
     :param func fitting_function: Function to use to determine a read \
             threshold for each NP.
+    :param min_reads: Minimum number of reads required to call a window as \
+            positive.
+    :type min_reads: int or None
     :returns: segregation_table (a :ref:`segregation table <segregation_table>`) and \
             fitting_data (a :class:`~pandas.DataFrame` of fitting \
             parameters for each NP).
@@ -277,11 +309,20 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
 
     segregation_table = coverage_data.copy()
 
+    if min_reads is not None:
+        inferred_single_read_cov = infer_single_read_coverage(coverage_data)
+        min_cov = min_reads * inferred_single_read_cov
+    else:
+        min_cov = 0
+
     for i, sample_name in enumerate(coverage_data.columns):
 
         sample_coverage_data = coverage_data.loc[:, sample_name]
 
         sample_fitting_data = fitting_function(sample_coverage_data)
+
+        sample_fitting_data['coverage_threshold'] = max(
+            sample_fitting_data['coverage_threshold'], min_cov)
 
         if fitting_folder is not None:
 
@@ -312,8 +353,9 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function):
     return segregation_table, fitting_data
 
 
-def threshold_file(input_file, output_file,
-                   fitting_folder, fitting_details_file, fitting_function):
+def threshold_file(input_file, output_file, #pylint: disable=too-many-arguments
+                   fitting_folder, fitting_details_file,
+                   fitting_function, min_reads):
     """
     Read a :ref:`read coverage table <read_coverage_table>` file and threshold
     each NP, to generate a :ref:`segregation table <segregation_table>`.
@@ -328,6 +370,9 @@ def threshold_file(input_file, output_file,
     :param fitting_details_file: Path to save table of parameters for each \
             fit (or None to skip saving fitting table).
     :type fitting_details_file: str or None
+    :param min_reads: Minimum number of reads required to call a windows \
+            as positive.
+    :type min_reads: int or None
     :param func fitting_function: Function to use for thresholding each NP.
     """
 
@@ -335,7 +380,7 @@ def threshold_file(input_file, output_file,
                                 delim_whitespace=True, index_col=[0, 1, 2])
 
     segregation_matrix, fitting_data = do_coverage_thresholding(
-        coverage_data, fitting_folder, fitting_function)
+        coverage_data, fitting_folder, fitting_function, min_reads)
 
     segregation_matrix.to_csv(output_file, index=True, sep='\t')
 
@@ -375,4 +420,4 @@ def threshold_from_args(args):
 
     threshold_file(args.coverage_file, args.output_file,
                    args.fitting_folder, args.details_file,
-                   args.fitting_function)
+                   args.fitting_function, args.min_reads)
