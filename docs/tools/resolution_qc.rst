@@ -1,6 +1,6 @@
-############
+#############
 resolution_qc
-############
+#############
 
 The ``gamtools resolution_qc`` tool is used to perform some basic QC checks
 on a segregation table. This allows the user to generate segregation tables
