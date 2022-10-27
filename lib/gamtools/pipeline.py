@@ -361,7 +361,8 @@ class InputFileMappingTasks():
                 output_segregation_file,
                 full_fitting_dir,
                 self.args.details_file,
-                self.args.fitting_function)))
+                self.args.fitting_function,
+                self.args.min_read_threshold)))
 
             yield task
 

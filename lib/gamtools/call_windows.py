@@ -355,7 +355,7 @@ def do_coverage_thresholding(coverage_data, fitting_folder, fitting_function,
 
 def threshold_file(input_file, output_file, #pylint: disable=too-many-arguments
                    fitting_folder, fitting_details_file,
-                   fitting_function, min_reads):
+                   fitting_function, min_reads=None):
     """
     Read a :ref:`read coverage table <read_coverage_table>` file and threshold
     each NP, to generate a :ref:`segregation table <segregation_table>`.

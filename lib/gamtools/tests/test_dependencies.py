@@ -16,23 +16,11 @@ def application_installed(name):
 @pytest.mark.dependencies
 class TestClass:
 
-    def test_pybedtools_installed(self):
-        try:
-            import pybedtools
-        except ImportError:
-            assert False, "pybedtools is not installed. You will not be able to use the 'plot_np' command."
-
     def test_matplotlib_installed(self):
         try:
             import matplotlib
         except ImportError:
-            assert False, "matplotlib is not installed. You will not be able to use the 'plot_np' command."
-
-    def test_metaseq_installed(self):
-        try:
-            import metaseq
-        except ImportError:
-            assert False, "metaseq is not installed. You will not be able to use the 'plot_np' command."
+            assert False, "matplotlib is not installed. You will not be able to use some commands."
 
     def test_bowtie_installed(self):
         assert application_installed('bowtie2'), "bowtie2 could not be found, and is needed for mapping raw sequencing data"
