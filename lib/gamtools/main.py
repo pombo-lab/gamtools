@@ -21,7 +21,7 @@ from wrapit.parser import add_doit_options
 import pytest
 
 from . import bias, cosegregation, matrix, call_windows, enrichment, radial_position, \
-        permutation, pipeline, select_samples, compaction, resolution
+        permutation, pipeline, select_samples, compaction, resolution, utils
 
 def add_window_calling_options(base_parser):
     """
@@ -348,18 +348,6 @@ def get_script(script_name):
                         'scripts',
                         script_name)
 
-def get_example(example_name):
-    """Get the absolute path to a file in the gamtools 'examples' folder
-
-    :param str example_name: Name of the file.
-    :returns: Absolute path to the file
-    """
-
-    return os.path.join(os.path.dirname(__file__),
-                        'data',
-                        'examples',
-                        example_name)
-
 process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             to_run=[
                                 'Calling positive windows',
@@ -367,7 +355,7 @@ process_parser.set_defaults(func=pipeline.process_nps_from_args,
                             ],
                             mapping_stats_script=get_script(
                                 'mapping_stats.sh'),
-                            example_parameters_file=get_example(
+                            example_parameters_file=utils.get_example(
                                 'qc_parameters.example.cfg'),
                             default_stats=['contamination_stats.txt', 'mapping_stats.txt',
                                            'quality_stats.txt', 'segregation_stats.txt'],

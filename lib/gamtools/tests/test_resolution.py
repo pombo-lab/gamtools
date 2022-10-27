@@ -1,4 +1,4 @@
-from gamtools import segregation, resolution
+from gamtools import segregation, resolution, utils
 import io
 import pytest
 
@@ -10,10 +10,25 @@ chr1    8000   16000        0           0           0           0           0   
 
 data_table = segregation.open_segregation(fixture_table)
 
+bigger_table = segregation.open_segregation(
+    utils.get_example('example_segregation.table'))
+
 def test_detection_efficiency_visible():
-    eff = resolution.get_detection_efficiency(data_table, h = 200, R = 10000, L = 1e9)
+    eff = resolution.get_detection_efficiency(data_table, slice_thickness = 200, nuclear_radius = 10000, genome_size = 1e9)
     assert 0.78937754 < eff < 0.78937755
 
 def test_detection_efficiency_all():
-    eff = resolution.get_detection_efficiency(data_table, h = 200, R = 10000, L = 1e9, only_visible=False)
+    eff = resolution.get_detection_efficiency(data_table, slice_thickness = 200, nuclear_radius = 10000, genome_size = 1e9, only_visible=False)
     assert 0.39239383 < eff < 0.39239384
+
+def test_window_coverage():
+    cov = resolution.get_segregation_coverage_qc(bigger_table)
+    assert cov == 2
+
+def test_window_coverage_quantile():
+    cov = resolution.get_segregation_coverage_qc(bigger_table, quantile=0.6)
+    assert cov == 3
+
+def test_window_coverage_invisible():
+    cov = resolution.get_segregation_coverage_qc(bigger_table, only_visible=False)
+    assert cov == 0
