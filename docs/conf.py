@@ -66,7 +66,7 @@ release = u'0.1'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -297,5 +297,5 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'pandas': ('http://pandas-docs.github.io/pandas-docs-travis/', None),
+                       'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
