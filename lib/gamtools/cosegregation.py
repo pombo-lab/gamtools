@@ -14,16 +14,19 @@ provides functions that calculate the co-segregation of genomic regions,
 thereby allowing the relative nuclear proximity of different regions
 to be inferred.
 
-Co-segregation, the number of times that location x and location y are
-found in the same :ref:`nuclear profile <NPs>`, is the simplest measure
-of proximity but there are alternative approaches. Other ways of generating a
-:ref:`proximity matrix <proximity_matrices>` generally attempt to normalize for
-the differential detection of the two locations. For example, if locations x
-and y are detected in 100 :ref:`NPs` and location z is detected in only 20, the
+Co-segregation, the number of times that location x and location y are found in
+the same :ref:`nuclear profile <NPs>`, is the simplest measure of proximity but
+there are alternative approaches. Other ways of generating a :ref:`proximity
+matrix <proximity_matrices>` generally attempt to normalize for the
+differential detection of the two locations. For example, if locations x and y
+are detected in 100 :ref:`NPs` and location z is detected in only 20, the
 co-segregation of x and y will likely be higher than that between x and z even
-if their respective nuclear proximities are the same. In general, the approach
-that best accounts for such detection effects is the
-:func:`normalized linkage disequilibrium <get_dprime>` (or Dprime).
+if their respective nuclear proximities are the same. We have previously
+reported that the approach which best accounts for such detection effects is
+the :func:`normalized linkage disequilibrium <get_dprime>` (or Dprime).
+However, as of GAMtools v2.0 the recommended metric (and the new default for
+all matrix calculations) is :func"`normalized pointwise mutual information \
+        <get_npmi>`.
 
 
 """
@@ -37,6 +40,7 @@ import numpy as np
 
 from .cosegregation_internal import cosegregation_2d, cosegregation_3d, \
         linkage_2d, linkage_3d, dprime_2d
+from .npmi import npmi_2d
 from . import segregation, matrix
 from .utils import format_genomic_distance
 
@@ -180,8 +184,8 @@ def cosegregation_nd(*regions):
 
     result = list(map(get_frequency, combinations))
 
-    result_shape = tuple([len(region)
-                          for region in regions]) + (2, ) * len(regions)
+    result_shape = tuple(len(region)
+                         for region in regions) + (2, ) * len(regions)
 
     freqs = np.array(result).reshape(result_shape)
 
@@ -329,7 +333,54 @@ def get_dprime(segregation_data, *location_strings):
 
     return get_dprime_from_regions(*regions)
 
+
+def get_npmi_from_regions(*regions):
+    """Get the full normalized pointwise mutual information (npmi) matrix for n
+    regions.
+
+    This is a wrapper which determines the correct npmi function to call based
+    on the number of regions. Only two-dimensional matrices are currently
+    supported. Where only one region is given, npmi is calculated for that
+    region against itself.
+
+    :param list regions: List of :ref:`regions <regions>`.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the \
+            normalized pointwise mutual information (npmi) of all \
+            possible combinations of windows within the different regions.
+    """
+
+    regions = prepare_regions(regions)
+
+    if len(regions) == 2:
+        npmi_func = npmi_2d
+    else:
+        raise NotImplementedError(
+            'There is currently no implementation of npmi for more than '
+            '2 dimensions')
+
+    return npmi_func(*regions)
+
+
+def get_npmi(segregation_data, *location_strings):
+    """Calculate the normalized pointwise mutual information (npmi) matrix for a given
+    genomic location or locations. Where only one location is given, npmi
+    is calculated for that region against itself.  Where two regions
+    are given, linkage is calculated for region one against region two.
+
+    :param segregation_data: Input :ref:`segregation table <segregation_table>`
+    :param str location_strings: One or more :ref:`location strings <location_string>`.
+    :returns: :ref:`proximity matrix <proximity_matrices>` giving the \
+            normalized pointwise mutual information (npmi) of all \
+            possible combinations of windows within the different regions.
+    """
+
+    regions = [segregation.region_from_location_string(
+        segregation_data, l) for l in location_strings]
+
+    return get_npmi_from_regions(*regions)
+
 MATRIX_TYPES = {
+    'npmi': get_npmi_from_regions,
     'dprime': get_dprime_from_regions,
     'linkage': get_linkage_from_regions,
     'cosegregation': get_cosegregation_from_regions,
@@ -439,14 +490,14 @@ def create_and_save_contact_matrix(segregation_file, location_strings,
     """
 
     print('starting calculation for {}'.format(' x '.join(location_strings)))
-    start_time = time.clock()
+    start_time = time.perf_counter()
 
     contact_matrix, windows = matrix_from_segregation_file(
         segregation_file, location_strings, matrix_type)
 
     size_string = ' x '.join([str(s) for s in contact_matrix.shape])
     print('region size is: {}'.format(size_string), end=' ')
-    print('Calculation took {0}s'.format(time.clock() - start_time))
+    print('Calculation took {0}s'.format(time.perf_counter() - start_time))
     print('Saving matrix to file {}'.format(output_file))
 
     output_func = matrix.OUTPUT_FORMATS[output_format]

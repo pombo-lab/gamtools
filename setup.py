@@ -1,16 +1,8 @@
 import os
+import sys
 from setuptools import setup, Extension
-
-try:
-    from Cython.Distutils import build_ext
-except:
-    from setuptools.command.build_ext import build_ext
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.c"])]
-else:
-    ext_modules = [Extension('gamtools.cosegregation_internal',
-                   ["lib/gamtools/cosegregation_internal.pyx"])]
-
+from setuptools.command.sdist import sdist
+from setuptools.command.build_ext import build_ext
 
 class CustomBuildExtCommand(build_ext):
     """Customized setuptools build_ext command - checks numpy is installed."""
@@ -30,6 +22,16 @@ class CustomBuildExtCommand(build_ext):
 
         build_ext.run(self)
 
+class custom_cythonize_sdist(sdist):
+    def run(self):
+        # Make sure the compiled Cython files in the distribution are up-to-date
+        from Cython.Build import cythonize
+        cythonize([
+                   "lib/gamtools/cosegregation_internal.pyx",
+                   "lib/gamtools/mirnylib_numutils_internal.pyx",
+        ], language_level = "3")
+        sdist.run(self)
+
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
 # README file and 2) it's easier to type in the README file than to put a raw
@@ -39,37 +41,35 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "1.1.1",
+    version = "2.0.0",
     author = "Rob Beagrie",
-    author_email = "rob@beagrie.com",
-    url = "http://gam.tools",
+    author_email = "rob@beagrie.co.uk",
+    url = "https://gam.tools",
     description = ("A package containing some utilities for analyzing GAM data."),
     license = "Apache2.0",
     package_dir = {'': 'lib'},
     packages=['gamtools', 'gamtools.qc'],
-    ext_modules = ext_modules,
+    ext_modules = [Extension('gamtools.cosegregation_internal',
+                   ["lib/gamtools/cosegregation_internal.c"]),
+                   Extension('gamtools.mirnylib_numutils_internal',
+                      ["lib/gamtools/mirnylib_numutils_internal.c"],),
+                   ],
+    cmdclass = {
+      'sdist': custom_cythonize_sdist,
+      'build_ext': CustomBuildExtCommand,
+    },
     install_requires=[
-      'cython',
       'numpy',
       'scipy',
       'pandas',
-      'wrapit',
+      'wrapit>=0.3.0',
       'pytest'],
     extras_require={
       ':python_version<"3.0"': ['doit==0.29.0'],
       ':python_version>="3.0"': ['doit==0.30.0'],
       ':python_version<"3.0"': ['mock'],
     },
-    # Set include_dirs in a custom build_ext class so that numpy is only
-    # required if we are compiling C files
-    cmdclass={
-          'build_ext': CustomBuildExtCommand,
-      },
     entry_points = {
-                    # TODO: make new EIYBrowse filetypes using IO functions in gamtools.matrix
-                    #'EIYBrowse.filetypes': [
-                    #    'gam_segmentation_file = gamtools.segmentation:GamSegmentationFile',
-                    #],
                     'console_scripts': [
                         'gamtools = gamtools.main:main',
                         'create_empty_bedgraph = gamtools.utils:empty_bedgraph_from_cmdline',

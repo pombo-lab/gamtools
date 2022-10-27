@@ -9,6 +9,8 @@
 *.pyc
 *.pyd
 *.c
+lib/gamtools/cosegregation_internal.cpp
+lib/gamtools/mirnylib_numutils_internal.cpp
 
 # Packages #
 ############
@@ -47,9 +49,11 @@ docs/_build
 # py.test #
 ###########
 .cache/
+.pytest_cache/
 
 # tox #
 ###########
 .tox/
 .coverage
 .python-version
+coverage.xml

@@ -109,7 +109,7 @@ programs which are not installed automatically.
 Making plots
 ------------
 
-The ``gamtools plot_np`` command requires some python plotting libraries to be
+The ``gamtools matrix`` command requires some python plotting libraries to be
 installed. These may also be required for the ``gamtools call_windows`` command
 if the ``--fitting-folder`` flag is specified.
 
@@ -117,8 +117,6 @@ Optional python dependencies
 ----------------------------
 
   * matplotlib_
-  * pybedtools_
-  * metaseq_
 
 Working with raw sequencing data
 --------------------------------

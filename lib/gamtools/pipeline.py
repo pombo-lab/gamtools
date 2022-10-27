@@ -67,18 +67,31 @@ def pretty_resolution(window_size):
     return utils.format_genomic_distance(window_size, precision=0)
 
 
-def coverage_path(base_folder, window_size):
-    """Get the path to a coverage table given a base folder and resolution.
+def bp_coverage_path(base_folder, window_size):
+    """Get the path to a bp coverage table given a base folder and resolution.
 
-    :param str base_folder: Path to the folder containing the coverage table.
+    :param str base_folder: Path to the folder containing the bp coverage table.
     :param int window_size: Resolution in base pairs
-    :returns: Path to coverage table
+    :returns: Path to bp coverage table
     """
 
     return os.path.join(
         base_folder,
-        'coverage_at_{0}.table'.format(
+        'bp_coverage_at_{0}.table'.format(
             pretty_resolution(window_size)))
+
+
+def individual_bp_coverage_path(window_size, bam_path):
+    """Get the path to a bp coverage table for one specific bam
+
+    :param int window_size: Resolution in base pairs
+    :param str bam_path: Path to input bam for bp coverage calculation
+    :returns: Path to bp coverage table
+    """
+
+    new_suffix = '.bp_at_{}.bed'.format(
+        pretty_resolution(window_size))
+    return swap_extension(bam_path, new_suffix)
 
 
 def segregation_path(base_folder, window_size):
@@ -99,15 +112,17 @@ def get_samtools_version():
     """Get the version number for the installed version of samtools"""
 
     try:
-        proc = subprocess.Popen('samtools',
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+
+        with subprocess.Popen('samtools',
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE) as proc:
+
+            output, err = proc.communicate() #pylint: disable=unused-variable
+            proc.wait()
+
     except OSError:
         sys.exit('samtools is either not installed or not present in $PATH. '
                  'Please install samtools to continue.')
-
-    output, err = proc.communicate() #pylint: disable=unused-variable
-    proc.wait()
 
     vnum_regexp = b'^Version:\s(?P<version>(\d+\.){1,2}(\d+))'
 
@@ -136,7 +151,7 @@ def get_samtools_sort_actions():
     return samtools_actions
 
 
-class InputFileMappingTasks(object):
+class InputFileMappingTasks():
     """Class for generating doit tasks from command-line arguments.
 
     GAMtools "process_nps" command generates a set of doit tasks at
@@ -273,30 +288,53 @@ class InputFileMappingTasks(object):
             "uptodate": [True],
         }
 
-    def task_get_coverage(self):
+    def task_get_bp_coverage(self):
         """Task to get read coverage per window for a range of resolutions"""
 
-        bamfiles = [swap_extension(input_fastq, ".rmdup.bam")
-                    for input_fastq in self.args.input_fastqs]
+        for input_fastq in self.args.input_fastqs:
+            for window_size in self.args.window_sizes:
+                input_bam = swap_extension(input_fastq, ".rmdup.bam")
+                output_cov = individual_bp_coverage_path(window_size, input_bam)
+                yield {
+                    'basename': 'Getting bp coverage',
+                    'name': output_cov,
+                    'actions': ['echo "chrom start stop %(dependencies)s" > %(targets)s',
+                                'bash -i -c "bedtools coverage -b %(dependencies)s '
+                                '-a <(bedtools makewindows -w {0} -g %(genome_file)s) '
+                                '| cut -d \'\t\' -f 1,2,3,7 '
+                                '>> %(targets)s"' .format(window_size)],
+                    'targets': [output_cov],
+                    'file_dep': [input_bam],
+                    'task_dep': ['Indexing bam', 'Creating output directory'],
+                }
+
+
+    def task_merge_bp_coverage(self):
+        """Task to merge bp coverage files for individual bams into a bp coverage table"""
+
+        input_bamfiles = [swap_extension(input_fastq, ".rmdup.bam")
+                          for input_fastq in self.args.input_fastqs]
+
         for window_size in self.args.window_sizes:
+
+            input_cov_files = [individual_bp_coverage_path(window_size, input_bam)
+                               for input_bam in input_bamfiles]
+
             yield {
-                'basename': 'Getting coverage',
+                'basename': 'Merging bp coverage',
                 'name': '{0} windows'.format(pretty_resolution(window_size)),
-                'actions': ['echo "chrom start stop %(dependencies)s" > %(targets)s',
-                            'bash -i -c "bedtools multicov -bams %(dependencies)s '
-                            '-bed <(bedtools makewindows -w {0} -g %(genome_file)s) '
-                            '>> %(targets)s"' .format(window_size)],
-                'targets': [coverage_path(self.args.output_dir, window_size)],
-                'file_dep': bamfiles,
-                'task_dep': ['Indexing bam', 'Creating output directory'],
+                'actions': [call_windows.merge_reads_coverage],
+                'targets': [bp_coverage_path(self.args.output_dir, window_size)],
+                'file_dep': input_cov_files,
             }
+
 
     def task_get_segregation(self):
         """Task to call positive windows from coverage tables for a range of resolutions"""
 
         for window_size in self.args.window_sizes:
 
-            input_coverage_file = coverage_path(
+            input_coverage_file = bp_coverage_path(
                 self.args.output_dir, window_size)
             output_segregation_file = segregation_path(
                 self.args.output_dir, window_size)
@@ -309,9 +347,9 @@ class InputFileMappingTasks(object):
                 'actions': [],
             }
 
-            if self.args.fittings_dir:
+            if self.args.fitting_folder:
                 full_fitting_dir = os.path.join(
-                    self.args.output_dir, self.args.fittings_dir, '{0}'.format(
+                    self.args.output_dir, self.args.fitting_folder, '{0}'.format(
                         pretty_resolution(window_size)))
                 task['actions'].append(
                     'mkdir -pv {0}'.format(full_fitting_dir))
@@ -323,7 +361,8 @@ class InputFileMappingTasks(object):
                 output_segregation_file,
                 full_fitting_dir,
                 self.args.details_file,
-                self.args.fitting_function)))
+                self.args.fitting_function,
+                self.args.min_read_threshold)))
 
             yield task
 

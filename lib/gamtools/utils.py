@@ -9,8 +9,22 @@ their own place.
 """
 
 import sys
+import os
 
 import pandas as pd
+
+
+def get_example(example_name):
+    """Get the absolute path to a file in the gamtools 'examples' folder
+
+    :param str example_name: Name of the file.
+    :returns: Absolute path to the file
+    """
+
+    return os.path.join(os.path.dirname(__file__),
+                        'data',
+                        'examples',
+                        example_name)
 
 
 def format_genomic_distance(distance, precision=1):
@@ -60,7 +74,7 @@ def empty_bedgraph_from_cmdline():
     empty_bedgraph(sys.argv[1], sys.argv[2])
 
 
-class DelayedImportError(object): #pylint: disable=too-few-public-methods
+class DelayedImportError(): #pylint: disable=too-few-public-methods
     """Class that returns an ImportError if any method or attribute is accessed.
 
     Useful for delaying the ImportError until an optional dependency is actually used"""
