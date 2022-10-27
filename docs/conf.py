@@ -297,5 +297,5 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('http://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-                       'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+                       'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None)}

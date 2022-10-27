@@ -14,4 +14,4 @@ key modules of interest for third-party developers are:
 """
 
 #from . import call_windows, compaction, cosegregation, enrichment, matrix, \
-#     permutation, plotting, radial_position, segregation, utils
+#     permutation, radial_position, resolution, segregation, utils

@@ -17,7 +17,7 @@ get the following ouput:
 
   $ gamtools --help
   usage: gamtools [-h]
-                {call_windows,convert,enrichment,matrix,permute_segregation,plot_np,process_nps,select}
+                {call_windows,convert,enrichment,matrix,permute_segregation,process_nps,resolution,select}
                 ...
 
 If this command gives you an error message, it is likely that **GAMtools** has

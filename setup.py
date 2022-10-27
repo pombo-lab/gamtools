@@ -4,7 +4,6 @@ from setuptools import setup, Extension
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
-
 class CustomBuildExtCommand(build_ext):
     """Customized setuptools build_ext command - checks numpy is installed."""
     def run(self):
@@ -22,7 +21,6 @@ class CustomBuildExtCommand(build_ext):
         self.include_dirs.append(numpy.get_include())
 
         build_ext.run(self)
-
 
 class custom_cythonize_sdist(sdist):
     def run(self):
@@ -43,7 +41,7 @@ def read(fname):
 
 setup(
     name = "gamtools",
-    version = "2.0.0alpha7",
+    version = "2.0.0beta1",
     author = "Rob Beagrie",
     author_email = "rob@beagrie.co.uk",
     url = "https://gam.tools",
