@@ -57,7 +57,7 @@ def segregation_info(segregation_table, skip_chroms):
 
     bin_sizes = segregation_windows['size'].value_counts()
     frequent_sizes = [size for (size, freq)
-                      in (bin_sizes / bin_sizes.sum()).iteritems()
+                      in (bin_sizes / bin_sizes.sum()).items()
                       if freq > 0.95]
     if not frequent_sizes:
         raise Exception('SLICE requires windows of even sizes')
