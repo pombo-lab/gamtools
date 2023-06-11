@@ -40,7 +40,7 @@ from . import segregation
 
 
 class SliceException(Exception):
-    pass
+    """Exception class for errors related to SLICE"""
 
 def segregation_info(segregation_table, skip_chroms):
     """
