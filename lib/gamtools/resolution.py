@@ -39,6 +39,9 @@ import numpy as np
 from . import segregation
 
 
+class SliceException(Exception):
+    pass
+
 def segregation_info(segregation_table, skip_chroms):
     """
     Given a segregation table, retrieve the number of tubes,
@@ -60,7 +63,7 @@ def segregation_info(segregation_table, skip_chroms):
                       in (bin_sizes / bin_sizes.sum()).items()
                       if freq > 0.95]
     if not frequent_sizes:
-        raise Exception('SLICE requires windows of even sizes')
+        raise SliceException('SLICE requires windows of even sizes')
     window_size = frequent_sizes[0]
 
     return genome_size, window_size
