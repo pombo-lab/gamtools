@@ -420,4 +420,4 @@ def threshold_from_args(args):
 
     threshold_file(args.coverage_file, args.output_file,
                    args.fitting_folder, args.details_file,
-                   args.fitting_function, args.min_reads)
+                   args.fitting_function, args.min_read_threshold)
