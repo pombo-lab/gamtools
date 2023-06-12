@@ -25,4 +25,4 @@ jobs:
           # stop the build if there are Python syntax errors or undefined names
           tox -e pylint
       - name: Test with tox
-        run: tox -e py
+        run: tox --skip-missing-interpreters
