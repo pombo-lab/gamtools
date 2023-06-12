@@ -22,6 +22,11 @@ jobs:
           pip install tox
       - name: Test with tox
         run: tox --skip-missing-interpreters
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@v2
+        with:
+          flag-name: run-${{ join(matrix.*, '-') }}
+          parallel: true
 
   finish:
     needs: test
@@ -32,3 +37,4 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         parallel-finished: true
+        carryforward: "run-3.8,run-3.9"
