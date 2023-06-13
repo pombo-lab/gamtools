@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "Cython", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gamtools"
+version = "2.0.1"
+authors = [
+    { name="Rob Beagrie", email="rob@beagrie.co.uk"}
+]
+description = "A package containing some utilities for analyzing GAM data."
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "License :: OSI Approved :: Apache Software License"
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "wrapit>=0.3.0",
+    "pytest",
+    "doit==0.29.0; python_version<'3.0'",
+    "mock; python_version<'3.0'",
+    "doit>=0.30.0; python_version>='3.0'"
+]
+
+[project.urls]
+"Homepage" = "https://gam.tools"
+
+[project.scripts]
+gamtools = 'gamtools.main:main'
+create_empty_bedgraph = 'gamtools.utils:empty_bedgraph_from_cmdline'
+
+[tool.setuptools]
+packages = ['gamtools', 'gamtools.qc']
+include-package-data = true
+package-dir = {"" = "lib"}
